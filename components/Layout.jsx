@@ -5,8 +5,11 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ROLES, isStaff, canManageUsers, hasApprovedRole } from "@/lib/roles";
-import NotificationBell from "@/components/NotificationBell";
+import Notification from "@/components/Notification";
+// import ScrollToTop from "@/components/ui/ScrollToTop";
 import { ACCESS } from "@/lib/route-access";
+
+import CommonFooter from "@/components/ui/CommonFooter";
 
 // ─── Access guard ─────────────────────────────────────────────────────────────
 function canRender(access, role) {
@@ -29,22 +32,43 @@ function homeFor(role) {
   return "/";
 }
 
+// ─── Active link helper ───────────────────────────────────────────────────────
+function NavLink({ href, mobile, children, active }) {
+  return (
+    <Link
+      href={href}
+      className={`relative transition-colors ${
+        mobile ? "block py-2 border-b border-slate-100" : ""
+      } ${
+        active
+          ? "text-brand-600 font-bold"
+          : "text-slate-700 hover:text-brand-600"
+      }`}
+    >
+      {children}
+      {/* Active indicator line (desktop only) */}
+      {active && !mobile && (
+        <span className="absolute -bottom-[13px] left-0 right-0 h-0.5 bg-brand-600 rounded-full" />
+      )}
+    </Link>
+  );
+}
+
 // ─── Navigation link sets ─────────────────────────────────────────────────────
-function AdminLinks({ mobile, logout }) {
-  const cls = mobile ? "block py-2 border-b border-slate-100" : "";
+function AdminLinks({ mobile, logout, activePath }) {
   return (
     <>
-      <Link href="/profile"         className={`text-slate-700 hover:text-brand-600 ${cls}`}>Profile</Link>
-      <Link href="/admin"           className={`text-slate-700 hover:text-brand-600 ${cls}`}>Overview</Link>
-      <Link href="/admin/students"  className={`text-slate-700 hover:text-brand-600 ${cls}`}>Students</Link>
-      <Link href="/admin/faculty"   className={`text-slate-700 hover:text-brand-600 ${cls}`}>Faculty</Link>
-      <Link href="/admin/requests"  className={`text-slate-700 hover:text-brand-600 ${cls}`}>Requests</Link>
-      <Link href="/admin/audit"     className={`text-slate-700 hover:text-brand-600 ${cls}`}>Audit Logs</Link>
-      <div className={mobile ? "py-2 border-b border-slate-100" : ""}><NotificationBell /></div>
+      <NavLink href="/profile"        mobile={mobile} active={activePath === "/profile"}>Profile</NavLink>
+      <NavLink href="/admin"          mobile={mobile} active={activePath === "/admin"}>Overview</NavLink>
+      <NavLink href="/admin/students" mobile={mobile} active={activePath === "/admin/students"}>Students</NavLink>
+      <NavLink href="/admin/faculty"  mobile={mobile} active={activePath === "/admin/faculty"}>Faculty</NavLink>
+      <NavLink href="/admin/requests" mobile={mobile} active={activePath === "/admin/requests"}>Requests</NavLink>
+      <NavLink href="/admin/audit"    mobile={mobile} active={activePath === "/admin/audit"}>Audit Logs</NavLink>
+      <div className={mobile ? "py-2 border-b border-slate-100" : ""}><Notification /></div>
       <button
         type="button"
         onClick={logout}
-        className={`rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 ${mobile ? "block w-full px-3 py-2 mt-4 text-left font-medium" : "px-2 py-1"}`}
+        className={`rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors ${mobile ? "block w-full px-3 py-2 mt-4 text-left font-medium" : "px-3 py-1.5 text-sm"}`}
       >
         Sign out
       </button>
@@ -52,18 +76,17 @@ function AdminLinks({ mobile, logout }) {
   );
 }
 
-function StaffLinks({ mobile, isFaculty, logout }) {
-  const cls = mobile ? "block py-2 border-b border-slate-100" : "";
+function StaffLinks({ mobile, isFaculty, logout, activePath }) {
   return (
     <>
-      <Link href="/profile" className={`text-slate-700 hover:text-brand-600 ${cls}`}>Profile</Link>
+      <NavLink href="/profile" mobile={mobile} active={activePath === "/profile"}>Profile</NavLink>
       {isFaculty && (
-        <Link href="/dashboard" className={`text-slate-700 hover:text-brand-600 ${cls}`}>Dashboard</Link>
+        <NavLink href="/dashboard" mobile={mobile} active={activePath.startsWith("/dashboard")}>Dashboard</NavLink>
       )}
       <button
         type="button"
         onClick={logout}
-        className={`rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 ${mobile ? "block w-full px-3 py-2 mt-4 text-left font-medium" : "px-2 py-1"}`}
+        className={`rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors ${mobile ? "block w-full px-3 py-2 mt-4 text-left font-medium" : "px-3 py-1.5 text-sm"}`}
       >
         Sign out
       </button>
@@ -71,15 +94,14 @@ function StaffLinks({ mobile, isFaculty, logout }) {
   );
 }
 
-function StudentLinks({ mobile, logout }) {
-  const cls = mobile ? "block py-2 border-b border-slate-100" : "";
+function StudentLinks({ mobile, logout, activePath }) {
   return (
     <>
-      <Link href="/profile"  className={`text-slate-700 hover:text-brand-600 ${cls}`}>Profile</Link>
+      <NavLink href="/profile" mobile={mobile} active={activePath === "/profile"}>Profile</NavLink>
       <button
         type="button"
         onClick={logout}
-        className={`rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 ${mobile ? "block w-full px-3 py-2 mt-4 text-left font-medium" : "px-2 py-1"}`}
+        className={`rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors ${mobile ? "block w-full px-3 py-2 mt-4 text-left font-medium" : "px-3 py-1.5 text-sm"}`}
       >
         Sign out
       </button>
@@ -95,13 +117,16 @@ function GuestLinks({ mobile }) {
       </Link>
       <Link
         href="/register"
-        className={`rounded-md bg-brand-600 text-white hover:bg-brand-700 text-center ${mobile ? "block w-full px-4 py-3 mt-4" : "px-3 py-1.5"}`}
+        className={`rounded-lg bg-brand-600 text-white hover:bg-brand-700 text-center transition-colors ${mobile ? "block w-full px-4 py-3 mt-4" : "px-3.5 py-1.5 text-sm"}`}
       >
         Register
       </Link>
     </>
   );
 }
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+// Footer replaced by CommonFooter
 
 // ─── Main Layout ──────────────────────────────────────────────────────────────
 export default function Layout({ children, title = "", access = ACCESS.PUBLIC }) {
@@ -113,6 +138,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
   const isAdmin   = hasApprovedRole(role) && canManageUsers(role);
   const isFaculty = hasApprovedRole(role) && isStaff(role) && !isAdmin;
   const isStudent = role === ROLES.STUDENT;
+  const activePath = router.asPath.split("?")[0];
 
   // Close mobile menu on navigation
   useEffect(() => { setMobileMenuOpen(false); }, [router.asPath]);
@@ -162,9 +188,9 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
   const logoHref = isAdmin ? "/admin" : isFaculty ? "/faculty" : isStudent ? "/student" : "/";
 
   function navLinks(mobile) {
-    if (user && isAdmin)   return <AdminLinks   mobile={mobile} logout={logout} />;
-    if (user && isFaculty) return <StaffLinks   mobile={mobile} isFaculty logout={logout} />;
-    if (user && isStudent) return <StudentLinks mobile={mobile} logout={logout} />;
+    if (user && isAdmin)   return <AdminLinks   mobile={mobile} logout={logout} activePath={activePath} />;
+    if (user && isFaculty) return <StaffLinks   mobile={mobile} isFaculty logout={logout} activePath={activePath} />;
+    if (user && isStudent) return <StudentLinks mobile={mobile} logout={logout} activePath={activePath} />;
     if (!user && !loading) return <GuestLinks   mobile={mobile} />;
     return null;
   }
@@ -188,48 +214,58 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
         Skip to main content
       </a>
 
-      <header className="no-print border-b border-slate-200 bg-white shadow-sm relative z-50">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link href={logoHref} className="flex items-center gap-2 text-lg font-semibold text-brand-800 hover:text-brand-600">
-            <Image src="/logo.png" alt="Department Ledger Logo" width={32} height={32} className="h-8 w-auto" priority />
-            <span>Department Ledger Portal</span>
-          </Link>
+      <div className="flex min-h-screen flex-col">
+        <header className="no-print border-b border-slate-200 bg-white shadow-sm relative z-50">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+            <Link href={logoHref} className="flex items-center gap-2 text-lg font-semibold text-brand-800 hover:text-brand-600 transition-colors">
+              <Image src="/logo.png" alt="Department Ledger Logo" width={32} height={32} className="h-8 w-auto" priority />
+              <span>Department Ledger Portal</span>
+            </Link>
 
-          <nav className="hidden md:flex flex-wrap items-center gap-4 text-sm font-medium" aria-label="Primary">
-            {navLinks(false)}
-          </nav>
-
-          <button
-            type="button"
-            className="md:hidden rounded-md p-2 -mr-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-            onClick={() => setMobileMenuOpen((o) => !o)}
-            aria-expanded={mobileMenuOpen}
-            aria-label="Open main menu"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"} />
-            </svg>
-          </button>
-        </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 shadow-lg absolute w-full left-0">
-            <nav className="flex flex-col text-base font-medium space-y-1 pb-4" aria-label="Mobile">
-              {navLinks(true)}
+            <nav className="hidden md:flex flex-wrap items-center gap-4 text-sm font-medium" aria-label="Primary">
+              {navLinks(false)}
             </nav>
-          </div>
-        )}
-      </header>
 
-      <main id="main-content" className="mx-auto max-w-6xl px-4 py-8">
-        {allowed ? (
-          children
-        ) : (
-          <p className="text-center text-slate-500 py-16" role="status">
-            Loading…
-          </p>
-        )}
-      </main>
+            <button
+              type="button"
+              className="md:hidden rounded-lg p-2 -mr-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors"
+              onClick={() => setMobileMenuOpen((o) => !o)}
+              aria-expanded={mobileMenuOpen}
+              aria-label="Open main menu"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"} />
+              </svg>
+            </button>
+          </div>
+
+          {/* Mobile menu with slide animation */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 shadow-lg absolute w-full left-0 animate-menu-down">
+              <nav className="flex flex-col text-base font-medium space-y-1 pb-4" aria-label="Mobile">
+                {navLinks(true)}
+              </nav>
+            </div>
+          )}
+        </header>
+
+        <main id="main-content" className="mx-auto max-w-6xl w-full px-4 py-8 flex-1">
+          {allowed ? (
+            children
+          ) : (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-slate-400 text-sm">Loading…</p>
+              </div>
+            </div>
+          )}
+        </main>
+
+        <CommonFooter />
+      </div>
+
+      {/* <ScrollToTop /> removed as requested */}
     </>
   );
 }

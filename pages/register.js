@@ -3,6 +3,9 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -35,7 +38,7 @@ export default function RegisterPage() {
   return (
     <Layout title="Register" access={ACCESS.GUEST}>
       <div className="mx-auto max-w-md">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-lg shadow-slate-200/60">
+        <Card className="p-8 shadow-lg shadow-slate-200/60">
           {/* Header */}
           <div className="mb-6">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-600 mb-4">
@@ -54,20 +57,19 @@ export default function RegisterPage() {
               <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-1.5">
                 Full name
               </label>
-              <input
+              <Input
                 id="name"
                 required
                 placeholder="Your full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
               />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-1.5">
                 Email address
               </label>
-              <input
+              <Input
                 id="email"
                 type="email"
                 autoComplete="email"
@@ -75,7 +77,6 @@ export default function RegisterPage() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
               />
             </div>
             <div>
@@ -84,7 +85,7 @@ export default function RegisterPage() {
                 <span className="ml-1 font-normal text-slate-400">(min 8 characters)</span>
               </label>
               <div className="relative">
-                <input
+                <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
@@ -92,7 +93,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 pr-12 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
+                  className="pr-12"
                 />
                 <button
                   type="button"
@@ -142,11 +143,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full rounded-xl bg-brand-600 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700 disabled:opacity-60 transition-all active:scale-[0.98] mt-2"
-            >
+            <Button type="submit" disabled={busy} className="w-full mt-2" size="lg">
               {busy ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -156,7 +153,7 @@ export default function RegisterPage() {
                   Creating account…
                 </span>
               ) : "Create account"}
-            </button>
+            </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
@@ -165,7 +162,7 @@ export default function RegisterPage() {
               Sign in
             </Link>
           </p>
-        </div>
+        </Card>
       </div>
     </Layout>
   );

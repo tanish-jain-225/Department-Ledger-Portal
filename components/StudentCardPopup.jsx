@@ -22,20 +22,50 @@ export default function StudentCardPopup({
     const script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
     script.onload = () => {
+      // Create a dedicated container for capture to avoid modal clipping issues
       const opt = {
         margin: [10, 10],
         filename: `Student_Card_${data.rollNumber || "ID"}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          letterRendering: true,
+          scrollY: 0,
+          windowHeight: element.scrollHeight + 500 // Ensure full height is seen
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
-      window.html2pdf().set(opt).from(element).save();
+
+      // Temporarily expand parent container if it has overflow/max-height
+      const parent = element.closest('.overflow-y-auto');
+      const originalMaxHeight = parent ? parent.style.maxHeight : null;
+      const originalOverflow = parent ? parent.style.overflow : null;
+      
+      if (parent) {
+        parent.style.maxHeight = 'none';
+        parent.style.overflow = 'visible';
+      }
+
+      window.html2pdf()
+        .set(opt)
+        .from(element)
+        .save()
+        .then(() => {
+          // Restore original styles
+          if (parent) {
+            parent.style.maxHeight = originalMaxHeight;
+            parent.style.overflow = originalOverflow;
+          }
+        });
     };
     document.body.appendChild(script);
   };
 
+
   return (
-    <div className="fixed inset-0 z-[110] flex items-start sm:items-center justify-center bg-slate-900/80 p-2 sm:p-6 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/80 p-2 sm:p-6 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
       <div className="relative my-auto w-full max-w-3xl max-h-none sm:max-h-[90vh] overflow-y-auto rounded-xl sm:rounded-2xl bg-slate-50 shadow-2xl flex flex-col no-print border border-slate-200">
 
         

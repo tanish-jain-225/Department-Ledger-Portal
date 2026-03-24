@@ -11,13 +11,20 @@ export default function Home() {
     <Layout title="Department Ledger Portal" access={ACCESS.PUBLIC}>
       <div className="mx-auto max-w-4xl">
         {/* Hero */}
-        <div className="text-center py-16 sm:py-24">
-          <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 border border-brand-200 px-4 py-1.5 text-xs font-bold text-brand-700 uppercase tracking-widest mb-6">
+        <div className="text-center py-16 sm:py-24 relative">
+          {/* Decorative gradient orbs */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+            <div className="absolute top-10 left-1/4 w-72 h-72 bg-brand-200/30 rounded-full blur-3xl animate-float" />
+            <div className="absolute top-20 right-1/4 w-60 h-60 bg-violet-200/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "1.5s" }} />
+          </div>
+
+          <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 border border-brand-200 px-4 py-1.5 text-xs font-bold text-brand-700 uppercase tracking-widest mb-6 animate-fade-in">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" />
             Academic Records Portal
           </div>
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
             Department{" "}
-            <span className="text-brand-600">Ledger</span>{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-brand-700 animate-gradient">Ledger</span>{" "}
             Portal
           </h1>
           <p className="mt-6 text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
@@ -25,14 +32,16 @@ export default function Home() {
           </p>
 
           {loading && (
-            <p className="mt-12 text-slate-400 animate-pulse" role="status">Loading…</p>
+            <div className="mt-12 flex justify-center">
+              <div className="h-6 w-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+            </div>
           )}
 
           {!loading && user && hasApprovedRole(role) && (
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/profile"
-                className="w-full sm:w-auto rounded-xl bg-brand-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700 transition-all active:scale-95"
+                className="w-full sm:w-auto rounded-xl bg-brand-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700 hover:shadow-brand-500/30 transition-all active:scale-95"
               >
                 My Profile
               </Link>
@@ -59,7 +68,7 @@ export default function Home() {
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/login"
-                className="w-full sm:w-auto rounded-xl bg-brand-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700 transition-all active:scale-95"
+                className="w-full sm:w-auto rounded-xl bg-brand-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700 hover:shadow-brand-500/30 transition-all active:scale-95"
               >
                 Sign in
               </Link>
@@ -110,9 +119,9 @@ export default function Home() {
             ].map((f) => (
               <div
                 key={f.title}
-                className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow`}
+                className="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm group"
               >
-                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.color === "brand" ? "bg-brand-50 text-brand-600" : f.color === "amber" ? "bg-amber-50 text-amber-600" : "bg-violet-50 text-violet-600"}`}>
+                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110 ${f.color === "brand" ? "bg-brand-50 text-brand-600" : f.color === "amber" ? "bg-amber-50 text-amber-600" : "bg-violet-50 text-violet-600"}`}>
                   {f.icon}
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mb-1">{f.title}</h3>

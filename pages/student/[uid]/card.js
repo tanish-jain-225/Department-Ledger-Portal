@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import Head from "next/head";
 import { getDb } from "@/lib/firebase";
@@ -17,6 +17,7 @@ export default function StudentCardPage() {
   const [data, setData] = useState(null);
   const [extra, setExtra] = useState({ academic: [], placements: [] });
   const [err, setErr] = useState("");
+  const cardRef = useRef(null);
 
   const role = profile?.role;
   const canView =
@@ -63,6 +64,36 @@ export default function StudentCardPage() {
     load();
   }, [router.isReady, authLoading, uid, user, role, canView, router]);
 
+  const handleDownload = () => {
+    const element = cardRef.current;
+    if (!element) return;
+    
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+    script.onload = () => {
+      const opt = {
+        margin: [10, 10],
+        filename: `Student_Card_${data.rollNumber || "ID"}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          letterRendering: true,
+          scrollY: 0,
+          windowHeight: element.scrollHeight + 500
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      window.html2pdf()
+        .set(opt)
+        .from(element)
+        .save();
+    };
+    document.body.appendChild(script);
+  };
+
   if (!router.isReady) {
     return (
       <Layout title="Student card" access={ACCESS.AUTH}>
@@ -92,19 +123,22 @@ export default function StudentCardPage() {
             </Link>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handleDownload}
               className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-700 shadow-lg shadow-brand-500/20 active:scale-95 transition-all"
             >
-              View / Download
+              View / Download (PDF)
             </button>
           </div>
-          <StudentCard 
-            data={data} 
-            academic={extra.academic} 
-            placements={extra.placements} 
-          />
+          <div ref={cardRef}>
+            <StudentCard 
+              data={data} 
+              academic={extra.academic} 
+              placements={extra.placements} 
+            />
+          </div>
         </div>
       )}
     </Layout>
   );
 }
+

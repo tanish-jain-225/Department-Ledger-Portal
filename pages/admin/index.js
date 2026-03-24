@@ -91,10 +91,46 @@ export default function AdminHome() {
   }, []);
 
   const statCards = [
-    { label: "Students", value: stats.students, color: "brand", icon: "👨‍🎓" },
-    { label: "Faculty", value: stats.faculty, color: "violet", icon: "👩‍🏫" },
-    { label: "Admins", value: stats.admins, color: "slate", icon: "🛡️" },
-    { label: "Pending", value: stats.requests, color: "amber", icon: "⏳" },
+    {
+      label: "Students",
+      value: stats.students,
+      color: "brand",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 0015.48 0M6.75 10.147V21a.75.75 0 00.75.75h9a.75.75 0 00.75-.75V10.147M5.25 6.75L12 3l6.75 3.75-6.75 3.75L5.25 6.75z" />
+        </svg>
+      ),
+    },
+    {
+      label: "Faculty",
+      value: stats.faculty,
+      color: "violet",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z" />
+        </svg>
+      ),
+    },
+    {
+      label: "Admins",
+      value: stats.admins,
+      color: "slate",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7.5 4.5v6c0 5.25-3.75 8.25-7.5 9-3.75-.75-7.5-3.75-7.5-9v-6L12 3z" />
+        </svg>
+      ),
+    },
+    {
+      label: "Pending",
+      value: stats.requests,
+      color: "amber",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -120,7 +156,7 @@ export default function AdminHome() {
           return (
             <div key={s.label} className={`rounded-2xl border ${c.border} ${c.bg} p-5 shadow-sm`}>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xl">{s.icon}</span>
+                <span className={c.text}>{s.icon}</span>
               </div>
               <p className={`text-3xl font-extrabold ${s.color === "brand" ? "text-brand-900" : s.color === "violet" ? "text-violet-900" : s.color === "amber" ? "text-amber-900" : "text-slate-900"}`}>
                 {loadingStats ? <span className="text-2xl animate-pulse">—</span> : s.value}

@@ -103,7 +103,7 @@ export default function AdminAuditPage() {
                     {r.targetUid && <span>Target: <span className="font-mono text-slate-600">{r.targetUid}</span></span>}
                   </div>
                   {r.details && Object.keys(r.details).length > 0 && (
-                    <pre className="mt-2 rounded-lg bg-white/70 border border-slate-200 px-3 py-1.5 text-[10px] text-slate-500 overflow-x-auto">
+                    <pre className="mt-2 rounded-lg bg-white/70 border border-slate-200 px-3 py-1.5 text-[10px] text-slate-500">
                       {JSON.stringify(r.details, null, 2)}
                     </pre>
                   )}

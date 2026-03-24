@@ -10,9 +10,11 @@ import {
 } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import { getDb } from "@/lib/firebase";
 import { ROLES, isStaff } from "@/lib/roles";
 import { createRecord, listByStudent, removeRecord, updateRecord } from "@/lib/data";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 import StudentCardPopup from "@/components/StudentCardPopup";
 import FacultyProfile from "@/components/FacultyProfile";
@@ -53,16 +55,70 @@ function EditModal({ title, isOpen, onClose, onSave, children }) {
 }
 
 const TABS = [
-  { id: "profile", label: "Profile" },
-  { id: "academic", label: "Academic" },
-  { id: "activities", label: "Activities" },
-  { id: "achievements", label: "Achievements" },
-  { id: "placement", label: "Placement" },
-  { id: "certificates", label: "Certificates" },
+  {
+    id: "profile",
+    label: "Profile",
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z" />
+        <circle cx="12" cy="11" r="3" />
+      </svg>
+    ),
+  },
+  {
+    id: "academic",
+    label: "Academic",
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="M3 10h18" />
+      </svg>
+    ),
+  },
+  {
+    id: "activities",
+    label: "Activities",
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+  },
+  {
+    id: "achievements",
+    label: "Achievements",
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="8" r="7" />
+        <path d="M8.21 13.89l-1.42 4.24a1 1 0 001.52 1.11L12 17.77l3.69 1.47a1 1 0 001.52-1.11l-1.42-4.24" />
+      </svg>
+    ),
+  },
+  {
+    id: "placement",
+    label: "Placement",
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <rect x="2" y="7" width="20" height="14" rx="2" />
+        <path d="M16 3v4M8 3v4" />
+      </svg>
+    ),
+  },
+  {
+    id: "certificates",
+    label: "Certificates",
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <rect x="4" y="4" width="16" height="16" rx="2" />
+        <path d="M8 8h8M8 12h8M8 16h4" />
+      </svg>
+    ),
+  },
 ];
 
 export default function ProfilePage() {
   const { user, profile, loading, refreshProfile } = useAuth();
+  const { addToast } = useToast();
   const [tab, setTab] = useState("profile");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -151,10 +207,10 @@ export default function ProfilePage() {
         updatedAt: serverTimestamp(),
       });
       await refreshProfile();
-      setMsg("Profile saved.");
+      addToast("Profile saved successfully!", "success");
       setIsEditing(false);
     } catch (error) {
-      setErr(error?.message || "Save failed");
+      addToast(error?.message || "Save failed", "error");
     } finally {
       setSaving(false);
     }
@@ -176,48 +232,50 @@ export default function ProfilePage() {
         <FacultyProfile profile={profile} onRefresh={refreshProfile} />
       ) : (
         <>
-          <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="flex flex-col gap-2">
         <nav
-          className="flex flex-wrap gap-2 lg:w-48 lg:flex-col"
+          className="flex gap-2 items-center justify-center p-1 flex-col"
           aria-label="Profile sections"
         >
           <button
             type="button"
             onClick={() => setShowCard(true)}
-            className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all active:scale-95"
+            className="mb-2 lg:mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all active:scale-95 flex-shrink-0"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
             View / Download Card
           </button>
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
-                tab === t.id
-                  ? "bg-brand-600 text-white"
-                  : "bg-white text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          <div className="flex gap-2 w-full p-1 flex-wrap justify-start">
+          {TABS.map((t) => {
+            const countMap = { academic: academic.length, activities: activities.length, achievements: achievements.length, placement: placements.length, certificates: certificates.length };
+            const count = countMap[t.id];
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all flex items-center gap-2 flex-shrink-0 ${
+                  tab === t.id
+                    ? "bg-brand-600 text-white shadow-md shadow-brand-500/20"
+                    : "bg-white text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-brand-200"
+                }`}
+              >
+                <span className="text-base">{t.icon}</span>
+                <span>{t.label}</span>
+                {count > 0 && (
+                  <span className={`ml-auto text-[10px] font-bold rounded-full px-1.5 py-0.5 ${
+                    tab === t.id ? "bg-white/20 text-white" : "bg-brand-50 text-brand-600"
+                  }`}>{count}</span>
+                )}
+              </button>
+            );
+          })}
+          </div>
         </nav>
 
         <div className="min-w-0 flex-1">
-          {msg && (
-            <p className="mb-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
-              {msg}
-            </p>
-          )}
-          {err && (
-            <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
-              {err}
-            </p>
-          )}
 
           {tab === "profile" && (
             <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300">
@@ -453,6 +511,7 @@ function AcademicSection({ uid, rows, onRefresh }) {
   const [link, setLink] = useState("");
 
   const [editingRecord, setEditingRecord] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   async function add(e) {
     if (e) e.preventDefault();
@@ -597,10 +656,7 @@ function AcademicSection({ uid, rows, onRefresh }) {
                       </button>
                       <button
                         onClick={async () => {
-                          if (confirm("Delete this record?")) {
-                            await removeRecord("academicRecords", r.id);
-                            onRefresh();
-                          }
+                          setDeleteTarget({ collection: "academicRecords", id: r.id, label: `Year ${r.year} · Semester ${r.semester}` });
                         }}
                         className="p-2 text-slate-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                         title="Delete record"
@@ -687,6 +743,20 @@ function AcademicSection({ uid, rows, onRefresh }) {
             </div>
           </div>
         </EditModal>
+
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title="Delete Record?"
+          message={`Are you sure you want to delete "${deleteTarget?.label}"? This action cannot be undone.`}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={async () => {
+            if (deleteTarget) {
+              await removeRecord(deleteTarget.collection, deleteTarget.id);
+              setDeleteTarget(null);
+              onRefresh();
+            }
+          }}
+        />
       </section>
     </div>
   );

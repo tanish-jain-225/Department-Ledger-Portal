@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
+import FacultyCard from "./FacultyCard";
 
 export default function FacultyProfile({ profile, onRefresh }) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  const cardRef = useRef(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -56,6 +58,48 @@ export default function FacultyProfile({ profile, onRefresh }) {
     }
   }
 
+  const handleDownload = () => {
+    const element = cardRef.current;
+    if (!element) return;
+    
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+    script.onload = () => {
+      const opt = {
+        margin: [10, 10],
+        filename: `Faculty_Card_${profile.name || "ID"}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          letterRendering: true,
+          scrollY: 0,
+          windowHeight: element.scrollHeight + 500
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      // Ensure the hidden capture element is not clipped
+      const parent = element.parentElement;
+      const originalPosition = parent.style.position;
+      const originalVisibility = parent.style.visibility;
+      
+      parent.style.position = 'static';
+      parent.style.visibility = 'visible';
+
+      window.html2pdf()
+        .set(opt)
+        .from(element)
+        .save()
+        .then(() => {
+          parent.style.position = originalPosition;
+          parent.style.visibility = originalVisibility;
+        });
+    };
+    document.body.appendChild(script);
+  };
+
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       {msg && (
@@ -91,15 +135,27 @@ export default function FacultyProfile({ profile, onRefresh }) {
                 </span>
               </div>
             </div>
-            {!isEditing && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 transition-all active:scale-95"
+                onClick={handleDownload}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95"
               >
-                Edit Profile
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                PDF Card
               </button>
-            )}
+              {!isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 transition-all active:scale-95"
+                >
+                  Edit Profile
+                </button>
+              )}
+            </div>
           </div>
+
 
           {!isEditing ? (
             <div className="space-y-10">
@@ -225,6 +281,14 @@ export default function FacultyProfile({ profile, onRefresh }) {
           )}
         </div>
       </div>
+
+      {/* Hidden FacultyCard for PDF export */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '0', width: '800px' }}>
+        <div ref={cardRef}>
+          <FacultyCard data={profile} />
+        </div>
+      </div>
     </div>
   );
 }
+

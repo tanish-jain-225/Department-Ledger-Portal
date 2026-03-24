@@ -27,7 +27,7 @@ function SectionCard({ title, icon, count, children }) {
         className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className="text-lg">{icon}</span>
+          <span className="text-brand-600">{icon}</span>
           <h2 className="font-bold text-slate-900">{title}</h2>
           {count !== undefined && (
             <span className="rounded-full bg-brand-100 text-brand-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5">
@@ -177,7 +177,15 @@ export default function StudentDetailPage() {
           </div>
 
           {/* Academic */}
-          <SectionCard title="Academic Records" icon="📚" count={lists.academic.length}>
+          <SectionCard
+            title="Academic Records"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
+            }
+            count={lists.academic.length}
+          >
             {lists.academic.length === 0 ? <EmptyState text="No academic records added yet." /> : (
               <ul className="mt-4 space-y-3">
                 {lists.academic.map((r) => (
@@ -201,7 +209,16 @@ export default function StudentDetailPage() {
           </SectionCard>
 
           {/* Activities */}
-          <SectionCard title="Activities" icon="🏆" count={lists.activities.length}>
+          <SectionCard
+            title="Activities"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9A2.25 2.25 0 015.25 16.5v-9A2.25 2.25 0 017.5 5.25h9A2.25 2.25 0 0118.75 7.5v9A2.25 2.25 0 0116.5 18.75z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9.75h7.5M8.25 12h7.5M8.25 14.25h4.5" />
+              </svg>
+            }
+            count={lists.activities.length}
+          >
             {lists.activities.length === 0 ? <EmptyState text="No activities recorded." /> : (
               <ul className="mt-4 space-y-2">
                 {lists.activities.map((r) => (
@@ -218,7 +235,17 @@ export default function StudentDetailPage() {
           </SectionCard>
 
           {/* Achievements */}
-          <SectionCard title="Achievements" icon="🥇" count={lists.achievements.length}>
+          <SectionCard
+            title="Achievements"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v.75A3.75 3.75 0 0112 9.75 3.75 3.75 0 018.25 6v-.75M6 5.25h12v3A6 6 0 0112 14.25 6 6 0 016 8.25v-3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25v2.25a3 3 0 006 0v-2.25" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 19.5h7.5" />
+              </svg>
+            }
+            count={lists.achievements.length}
+          >
             {lists.achievements.length === 0 ? <EmptyState text="No achievements recorded." /> : (
               <ul className="mt-4 space-y-2">
                 {lists.achievements.map((r) => (
@@ -235,7 +262,16 @@ export default function StudentDetailPage() {
           </SectionCard>
 
           {/* Placements */}
-          <SectionCard title="Placements & Internships" icon="💼" count={lists.placements.length}>
+          <SectionCard
+            title="Placements & Internships"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V6a3 3 0 013-3h0a3 3 0 013 3v.75m-9 0h12A2.25 2.25 0 0120.25 9v9.75A2.25 2.25 0 0118 21H6A2.25 2.25 0 013.75 18.75V9A2.25 2.25 0 016 6.75z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5" />
+              </svg>
+            }
+            count={lists.placements.length}
+          >
             {lists.placements.length === 0 ? <EmptyState text="No placement records." /> : (
               <ul className="mt-4 space-y-2">
                 {lists.placements.map((r) => (
@@ -254,8 +290,16 @@ export default function StudentDetailPage() {
           </SectionCard>
 
           {/* Certificates */}
-          <SectionCard title="Certificates" icon="📄" count={lists.certificates.length}>
-            {lists.certificates.length === 0 ? <EmptyState text="No certificates uploaded." /> : (
+          <SectionCard
+            title="Certificates"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            }
+            count={lists.certificates.length}
+          >
+            {lists.certificates.length === 0 ? <EmptyState text="No certificates added." /> : (
               <ul className="mt-4 space-y-2">
                 {lists.certificates.map((c) => (
                   <li key={c.id} className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">

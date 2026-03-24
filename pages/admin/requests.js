@@ -14,6 +14,11 @@ import Layout, { ACCESS } from "@/components/Layout";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { logAudit } from "@/lib/audit";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
+import EmptyState from "@/components/ui/EmptyState";
 
 export default function AdminRequestsPage() {
   const { user } = useAuth();
@@ -62,7 +67,7 @@ export default function AdminRequestsPage() {
     
     if (action === "delete") {
       const isConfirmed = window.confirm(
-        "⚠️ CRITICAL ACTION: This will PERMANENTLY delete this user AND all their associated records (Academics, Activities, Achievements, Placements, and Certificates).\n\nThis cannot be undone. Are you absolutely sure?"
+        "CRITICAL ACTION: This will permanently delete this user and all their associated records (Academics, Activities, Achievements, Placements, and Certificates).\n\nThis cannot be undone. Are you absolutely sure?"
       );
       if (!isConfirmed) return;
 
@@ -135,39 +140,35 @@ export default function AdminRequestsPage() {
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input
+            <Input
               type="text"
               placeholder="Search name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-4 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-sm"
+              className="pl-9"
             />
           </div>
 
           {/* Role Filter */}
           <div className="relative w-full sm:w-40">
-            <select
+            <Select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-sm appearance-none cursor-pointer"
             >
               <option value="all">All Roles</option>
               <option value="student">Students</option>
               <option value="faculty">Faculty</option>
               <option value="admin">Admins</option>
               <option value="none">No Role</option>
-            </select>
-            <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            </Select>
           </div>
         </div>
       </div>
 
       <ul className="mt-8 space-y-4">
         {rows.length === 0 && (
-          <li className="rounded-lg border border-slate-200 bg-white p-4 text-slate-500 text-center italic">
-            No users generated natively.
+          <li>
+            <EmptyState>No users generated natively.</EmptyState>
           </li>
         )}
         {rows
@@ -197,7 +198,9 @@ export default function AdminRequestsPage() {
                 <div className="flex items-center gap-3">
                   <p className="font-bold text-slate-900 text-lg">{r.email}</p>
                   {hasPending && (
-                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-bold tracking-wide text-amber-800 animate-pulse">REQUESTS {r.pendingRoleReq.toUpperCase()}</span>
+                    <Badge variant="warning" className="animate-pulse">
+                      Request {r.pendingRoleReq.toUpperCase()}
+                    </Badge>
                   )}
                 </div>
                 <p className="text-sm text-slate-500 mt-1">
@@ -209,46 +212,36 @@ export default function AdminRequestsPage() {
               <div className="flex flex-wrap gap-2 xl:justify-end">
                 {r.id !== user?.uid ? (
                   <>
-                    <button
+                    <Button
                       type="button"
                       onClick={() => decide(r.id, "student", r.roleReqDocId)}
-                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
-                        isStudent
-                          ? "bg-brand-600 text-white shadow-inner ring-2 ring-brand-300 ring-offset-1"
-                          : "border border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100"
-                      }`}
+                      variant={isStudent ? "primary" : "soft"}
                     >
                       Student
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => decide(r.id, "faculty", r.roleReqDocId)}
-                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
-                        isFaculty
-                          ? "bg-violet-600 text-white shadow-inner ring-2 ring-violet-300 ring-offset-1"
-                          : "border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
-                      }`}
+                      className={isFaculty ? "bg-violet-800 hover:bg-violet-900 shadow-lg shadow-violet-800/15" : "bg-violet-100 text-violet-800 border border-violet-300 hover:bg-violet-200"}
                     >
                       Faculty
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => decide(r.id, "admin", r.roleReqDocId)}
-                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
-                        isAdmin
-                          ? "bg-slate-800 text-white shadow-inner ring-2 ring-slate-400 ring-offset-1"
-                          : "border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                      }`}
+                      className={isAdmin ? "bg-slate-800 hover:bg-slate-900" : ""}
+                      variant={isAdmin ? "primary" : "secondary"}
                     >
                       Admin
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => decide(r.id, "delete", r.roleReqDocId)}
-                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all border border-red-200 text-red-700 bg-white hover:bg-red-50 ml-auto xl:ml-2`}
+                      variant="secondary"
+                      className="border-red-200 text-red-700 hover:bg-red-50 ml-auto xl:ml-2"
                     >
                       None (Delete)
-                    </button>
+                    </Button>
                   </>
                 ) : (
                   <span className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500 italic">

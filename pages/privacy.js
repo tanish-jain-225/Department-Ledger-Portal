@@ -9,12 +9,7 @@ export default function PrivacyPage() {
         <p>
           This portal processes personal data for academic and departmental
           purposes. Data is stored in Firebase (Google Cloud) with access
-          controlled by role. Students can request correction or deletion of
-          their profile data via the{" "}
-          <Link href="/data-deletion" className="text-brand-600 hover:underline">
-            data deletion
-          </Link>{" "}
-          page.
+          controlled by role.
         </p>
         <p>
           Exports for faculty and administrators may mask contact details by

@@ -1,4 +1,5 @@
 import React from "react";
+import CommonFooter from "@/components/ui/CommonFooter";
 
 export default function StudentCard({ 
   data, 
@@ -11,7 +12,8 @@ export default function StudentCard({
   if (!data) return null;
 
   return (
-    <article className="mx-auto w-full max-w-full sm:max-w-4xl rounded-xl border border-brand-200 bg-white p-4 sm:p-10 shadow-md print:border-0 print:shadow-none print:p-0 overflow-hidden">
+    <article className="mx-auto w-full max-w-full sm:max-w-4xl rounded-xl border border-brand-200 bg-white p-4 sm:p-10 shadow-md print:border-0 print:shadow-none print:p-0 overflow-hidden print:overflow-visible">
+
       {/* Header */}
       <header className="border-b-2 border-brand-100 pb-4 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -38,15 +40,12 @@ export default function StudentCard({
             )}
           </div>
         </div>
-        <div className="hidden sm:block">
-           <div className="h-20 w-20 bg-slate-50 rounded-lg flex items-center justify-center text-[8px] text-slate-300 border border-slate-100">
-            Official QR
-          </div>
-        </div>
+        {/* Official QR box removed as requested */}
       </header>
       
       {/* Core Profile Data */}
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-10">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-10 print:break-inside-avoid">
+
         <dl className="grid grid-cols-3 gap-3">
           {[
             { label: "Gender", value: data.gender || "—" },
@@ -77,7 +76,8 @@ export default function StudentCard({
 
       <div className="space-y-10">
         {/* Academic Profile */}
-        <section>
+        <section className="print:break-inside-avoid">
+
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">Academic Portfolio</h2>
             <div className="flex-1 h-px bg-slate-100"></div>
@@ -117,7 +117,8 @@ export default function StudentCard({
         {/* Professional Sections */}
         <div className="grid gap-10 sm:grid-cols-2">
           {/* Activities */}
-          <section>
+          <section className="print:break-inside-avoid">
+
             <div className="flex items-center gap-3 mb-4">
               <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">Activities</h2>
               <div className="flex-1 h-px bg-slate-100"></div>
@@ -143,7 +144,8 @@ export default function StudentCard({
           </section>
 
           {/* Achievements */}
-          <section>
+          <section className="print:break-inside-avoid">
+
             <div className="flex items-center gap-3 mb-4">
               <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">Achievements</h2>
               <div className="flex-1 h-px bg-slate-100"></div>
@@ -163,7 +165,8 @@ export default function StudentCard({
         </div>
 
         {/* Placements */}
-        <section>
+        <section className="print:break-inside-avoid">
+
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">Placements & Careers</h2>
             <div className="flex-1 h-px bg-slate-100"></div>
@@ -214,20 +217,7 @@ export default function StudentCard({
         )}
       </div>
 
-      <footer className="mt-16 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 grayscale opacity-60">
-        <div className="text-center sm:text-left">
-          <div className="text-[10px] text-slate-800 font-black uppercase tracking-widest mb-1">Authenticity Guaranteed</div>
-          <div className="text-[9px] text-slate-400 font-medium">
-            This document is a digitally synchronized record of the Department Ledger Portal.
-          </div>
-        </div>
-        <div className="text-right flex flex-col items-center sm:items-end">
-           <div className="text-[10px] text-brand-600 font-black tracking-widest uppercase mb-1">
-            Generation Date: {new Date().toLocaleDateString()}
-          </div>
-          <div className="h-0.5 w-full bg-brand-600 rounded-full"></div>
-        </div>
-      </footer>
+      <CommonFooter />
     </article>
   );
 }
