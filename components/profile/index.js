@@ -1,0 +1,10 @@
+export { default as AcademicSection } from "./AcademicSection";
+export { default as AchievementSection } from "./AchievementSection";
+export { default as ActivitySection } from "./ActivitySection";
+export { default as PlacementSection } from "./PlacementSection";
+export { default as ProfileInfoSection } from "./ProfileInfoSection";
+export { default as ReadinessInsight } from "./ReadinessInsight";
+export { default as ProjectSection } from "./ProjectSection";
+export { default as SkillSection } from "./SkillSection";
+export { default as StudentLedger } from "./StudentLedger";
+export { default as SmartAssistant } from "./SmartAssistant";

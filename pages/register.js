@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
-import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 
@@ -21,7 +20,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setErr("");
     if (password.length < 8) {
-      setErr("Password must be at least 8 characters.");
+      setErr("Password security violation: Minimum 8 characters required.");
       return;
     }
     setBusy(true);
@@ -29,140 +28,128 @@ export default function RegisterPage() {
       await register({ email, password, name });
       await router.push("/login?registered=1");
     } catch (error) {
-      setErr(error?.message || "Registration failed");
+      setErr(error?.message || "Internal registration fault.");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Layout title="Register" access={ACCESS.GUEST}>
-      <div className="mx-auto max-w-md">
-        <Card className="p-8 shadow-lg shadow-slate-200/60">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-600 mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-white">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              After registering, an admin will assign your role before you can access the portal.
-            </p>
+    <Layout title="Identity Provisioning" access={ACCESS.GUEST}>
+      <div className="mx-auto max-w-lg pt-12 pb-24 px-6 animate-fade-in">
+        <div className="premium-card p-10 sm:p-14 relative overflow-hidden">
+          <div className="absolute top-0 left-0 p-8 opacity-[0.03] pointer-events-none">
+            <svg className="h-48 w-48 rotate-180" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <div className="mb-10 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-indigo-600 shadow-2xl shadow-indigo-500/30 mb-8 border-4 border-white">
+              <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Initialize Account</h1>
+            <p className="mt-2 text-slate-500 font-medium">Provision your credentials for the department ledger.</p>
+          </div>
+
+          <form onSubmit={onSubmit} className="space-y-6">
             <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Full name
-              </label>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] pl-1 mb-2 block">Full Legal Name</label>
               <Input
-                id="name"
                 required
-                placeholder="Your full name"
+                placeholder="Ex: John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Email address
-              </label>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] pl-1 mb-2 block">Instructional Email</label>
               <Input
-                id="email"
                 type="email"
-                autoComplete="email"
                 required
-                placeholder="you@example.com"
+                placeholder="you@university.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Password
-                <span className="ml-1 font-normal text-slate-400">(min 8 characters)</span>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] pl-1 mb-2 block">
+                Secure Passcode
               </label>
               <div className="relative">
                 <Input
-                  id="password"
                   type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
                   required
-                  placeholder="••••••••"
+                  placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pr-12"
+                  className="pr-14"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-indigo-500 transition-colors"
                 >
                   {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                   )}
                 </button>
               </div>
 
-              {/* Password strength indicator */}
               {password.length > 0 && (
-                <div className="mt-2 flex gap-1">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className={`h-1 flex-1 rounded-full transition-all ${
-                        password.length >= i * 4
-                          ? password.length >= 12 ? "bg-emerald-500" : password.length >= 8 ? "bg-amber-400" : "bg-red-400"
-                          : "bg-slate-200"
-                      }`}
-                    />
-                  ))}
-                  <span className={`ml-2 text-[10px] font-bold uppercase tracking-widest ${password.length >= 12 ? "text-emerald-600" : password.length >= 8 ? "text-amber-600" : "text-red-500"}`}>
-                    {password.length >= 12 ? "Strong" : password.length >= 8 ? "Good" : "Weak"}
-                  </span>
+                <div className="mt-4 flex flex-col gap-2 animate-fade-in">
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+                          password.length >= i * 3
+                            ? password.length >= 12 ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" : password.length >= 8 ? "bg-amber-400" : "bg-red-400"
+                            : "bg-slate-100"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center px-0.5">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Entropy Strength</span>
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${password.length >= 12 ? "text-emerald-600" : password.length >= 8 ? "text-amber-600" : "text-red-500"}`}>
+                      {password.length >= 12 ? "Elite" : password.length >= 8 ? "Secure" : "Vulnerable"}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
 
             {err && (
-              <div className="flex gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3" role="alert">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              <div className="flex gap-4 rounded-3xl bg-red-50 border border-red-100 p-5 animate-slide-up">
+                <svg className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <p className="text-sm text-red-700">{err}</p>
+                <p className="text-sm text-red-700 font-bold leading-relaxed">{err}</p>
               </div>
             )}
 
-            <Button type="submit" disabled={busy} className="w-full mt-2" size="lg">
-              {busy ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Creating account…
-                </span>
-              ) : "Create account"}
+            <Button type="submit" disabled={busy} className="w-full py-5 text-base mt-2 shadow-2xl shadow-indigo-500/20">
+              {busy ? "Provisioning Identity..." : "Request Access"}
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-500">
-            Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-brand-600 hover:underline">
+          <p className="mt-10 text-center text-sm font-black text-slate-400 uppercase tracking-widest">
+            Already provisioned?{" "}
+            <Link href="/login" className="text-indigo-600 hover:text-indigo-700 transition-colors">
               Sign in
             </Link>
           </p>
-        </Card>
+        </div>
       </div>
     </Layout>
   );

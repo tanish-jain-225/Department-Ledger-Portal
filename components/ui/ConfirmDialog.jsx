@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function ConfirmDialog({
   open,
@@ -11,6 +12,11 @@ export default function ConfirmDialog({
   onCancel,
 }) {
   const confirmRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -22,7 +28,7 @@ export default function ConfirmDialog({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onCancel]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const colors =
     variant === "danger"
@@ -35,18 +41,21 @@ export default function ConfirmDialog({
           btn: "bg-amber-600 hover:bg-amber-700 shadow-amber-500/15",
         };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fade-in"
+      className="fixed inset-0 z-[100000] flex items-center justify-center p-4"
       role="alertdialog"
       aria-modal="true"
       aria-label={title}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onCancel?.();
-      }}
     >
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-in">
-        <div className="p-6 text-center">
+      {/* Premium Light Glassmorphic Backdrop */}
+      <div 
+        className="absolute inset-0 bg-white/20 backdrop-blur-3xl animate-fade-in" 
+        onClick={onCancel} 
+      />
+
+      <div className="relative w-full max-w-sm bg-white/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_128px_-16px_rgba(0,0,0,0.1)] border-2 border-white/60 overflow-hidden animate-scale-in">
+        <div className="p-6 text-center text-slate-900 border-none">
           {/* Icon */}
           <div
             className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${colors.icon} mb-4`}
@@ -62,9 +71,9 @@ export default function ConfirmDialog({
             )}
           </div>
 
-          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <h3 className="text-xl font-black">{title}</h3>
           {message && (
-            <p className="mt-2 text-sm text-slate-500 leading-relaxed">{message}</p>
+            <p className="mt-3 text-sm text-slate-500 leading-relaxed font-medium">{message}</p>
           )}
         </div>
 
@@ -72,7 +81,7 @@ export default function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all active:scale-95"
+            className="flex-1 rounded-xl border border-white/20 bg-white/50 px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-white transition-all active:scale-95 uppercase tracking-widest"
           >
             {cancelLabel}
           </button>
@@ -80,12 +89,13 @@ export default function ConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
-            className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all active:scale-95 ${colors.btn}`}
+            className={`flex-1 rounded-xl px-4 py-2.5 text-xs font-black text-white shadow-lg transition-all active:scale-95 uppercase tracking-widest ${colors.btn}`}
           >
             {confirmLabel}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

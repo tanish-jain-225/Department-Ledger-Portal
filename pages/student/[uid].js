@@ -2,11 +2,12 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import Layout, { ACCESS } from "@/components/Layout";
+import { Layout, ACCESS } from "@/components";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { isStaff } from "@/lib/roles";
 import { listByStudent } from "@/lib/data";
+import { Badge, Skeleton, EmptyState, SectionCard } from "@/components/ui";
 
 function InfoItem({ label, value, wide }) {
   return (
@@ -17,49 +18,6 @@ function InfoItem({ label, value, wide }) {
   );
 }
 
-function SectionCard({ title, icon, count, children }) {
-  const [open, setOpen] = useState(true);
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-brand-600">{icon}</span>
-          <h2 className="font-bold text-slate-900">{title}</h2>
-          {count !== undefined && (
-            <span className="rounded-full bg-brand-100 text-brand-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5">
-              {count}
-            </span>
-          )}
-        </div>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-          className={`h-4 w-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-        </svg>
-      </button>
-      {open && (
-        <div className="px-6 pb-5 border-t border-slate-100">
-          {children}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function EmptyState({ text }) {
-  return (
-    <p className="py-4 text-sm text-slate-400 italic">{text}</p>
-  );
-}
 
 export default function StudentDetailPage() {
   const router = useRouter();
@@ -67,7 +25,7 @@ export default function StudentDetailPage() {
   const { user, profile } = useAuth();
   const [data, setData] = useState(null);
   const [lists, setLists] = useState({
-    academic: [], activities: [], achievements: [], placements: [], certificates: [],
+    academic: [], activities: [], achievements: [], placements: [],
   });
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
@@ -86,14 +44,13 @@ export default function StudentDetailPage() {
         const userData = { id: snap.id, ...snap.data() };
         if (userData.role !== "student") { setErr("This user is not a student"); return; }
         setData(userData);
-        const [academic, activities, achievements, placements, certificates] = await Promise.all([
+        const [academic, activities, achievements, placements] = await Promise.all([
           listByStudent("academicRecords", uid),
           listByStudent("activities", uid),
           listByStudent("achievements", uid),
           listByStudent("placements", uid),
-          listByStudent("certificates", uid),
         ]);
-        setLists({ academic, activities, achievements, placements, certificates });
+        setLists({ academic, activities, achievements, placements });
       } catch (e) {
         setErr(e?.message || "Load failed");
       } finally {
@@ -107,9 +64,24 @@ export default function StudentDetailPage() {
     <Layout title={data?.name || "Student Detail"} access={ACCESS.STAFF}>
       {/* Loading skeleton */}
       {loading && !err && (
-        <div className="space-y-4 mt-4">
-          <div className="h-32 rounded-2xl bg-slate-100 animate-pulse" />
-          {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-2xl bg-slate-100 animate-pulse" />)}
+        <div className="space-y-8 mt-4 animate-pulse">
+          <div className="premium-card p-8 flex items-center gap-6">
+             <Skeleton className="h-20 w-20 rounded-[2rem]" />
+             <div className="flex-1 space-y-3">
+                <Skeleton className="h-8 w-1/3" />
+                <Skeleton className="h-4 w-1/2" />
+             </div>
+             <Skeleton className="h-12 w-40 rounded-2xl" />
+          </div>
+          {[1, 2, 3].map((i) => (
+             <div key={i} className="premium-card p-6 border border-slate-100 space-y-4">
+                <div className="flex justify-between">
+                   <Skeleton className="h-6 w-40" />
+                   <Skeleton className="h-6 w-10 rounded-full" />
+                </div>
+                <Skeleton className="h-20 w-full rounded-2xl" />
+             </div>
+          ))}
         </div>
       )}
 
@@ -135,9 +107,9 @@ export default function StudentDetailPage() {
                   <h1 className="text-2xl font-extrabold text-slate-900">{data.name}</h1>
                   <p className="text-slate-500 text-sm">{data.email}</p>
                   {data.alumni && (
-                    <span className="mt-1 inline-flex rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5">
+                    <Badge variant="brand" className="mt-1">
                       Alumni
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>
@@ -289,37 +261,7 @@ export default function StudentDetailPage() {
             )}
           </SectionCard>
 
-          {/* Certificates */}
-          <SectionCard
-            title="Certificates"
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-              </svg>
-            }
-            count={lists.certificates.length}
-          >
-            {lists.certificates.length === 0 ? <EmptyState text="No certificates added." /> : (
-              <ul className="mt-4 space-y-2">
-                {lists.certificates.map((c) => (
-                  <li key={c.id} className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5 text-slate-400 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                    <div className="flex-1 min-w-0">
-                      <a href={c.fileUrl} target="_blank" rel="noreferrer" className="text-sm font-bold text-brand-600 hover:underline truncate block">
-                        {c.title || "Certificate"}
-                      </a>
-                      {c.date && <p className="text-xs text-slate-400">{c.date}</p>}
-                    </div>
-                    <a href={c.fileUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-600 hover:bg-slate-50 transition-colors flex-shrink-0">
-                      Open ↗
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </SectionCard>
+
         </div>
       )}
     </Layout>

@@ -7,7 +7,6 @@ export default function StudentCard({
   activities = [], 
   achievements = [], 
   placements = [],
-  certificates = []
 }) {
   if (!data) return null;
 
@@ -189,32 +188,6 @@ export default function StudentCard({
             ))}
           </div>
         </section>
-
-        {/* Certificates */}
-        {certificates.length > 0 && (
-          <section>
-            <div className="flex items-center gap-3 mb-4">
-              <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">External Certifications</h2>
-              <div className="flex-1 h-px bg-slate-100"></div>
-            </div>
-            <div className="grid gap-3">
-              {certificates.map((r) => (
-                <div key={r.id} className="p-3 rounded-lg border border-slate-100 bg-white flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-slate-900 text-xs truncate">{r.title}</div>
-                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-medium">
-                      <span>{r.date}</span>
-                      {r.description && <span className="opacity-50 italic">· {r.description}</span>}
-                    </div>
-                  </div>
-                  {r.verified && (
-                    <span className="text-[8px] font-black bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded uppercase tracking-tighter">Verified</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
 
       <CommonFooter />

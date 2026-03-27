@@ -1,12 +1,20 @@
 import { useState, useEffect, useRef } from "react";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
+import { useToast } from "@/lib/toast-context";
+import { logAudit } from "@/lib/audit";
+import { createRecord } from "@/lib/data";
+import { notifyAdmins, purgeNotifications } from "@/lib/notifications";
 import FacultyCard from "./FacultyCard";
+import Button from "./ui/Button";
+import IdentityCardPopup from "./IdentityCardPopup";
 
 export default function FacultyProfile({ profile, onRefresh }) {
+  const { addToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [pendingDeletion, setPendingDeletion] = useState(false);
+  const [loadingDeletion, setLoadingDeletion] = useState(true);
   const [err, setErr] = useState("");
   const cardRef = useRef(null);
 
@@ -36,11 +44,32 @@ export default function FacultyProfile({ profile, onRefresh }) {
     }
   }, [profile]);
 
+  useEffect(() => {
+    async function checkDeletionStatus() {
+      if (!profile?.id) return;
+      try {
+        const db = getDb();
+        const q = query(
+          collection(db, "deletionRequests"),
+          where("uid", "==", profile.id),
+          where("status", "==", "pending"),
+          limit(1)
+        );
+        const snap = await getDocs(q);
+        setPendingDeletion(!snap.empty);
+      } catch (err) {
+        console.error("Deletion status check failed", err);
+      } finally {
+        setLoadingDeletion(false);
+      }
+    }
+    checkDeletionStatus();
+  }, [profile?.id]);
+
   async function save(e) {
     if (e) e.preventDefault();
     setSaving(true);
     setErr("");
-    setMsg("");
     try {
       const db = getDb();
       if (!db) return;
@@ -48,247 +77,249 @@ export default function FacultyProfile({ profile, onRefresh }) {
         ...form,
         updatedAt: serverTimestamp(),
       });
+      await logAudit({
+        action: "profile_updated",
+        actorUid: profile.id,
+        targetUid: profile.id,
+        description: `Updated faculty profile information`,
+        details: { fields: Object.keys(form) }
+      });
       await onRefresh();
-      setMsg("Professional profile updated.");
+      addToast("Professional profile updated.", "success");
       setIsEditing(false);
     } catch (error) {
+      addToast(error.message || "Failed to update profile", "error");
       setErr(error.message);
     } finally {
       setSaving(false);
     }
   }
 
-  const handleDownload = () => {
-    const element = cardRef.current;
-    if (!element) return;
-    
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-    script.onload = () => {
-      const opt = {
-        margin: [10, 10],
-        filename: `Faculty_Card_${profile.name || "ID"}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
-          letterRendering: true,
-          scrollY: 0,
-          windowHeight: element.scrollHeight + 500
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
+  async function requestDeletion() {
+    try {
+      const delDocId = await createRecord("deletionRequests", {
+        uid: profile.id,
+        email: profile.email || "",
+        name: profile.name || "",
+        status: "pending",
+        createdAt: new Date(),
+      }, {
+        actorUid: profile.id,
+        description: "Requested professional account and data deletion"
+      });
+      addToast("Deletion request transmitted. An admin will review it.", "success");
 
-      // Ensure the hidden capture element is not clipped
-      const parent = element.parentElement;
-      const originalPosition = parent.style.position;
-      const originalVisibility = parent.style.visibility;
-      
-      parent.style.position = 'static';
-      parent.style.visibility = 'visible';
+      await notifyAdmins({
+        title: "Staff Deletion Request",
+        message: `Faculty member ${profile.name || profile.email} has requested data deletion.`,
+        type: "warning",
+        link: "/admin/requests",
+        relatedId: `del_${delDocId}`
+      });
+      setPendingDeletion(true);
+    } catch (err) {
+      addToast("Failed to transmit request", "error");
+    }
+  }
 
-      window.html2pdf()
-        .set(opt)
-        .from(element)
-        .save()
-        .then(() => {
-          parent.style.position = originalPosition;
-          parent.style.visibility = originalVisibility;
-        });
-    };
-    document.body.appendChild(script);
-  };
+  const [showCardModal, setShowCardModal] = useState(false);
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      {msg && (
-        <div className="mb-6 rounded-xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800 border border-emerald-100 shadow-sm animate-in slide-in-from-top-2">
-          {msg}
+    <div className="mx-auto max-w-5xl space-y-10 animate-fade-in no-print pb-24">
+      <IdentityCardPopup 
+        show={showCardModal} 
+        onClose={() => setShowCardModal(false)} 
+        role="faculty"
+        data={profile}
+      />
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Professional Identity</h1>
+          <p className="text-base text-slate-400 mt-2 font-medium">Manage your instructional credentials and departmental status.</p>
         </div>
-      )}
-      {err && (
-        <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm font-bold text-red-800 border border-red-100 shadow-sm animate-in slide-in-from-top-2">
-          {err}
-        </div>
-      )}
-
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50 overflow-hidden transition-all duration-300">
-        {/* Profile Header Banner */}
-        <div className="h-32 bg-gradient-to-r from-brand-600 to-violet-600 relative">
-          <div className="absolute -bottom-12 left-8 p-1 rounded-2xl bg-white shadow-lg">
-            <div className="h-24 w-24 rounded-xl bg-violet-100 flex items-center justify-center text-violet-600">
-              <span className="text-3xl font-black uppercase tracking-tighter">{profile?.name?.charAt(0) || "F"}</span>
-            </div>
+        {!isEditing && (
+          <div className="flex items-center gap-4">
+            <Button
+              variant="secondary"
+              onClick={() => setIsEditing(true)}
+              className="px-6"
+            >
+              Update Credentials
+            </Button>
+            <Button
+              onClick={() => setShowCardModal(true)}
+              className="px-6 shadow-xl shadow-brand-500/20"
+            >
+              View Identity Card
+            </Button>
           </div>
-        </div>
+        )}
+      </div>
 
-        <div className="pt-16 pb-10 px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-            <div>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">{profile?.name || "Unnamed Faculty"}</h2>
-              <div className="flex items-center gap-3 mt-2">
-                <span className="text-sm font-medium text-slate-500">{profile?.email}</span>
-                <span className="h-1 w-1 rounded-full bg-slate-300"></span>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${profile?.facultyVerification === 'approved' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {profile?.facultyVerification || "Pending"}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleDownload}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                PDF Card
-              </button>
-              {!isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 transition-all active:scale-95"
-                >
-                  Edit Profile
-                </button>
-              )}
-            </div>
-          </div>
-
-
-          {!isEditing ? (
-            <div className="space-y-10">
-              <div className="grid gap-8 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Phone Number</p>
-                  <p className="text-sm font-bold text-slate-800">{profile?.phone || "—"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gender</p>
-                  <p className="text-sm font-bold text-slate-800 capitalize">{profile?.gender || "—"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date of Birth</p>
-                  <p className="text-sm font-bold text-slate-800">{profile?.dob || "—"}</p>
-                </div>
-                <div className="space-y-1">
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Permanent Address</p>
-                   <p className="text-sm font-bold text-slate-800 leading-relaxed">{profile?.address || "—"}</p>
-                </div>
-              </div>
-
-              <div className="pt-8 border-t border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Professional Bio</p>
-                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                  <p className="text-sm text-slate-600 leading-relaxed italic">
-                    {profile?.bio || "No professional biography has been added yet."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                {profile?.linkedin && (
-                  <a href={profile.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-100 hover:bg-brand-100 transition-colors">
-                    LinkedIn ↗
-                  </a>
-                )}
-                {profile?.github && (
-                  <a href={profile.github} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200 transition-colors">
-                    GitHub / Research ↗
-                  </a>
-                )}
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={save} className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Full Name</label>
+      <div className="grid gap-10 lg:grid-cols-2">
+        <div className="space-y-8">
+          {isEditing ? (
+            <form onSubmit={save} className="premium-card p-8 space-y-6">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Full Name</label>
                   <input
-                    required
+                    type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 outline-none transition-all"
+                    className="w-full rounded-2xl border-2 border-slate-100 bg-white px-5 py-3 text-sm font-black text-slate-900 focus:border-brand-500/50 outline-none transition-all"
                   />
                 </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Phone</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phone Contact</label>
                   <input
+                    type="tel"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 outline-none transition-all"
+                    className="w-full rounded-2xl border-2 border-slate-100 bg-white px-5 py-3 text-sm font-black text-slate-900 focus:border-brand-500/50 outline-none transition-all"
                   />
                 </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Gender</label>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Office Address</label>
+                <input
+                  type="text"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  className="w-full rounded-2xl border-2 border-slate-100 bg-white px-5 py-3 text-sm font-black text-slate-900 focus:border-brand-500/50 outline-none transition-all"
+                />
+              </div>
+
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={form.dob}
+                    onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                    className="w-full rounded-2xl border-2 border-slate-100 bg-white px-5 py-3 text-sm font-black text-slate-900 focus:border-brand-500/50 outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gender</label>
                   <select
                     value={form.gender}
                     onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 bg-white text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 outline-none transition-all"
+                    className="w-full rounded-2xl border-2 border-slate-100 bg-white px-5 py-3 text-sm font-black text-slate-900 focus:border-brand-500/50 outline-none transition-all appearance-none"
                   >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Bio</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">LinkedIn URL</label>
+                <input
+                  type="url"
+                  value={form.linkedin}
+                  onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
+                  className="w-full rounded-2xl border-2 border-slate-100 bg-white px-5 py-3 text-sm font-black text-slate-900 focus:border-brand-500/50 outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Instructions Bio</label>
                 <textarea
                   value={form.bio}
                   onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                  placeholder="Professional summary..."
-                  rows={3}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 outline-none transition-all"
+                  className="w-full rounded-2xl border-2 border-slate-100 bg-white px-5 py-3 text-sm font-black text-slate-900 focus:border-brand-500/50 outline-none transition-all min-h-[120px]"
                 />
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <input
-                  placeholder="LinkedIn URL"
-                  value={form.linkedin}
-                  onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                />
-                <input
-                  placeholder="GitHub URL"
-                  value={form.github}
-                  onChange={(e) => setForm({ ...form, github: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                />
-              </div>
-
-              <div className="flex gap-4 pt-6">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 rounded-xl bg-brand-600 px-6 py-4 text-sm font-black text-white shadow-xl shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-60 transition-all active:scale-95"
-                >
-                  {saving ? "Updating..." : "Save Changes"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-slate-700 hover:bg-slate-50 transition-all active:scale-95"
-                >
+              <div className="flex gap-4 pt-4">
+                <Button type="button" onClick={save} disabled={saving} className="flex-1">
+                  {saving ? "Saving Changes..." : "Secure Save"}
+                </Button>
+                <Button variant="secondary" onClick={() => setIsEditing(false)} className="flex-1">
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
+          ) : (
+            <div className="premium-card p-10 flex flex-col items-center text-center space-y-6">
+               <div className="h-24 w-24 rounded-[2.5rem] bg-slate-900 flex items-center justify-center text-white text-3xl font-black shadow-2xl shadow-slate-900/30">
+                  {profile.name?.charAt(0) || "U"}
+               </div>
+               <div>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tighter">{profile.name || "Staff Member"}</h2>
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-600 mt-2">{profile.role}</p>
+               </div>
+               <p className="text-slate-500 font-medium leading-relaxed max-w-sm italic">
+                  &quot;{profile.bio || "No professional biography provided. Update your credentials to customize your identity card."}&quot;
+               </p>
+               
+               <div className="w-full pt-8 border-t border-slate-50 grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50">
+                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Status</p>
+                     <p className="text-xs font-black text-emerald-600 uppercase">Verified</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50">
+                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Clearance</p>
+                     <p className="text-xs font-black text-slate-900 uppercase tracking-tighter">{profile.role === 'admin' ? 'L3 ROOT' : 'L2 STAFF'}</p>
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {!isEditing && (
+            <div className="mt-12 pt-10 border-t border-red-50/50">
+              <div className="flex items-center gap-2 mb-4">
+                 <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                 <h3 className="text-sm font-black text-red-600 uppercase tracking-widest">Protocol: Data Deletion</h3>
+              </div>
+              <p className="text-xs text-slate-400 mb-6 leading-relaxed max-w-xl">Requesting data deletion will trigger an administrative workflow to permanently purge your professional records. This operation is non-reversible.</p>
+              
+              {loadingDeletion ? (
+                <div className="h-12 w-48 bg-slate-100 animate-pulse rounded-2xl" />
+              ) : pendingDeletion ? (
+                <div className="flex flex-col gap-4 items-start">
+                   <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800 animate-fade-in shadow-sm">
+                      <svg className="h-5 w-5 text-amber-500 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs font-black uppercase tracking-widest">Awaiting Administrative Review</span>
+                   </div>
+                   <p className="text-[10px] font-bold text-slate-400 italic pl-2">Protocol: Your purge request is active. System access will be revoked upon clearance.</p>
+                </div>
+              ) : (
+                <Button
+                  onClick={requestDeletion}
+                  variant="ghost"
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-100/50 px-6"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Initialize Deletion Request
+                </Button>
+              )}
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Hidden FacultyCard for PDF export */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '0', width: '800px' }}>
-        <div ref={cardRef}>
-          <FacultyCard data={profile} />
+        <div className="lg:sticky lg:top-24 h-fit">
+          <div ref={cardRef}>
+            <FacultyCard data={profile} />
+          </div>
+          <div className="mt-8 p-6 rounded-3xl bg-amber-50/50 border border-amber-100/50 flex items-start gap-4">
+            <svg className="h-6 w-6 text-amber-600 mt-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-xs text-amber-700 font-medium leading-relaxed">
+              Your identity card is generated in real-time. Ensure your contact details and bio are up-to-date for professional departmental representation.
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

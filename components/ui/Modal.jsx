@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import clsx from "clsx";
 
 export default function Modal({
@@ -8,51 +9,97 @@ export default function Modal({
   children,
   className,
   maxWidth = "max-w-2xl",
+  fullScreen = false,
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     function onKeyDown(e) {
       if (e.key === "Escape") onClose?.();
     }
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "unset";
+    };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 sm:p-6 backdrop-blur-sm"
+      className={clsx(
+        "fixed inset-0 z-[100000] flex items-center justify-center transition-all duration-500",
+        fullScreen ? "p-0" : "p-4 sm:p-8"
+      )}
       role="dialog"
       aria-modal="true"
       aria-label={title || "Dialog"}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
     >
+      {/* Premium Light Glassmorphic Backdrop */}
+      <div 
+        className="absolute inset-0 bg-white/20 backdrop-blur-3xl animate-fade-in"
+        onClick={onClose}
+      />
+
+      {/* Glassmorphic Modal Container */}
       <div
         className={clsx(
-          "relative w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl flex flex-col",
-          maxWidth,
+          "relative overflow-hidden bg-white/80 backdrop-blur-2xl flex flex-col border-white/60 animate-scale-up transition-all duration-500",
+          fullScreen ? "w-screen h-screen rounded-none border-0" : [maxWidth, "w-full rounded-[2.5rem] border-2 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.1)]"],
           className
         )}
+        style={{ maxHeight: fullScreen ? "100vh" : "calc(100vh - 4rem)" }}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/90 backdrop-blur-md px-4 py-4 sm:px-6">
-          <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+        {/* Sticky Header with Glass Effect */}
+        <div className={clsx(
+          "sticky top-0 z-20 flex items-center justify-between border-b border-white/30 bg-white/30 backdrop-blur-xl transition-all",
+          fullScreen ? "px-10 py-8" : "px-8 py-6"
+        )}>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{title}</h2>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="group rounded-2xl p-3 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95"
             aria-label="Close dialog"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="h-6 w-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div className="p-6">{children}</div>
+
+        {/* Scrollable Content Body */}
+        <div className="flex-1 overflow-y-auto p-8 scrollbar-hide">
+          {children}
+        </div>
       </div>
-    </div>
+
+      <style jsx global>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scale-up {
+          from { opacity: 0; transform: scale(0.95) translateY(20px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-scale-up {
+          animation: scale-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+    </div>,
+    document.body
   );
 }
-

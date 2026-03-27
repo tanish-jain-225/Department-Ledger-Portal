@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
+import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { getDb } from "@/lib/firebase";
 
 const ACTION_STYLES = {
-  user_deleted: { bg: "bg-red-50 border-red-200", badge: "bg-red-100 text-red-700", label: "Deleted" },
-  user_role_assigned: { bg: "bg-brand-50 border-brand-200", badge: "bg-brand-100 text-brand-700", label: "Role Assigned" },
+  user_deleted: { bg: "bg-red-50/50 border-red-100", badge: "bg-red-100 text-red-700", label: "Deleted" },
+  user_role_assigned: { bg: "bg-brand-50/50 border-brand-100", badge: "bg-brand-100 text-brand-700", label: "Role Assigned" },
+  profile_updated: { bg: "bg-indigo-50/50 border-indigo-100", badge: "bg-indigo-100 text-indigo-700", label: "Profile Update" },
 };
 
 function getActionStyle(action) {
-  return ACTION_STYLES[action] || { bg: "bg-white border-slate-200", badge: "bg-slate-100 text-slate-600", label: action || "Action" };
+  return ACTION_STYLES[action] || { bg: "bg-white border-slate-100", badge: "bg-slate-100 text-slate-600", label: action || "Action" };
 }
 
 function timeAgo(date) {
@@ -35,7 +37,7 @@ export default function AdminAuditPage() {
       try {
         const q = query(collection(db, "auditLogs"), orderBy("timestamp", "desc"), limit(100));
         const snap = await getDocs(q);
-        setRows(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        setRows(snap.docs.map((d) => ({ ...d.data(), id: d.id })));
       } catch (e) {
         setErr(e?.message || "Could not load audit log (check Firestore index).");
       } finally {
@@ -45,79 +47,145 @@ export default function AdminAuditPage() {
     load();
   }, []);
 
+  const downloadCSV = () => {
+    if (rows.length === 0) return;
+    
+    const headers = ["ID", "Action", "Description", "Actor", "Target", "Timestamp", "Details"];
+    const csvRows = rows.map(r => [
+      r.id,
+      r.action,
+      `"${(r.description || "").replace(/"/g, '""')}"`,
+      r.actorUid || "",
+      r.targetUid || "",
+      r.timestamp?.toDate?.()?.toISOString() || "",
+      `"${JSON.stringify(r.details || {}).replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [headers, ...csvRows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Audit_Logs_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <Layout title="Audit Log" access={ACCESS.ADMIN}>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Audit Log</h1>
-          <p className="mt-1 text-sm text-slate-500">Last 100 administrative actions, most recent first.</p>
+    <Layout title="Governance Audit" access={ACCESS.ADMIN}>
+      <div className="space-y-10 animate-slide-up">
+        {/* Header */}
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Audit</h1>
+            <p className="text-base text-slate-400 mt-2 font-medium">Real-time oversight of administrative and professional operations.</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-100">
+               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+               <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{rows.length} Active Logs</span>
+            </div>
+            <Button
+              onClick={downloadCSV}
+              disabled={rows.length === 0}
+              className="lg:w-auto w-full group shadow-xl shadow-emerald-500/10"
+            >
+              <svg className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export Archive (CSV)
+            </Button>
+          </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-3.5 w-3.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-          </svg>
-          {loading ? "Loading…" : `${rows.length} entries`}
-        </span>
-      </div>
 
-      {err && (
-        <div className="mb-6 flex gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3" role="alert">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-          </svg>
-          <p className="text-sm text-amber-800">{err}</p>
-        </div>
-      )}
+        {err ? (
+          <div className="premium-card p-10 bg-red-50/30 border-red-100 flex items-start gap-4">
+            <svg className="h-6 w-6 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className="text-sm font-black text-red-900 uppercase tracking-widest">Protocol Error Detected</p>
+              <p className="text-sm text-red-600 font-medium mt-1 leading-relaxed">{err}</p>
+            </div>
+          </div>
+        ) : loading ? (
+          <div className="space-y-4">
+             {[1,2,3,4,5].map(i => (
+               <div key={i} className="premium-card p-6 border border-slate-100 flex items-center justify-between gap-6 animate-pulse">
+                 <div className="flex items-start gap-5 flex-1">
+                    <Skeleton className="h-10 w-10 rounded-2xl" />
+                    <div className="flex-1 space-y-2">
+                       <div className="flex gap-3 items-center">
+                          <Skeleton className="h-4 w-20 rounded-full" />
+                          <Skeleton className="h-3 w-16" />
+                       </div>
+                       <Skeleton className="h-5 w-3/4" />
+                       <div className="flex gap-6 mt-2">
+                          <Skeleton className="h-3 w-24" />
+                          <Skeleton className="h-3 w-16" />
+                       </div>
+                    </div>
+                 </div>
+                 <Skeleton className="h-10 w-10 rounded-xl" />
+               </div>
+             ))}
+          </div>
+        ) : rows.length === 0 ? (
+          <EmptyState 
+            title="Audit Vault Empty"
+            message="No system-wide operations have been committed to the governance ledger yet."
+          />
+        ) : (
+          <div className="space-y-4">
+            {rows.map((r) => {
+              const style = getActionStyle(r.action);
+              const date = r.timestamp?.toDate?.() || null;
 
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-16 rounded-xl bg-slate-100 animate-pulse" />
-          ))}
-        </div>
-      ) : rows.length === 0 ? (
-        <div className="text-center py-20 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
-          <p className="text-slate-400 font-medium">No audit entries found.</p>
-        </div>
-      ) : (
-        <ul className="space-y-2">
-          {rows.map((r) => {
-            const style = getActionStyle(r.action);
-            const ts = r.timestamp?.toDate?.() || null;
-            return (
-              <li
-                key={r.id}
-                className={`rounded-xl border ${style.bg} px-4 py-3 flex flex-col sm:flex-row sm:items-start gap-3 transition-all`}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${style.badge}`}>
-                      {style.label}
-                    </span>
-                    <span className="font-semibold text-slate-900 text-sm truncate">
-                      {r.description || r.action}
-                    </span>
+              return (
+                <div key={r.id} className={`group premium-card p-6 border transition-all hover:bg-slate-50/80 ${style.bg}`}>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-5">
+                      <div className={`mt-1 h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 border shadow-sm group-hover:scale-110 transition-transform ${style.bg}`}>
+                        <svg className="h-5 w-5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-5.19 4.595-9.362 9.716-10.198" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200/50 ${style.badge}`}>
+                            {style.label}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{timeAgo(date)}</span>
+                        </div>
+                        <p className="mt-2 text-sm font-black text-slate-900 tracking-tight leading-snug">{r.description}</p>
+                        <div className="mt-3 flex items-center gap-6">
+                           <div className="flex flex-col">
+                              <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Actor ID</span>
+                              <span className="text-[10px] font-bold text-slate-500 font-mono">{r.actorUid?.slice(-8) || "SYSTEM"}</span>
+                           </div>
+                           <div className="flex flex-col">
+                              <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Sector</span>
+                              <span className="text-[10px] font-bold text-slate-500 font-mono italic">{r.action?.split('_')[0] || "core"}</span>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                       <Button variant="ghost" className="h-10 w-10 !p-0 border border-slate-100 rounded-xl" title="Inspect Hash">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                       </Button>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-500">
-                    {r.actorUid && <span>Actor: <span className="font-mono text-slate-600">{r.actorUid}</span></span>}
-                    {r.targetUid && <span>Target: <span className="font-mono text-slate-600">{r.targetUid}</span></span>}
-                  </div>
-                  {r.details && Object.keys(r.details).length > 0 && (
-                    <pre className="mt-2 rounded-lg bg-white/70 border border-slate-200 px-3 py-1.5 text-[10px] text-slate-500">
-                      {JSON.stringify(r.details, null, 2)}
-                    </pre>
-                  )}
                 </div>
-                {ts && (
-                  <span className="flex-shrink-0 text-[10px] font-bold text-slate-400 uppercase tracking-widest sm:mt-0.5">
-                    {timeAgo(ts)}
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </Layout>
   );
 }

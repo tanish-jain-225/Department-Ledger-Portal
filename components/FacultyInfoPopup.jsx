@@ -4,13 +4,13 @@ import { getDb } from "@/lib/firebase";
 import Modal from "@/components/ui/Modal";
 import Badge from "@/components/ui/Badge";
 import Alert from "@/components/ui/Alert";
-import FacultyCard from "./FacultyCard";
+import IdentityCardPopup from "./IdentityCardPopup";
 
 export default function FacultyInfoPopup({ uid, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const cardRef = useRef(null);
+  const [showCardModal, setShowCardModal] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
@@ -34,50 +34,15 @@ export default function FacultyInfoPopup({ uid, onClose }) {
     load();
   }, [uid]);
 
-  const handleDownload = () => {
-    const element = cardRef.current;
-    if (!element) return;
-    
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-    script.onload = () => {
-      const opt = {
-        margin: [10, 10],
-        filename: `Faculty_Profile_${data.name || "ID"}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
-          letterRendering: true,
-          scrollY: 0,
-          windowHeight: element.scrollHeight + 500
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-
-      // Ensure the hidden capture element is not clipped
-      const parent = element.parentElement;
-      const originalPosition = parent.style.position;
-      const originalVisibility = parent.style.visibility;
-      
-      parent.style.position = 'static';
-      parent.style.visibility = 'visible';
-
-      window.html2pdf()
-        .set(opt)
-        .from(element)
-        .save()
-        .then(() => {
-          parent.style.position = originalPosition;
-          parent.style.visibility = originalVisibility;
-        });
-    };
-    document.body.appendChild(script);
-  };
-
   return (
-    <Modal title="Faculty Details" open={!!uid} onClose={onClose} maxWidth="max-w-2xl">
+    <Modal title="Faculty Details" open={!!uid} onClose={onClose} fullScreen={true}>
+      <IdentityCardPopup 
+        show={showCardModal} 
+        onClose={() => setShowCardModal(false)} 
+        role="faculty"
+        data={data}
+      />
+      
       {loading && (
         <p className="text-slate-500 animate-pulse text-center py-8">
           Loading profile...
@@ -91,19 +56,19 @@ export default function FacultyInfoPopup({ uid, onClose }) {
           
       {!loading && data && (
         <div className="space-y-8">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-slate-900 mr-2">{data.name || "Unnamed Faculty"}</h1>
-              <p className="text-slate-600 break-all mt-1">{data.email}</p>
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight truncate">{data.name || "Unnamed Faculty"}</h1>
+              <p className="text-sm font-medium text-slate-400 break-all mt-1">{data.email}</p>
             </div>
             <button
-              onClick={handleDownload}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-all active:scale-95 shadow-md shadow-emerald-500/20"
+              onClick={() => setShowCardModal(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm font-black text-white hover:bg-emerald-700 transition-all active:scale-95 shadow-xl shadow-emerald-500/20 w-full sm:w-auto"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
               </svg>
-              View / Download (PDF)
+              View Identity Card
             </button>
           </div>
 
@@ -149,13 +114,6 @@ export default function FacultyInfoPopup({ uid, onClose }) {
                 </a>
               )}
             </div>
-          </div>
-
-          {/* Hidden FacultyCard for PDF export */}
-          <div style={{ position: 'absolute', left: '-9999px', top: '0', width: '800px' }}>
-             <div ref={cardRef}>
-                <FacultyCard data={data} />
-             </div>
           </div>
         </div>
       )}
