@@ -6,7 +6,6 @@ import EmptyState from "@/components/ui/EmptyState";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { createNotification } from "@/lib/notifications";
 import { listByStudent, createRecord, removeRecord } from "@/lib/data";
-import { downloadAsPDF } from "@/lib/pdf-download";
 
 export default function ReadinessInsight({ profile, academic, activities, achievements, placements, projects, skills }) {
   const { addToast } = useToast();
@@ -67,12 +66,48 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
     const el = pdfRef.current;
     if (!el) return;
     setPdfBusy(true);
-    downloadAsPDF(
-      el,
-      `Career_Report_${profile?.name || "Student"}`,
-      () => setPdfBusy(false),
-      (msg) => { addToast(msg, "error"); setPdfBusy(false); }
-    );
+
+    const doDownload = () => {
+      const pxHeight = el.scrollHeight;
+      const pxWidth = el.scrollWidth;
+      const mmWidth = 210;
+      const mmHeight = Math.ceil((pxHeight / pxWidth) * mmWidth) + 30;
+
+      window.html2pdf()
+        .set({
+          margin: 0,
+          filename: `Career_Report_${profile?.name || "Student"}.pdf`,
+          image: { type: "jpeg", quality: 1 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: "#ffffff",
+            width: pxWidth,
+            height: pxHeight,
+            windowWidth: pxWidth,
+            scrollX: 0,
+            scrollY: 0,
+          },
+          jsPDF: { unit: "mm", format: [mmWidth, mmHeight], orientation: "portrait" },
+        })
+        .from(el)
+        .save()
+        .then(() => setPdfBusy(false))
+        .catch(() => { addToast("PDF export failed.", "error"); setPdfBusy(false); });
+    };
+
+    const scriptId = "html2pdf-cdn";
+    if (document.getElementById(scriptId)) {
+      doDownload();
+    } else {
+      const s = document.createElement("script");
+      s.id = scriptId;
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+      s.onload = doDownload;
+      s.onerror = () => { addToast("PDF library failed to load.", "error"); setPdfBusy(false); };
+      document.body.appendChild(s);
+    }
   };
 
   const scoreColor = (s) => s > 75 ? "text-emerald-500" : s >= 50 ? "text-amber-500" : "text-red-500";

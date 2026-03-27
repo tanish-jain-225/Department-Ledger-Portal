@@ -9,7 +9,6 @@ import Layout, { ACCESS } from "@/components/Layout";
 import Link from "next/link";
 import { listByStudent } from "@/lib/data";
 import StudentCard from "@/components/StudentCard";
-import { downloadAsPDF } from "@/lib/pdf-download";
 
 export default function StudentCardPage() {
   const router = useRouter();
@@ -50,14 +49,71 @@ export default function StudentCardPage() {
   }, [router.isReady, authLoading, uid, user, role, canView, router]);
 
   const handleDownload = () => {
+    const element = cardRef.current;
+    if (!element) return;
     setPdfErr("");
     setPdfBusy(true);
-    downloadAsPDF(
-      cardRef.current,
-      `Student_Card_${data?.rollNumber || data?.name || "ID"}`,
-      () => setPdfBusy(false),
-      (msg) => { setPdfErr(msg); setPdfBusy(false); }
-    );
+
+    const scriptId = "html2pdf-cdn-script";
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+      script.onload = () => performDownload(element);
+      script.onerror = () => {
+        setPdfBusy(false);
+        setPdfErr("PDF library failed to load. Check your internet connection and try again.");
+      };
+      document.body.appendChild(script);
+    } else {
+      performDownload(element);
+    }
+  };
+
+  const performDownload = async (element) => {
+    const clone = element.cloneNode(true);
+    clone.style.animation = 'none';
+    clone.style.transition = 'none';
+    clone.style.opacity = '1';
+    clone.style.visibility = 'visible';
+    clone.style.position = 'relative';
+    clone.style.width = '800px';
+    clone.style.margin = '0';
+    clone.style.padding = '40px';
+
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '-10000px';
+    container.style.left = '0';
+    container.style.width = '1000px';
+    container.appendChild(clone);
+    document.body.appendChild(container);
+
+    try {
+      const opt = {
+        margin: [5, 5],
+        filename: `Student_Card_${data.rollNumber || "ID"}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          letterRendering: true,
+          scrollY: 0,
+          windowWidth: 1000,
+          logging: false
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      await window.html2pdf().set(opt).from(clone).save();
+    } catch (e) {
+      console.error("PDF Export Error:", e);
+      setPdfErr("PDF export failed. Please try again.");
+    } finally {
+      document.body.removeChild(container);
+      setPdfBusy(false);
+    }
   };
 
   if (!router.isReady) {
