@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Head from "next/head";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
 import { isStaff, canManageUsers, hasApprovedRole } from "@/lib/roles";
@@ -10,6 +11,32 @@ export default function Home() {
 
   return (
     <Layout title="Department Ledger" access={ACCESS.PUBLIC}>
+      <Head>
+        <title>Department Ledger Portal — AI-Powered Academic Records</title>
+        <meta name="description" content="The modern academic ledger for departments. Track student GPA, placements, achievements and generate AI-powered placement readiness reports using Gemini." />
+        <meta property="og:title" content="Department Ledger Portal — AI-Powered Academic Records" />
+        <meta property="og:description" content="The modern academic ledger for departments. Track student GPA, placements, achievements and generate AI-powered placement readiness reports using Gemini." />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Department Ledger Portal",
+            "description": "AI-powered academic records platform for departments. Track student performance, placements, achievements and generate AI readiness reports.",
+            "applicationCategory": "EducationApplication",
+            "operatingSystem": "Web",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "featureList": [
+              "AI-powered document auto-fill",
+              "Placement readiness reports",
+              "Academic record tracking",
+              "Faculty dashboard",
+              "Admin governance panel",
+              "Audit trail"
+            ]
+          })}}
+        />
+      </Head>
       <div className="mx-auto max-w-7xl pt-12 pb-24">
         {/* Hero Section */}
         <div className="text-center py-20 relative px-6">

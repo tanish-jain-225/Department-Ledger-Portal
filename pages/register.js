@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Link from "next/link";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
@@ -35,7 +36,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <Layout title="Identity Provisioning" access={ACCESS.GUEST}>
+    <Layout title="Register" access={ACCESS.GUEST}>
+      <Head>
+        <title>Create Account — Department Ledger Portal</title>
+        <meta name="description" content="Create your Department Ledger Portal account to access AI-powered academic records, placement tracking, and career readiness reports." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <div className="mx-auto max-w-lg pt-12 pb-24 px-6 animate-fade-in">
         <div className="premium-card p-10 sm:p-14 relative overflow-hidden">
           <div className="absolute top-0 left-0 p-8 opacity-[0.03] pointer-events-none">

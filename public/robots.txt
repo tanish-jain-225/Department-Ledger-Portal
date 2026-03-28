@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /privacy
+Allow: /terms
+
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /student
+Disallow: /faculty
+Disallow: /api
+
+Sitemap: https://department-ledger.vercel.app/sitemap.xml
