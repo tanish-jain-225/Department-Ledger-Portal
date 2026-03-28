@@ -30,8 +30,7 @@ export default function NotificationCenter() {
         setNotifications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       },
       (err) => {
-        // Silently handle permission/auth errors — listener will retry on next mount
-        console.warn("[NotificationCenter] Listener error:", err.code);
+        // Listener errors are non-fatal — silently ignore permission/auth errors
       }
     );
 

@@ -9,6 +9,8 @@ import Layout, { ACCESS } from "@/components/Layout";
 import Link from "next/link";
 import { listByStudent } from "@/lib/data";
 import StudentCard from "@/components/StudentCard";
+import { DownloadPdfButton } from "@/components/ui";
+import { buildFilename } from "@/lib/pdf-download";
 
 export default function StudentCardPage() {
   const router = useRouter();
@@ -17,8 +19,6 @@ export default function StudentCardPage() {
   const [data, setData] = useState(null);
   const [extra, setExtra] = useState({ academic: [], placements: [] });
   const [err, setErr] = useState("");
-  const [pdfBusy, setPdfBusy] = useState(false);
-  const [pdfErr, setPdfErr] = useState("");
   const cardRef = useRef(null);
 
   const role = profile?.role;
@@ -48,74 +48,6 @@ export default function StudentCardPage() {
     load();
   }, [router.isReady, authLoading, uid, user, role, canView, router]);
 
-  const handleDownload = () => {
-    const element = cardRef.current;
-    if (!element) return;
-    setPdfErr("");
-    setPdfBusy(true);
-
-    const scriptId = "html2pdf-cdn-script";
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement("script");
-      script.id = scriptId;
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-      script.onload = () => performDownload(element);
-      script.onerror = () => {
-        setPdfBusy(false);
-        setPdfErr("PDF library failed to load. Check your internet connection and try again.");
-      };
-      document.body.appendChild(script);
-    } else {
-      performDownload(element);
-    }
-  };
-
-  const performDownload = async (element) => {
-    const clone = element.cloneNode(true);
-    clone.style.animation = 'none';
-    clone.style.transition = 'none';
-    clone.style.opacity = '1';
-    clone.style.visibility = 'visible';
-    clone.style.position = 'relative';
-    clone.style.width = '800px';
-    clone.style.margin = '0';
-    clone.style.padding = '40px';
-
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.top = '-10000px';
-    container.style.left = '0';
-    container.style.width = '1000px';
-    container.appendChild(clone);
-    document.body.appendChild(container);
-
-    try {
-      const opt = {
-        margin: [5, 5],
-        filename: `Student_Card_${data.rollNumber || "ID"}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
-          letterRendering: true,
-          scrollY: 0,
-          windowWidth: 1000,
-          logging: false
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-
-      await window.html2pdf().set(opt).from(clone).save();
-    } catch (e) {
-      console.error("PDF Export Error:", e);
-      setPdfErr("PDF export failed. Please try again.");
-    } finally {
-      document.body.removeChild(container);
-      setPdfBusy(false);
-    }
-  };
-
   if (!router.isReady) {
     return (
       <Layout title="Student card" access={ACCESS.AUTH}>
@@ -144,19 +76,15 @@ export default function StudentCardPage() {
               >
                 ← Back
               </Link>
-              <button
-                type="button"
-                onClick={handleDownload}
-                disabled={pdfBusy}
-                className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-black text-white hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 active:scale-95 transition-all uppercase tracking-widest disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {pdfBusy && <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-                {pdfBusy ? "Generating PDF..." : "Download Professional Identity (PDF)"}
-              </button>
+              {canView && (
+                <DownloadPdfButton
+                  elementRef={cardRef}
+                  filename={buildFilename("Student_Card", data.rollNumber || data.name)}
+                  label="Download Professional Identity (PDF)"
+                  allowedRoles={["student", "faculty", "admin"]}
+                />
+              )}
             </div>
-            {pdfErr && (
-              <p className="text-sm text-red-600 font-medium text-right">{pdfErr}</p>
-            )}
           </div>
           <div ref={cardRef}>
             <StudentCard 

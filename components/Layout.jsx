@@ -14,7 +14,7 @@ import NavContent from "@/components/NavContent";
 class NotificationBoundary extends Component {
   constructor(props) { super(props); this.state = { failed: false }; }
   static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch(e) { console.warn("[NotificationCenter] suppressed:", e.code || e.message); }
+  componentDidCatch() { /* suppress notification errors */ }
   render() { return this.state.failed ? null : this.props.children; }
 }
 

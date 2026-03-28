@@ -42,7 +42,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
         const snap = await getDocs(q);
         setPendingDeletion(!snap.empty);
       } catch (err) {
-        console.error("Deletion status check failed", err);
+        // Non-critical check — fail silently
       } finally {
         setLoadingDeletion(false);
       }

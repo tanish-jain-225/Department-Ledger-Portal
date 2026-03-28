@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { doc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createRecord } from "@/lib/data";
-import { notifyAdmins, purgeNotifications } from "@/lib/notifications";
-import FacultyCard from "./FacultyCard";
+import { notifyAdmins } from "@/lib/notifications";
 import Button from "./ui/Button";
 import IdentityCardPopup from "./IdentityCardPopup";
 
@@ -16,7 +15,6 @@ export default function FacultyProfile({ profile, onRefresh }) {
   const [pendingDeletion, setPendingDeletion] = useState(false);
   const [loadingDeletion, setLoadingDeletion] = useState(true);
   const [err, setErr] = useState("");
-  const cardRef = useRef(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -58,7 +56,7 @@ export default function FacultyProfile({ profile, onRefresh }) {
         const snap = await getDocs(q);
         setPendingDeletion(!snap.empty);
       } catch (err) {
-        console.error("Deletion status check failed", err);
+        // Deletion status check is non-critical — fail silently
       } finally {
         setLoadingDeletion(false);
       }
@@ -156,8 +154,7 @@ export default function FacultyProfile({ profile, onRefresh }) {
         )}
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-2">
-        <div className="space-y-8">
+      <div className="space-y-8">
           {isEditing ? (
             <form onSubmit={save} className="premium-card p-8 space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
@@ -305,21 +302,6 @@ export default function FacultyProfile({ profile, onRefresh }) {
             </div>
           )}
         </div>
-
-        <div className="lg:sticky lg:top-24 h-fit">
-          <div ref={cardRef}>
-            <FacultyCard data={profile} />
-          </div>
-          <div className="mt-8 p-6 rounded-3xl bg-amber-50/50 border border-amber-100/50 flex items-start gap-4">
-            <svg className="h-6 w-6 text-amber-600 mt-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-xs text-amber-700 font-medium leading-relaxed">
-              Your identity card is generated in real-time. Ensure your contact details and bio are up-to-date for professional departmental representation.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

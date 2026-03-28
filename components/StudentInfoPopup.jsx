@@ -5,18 +5,360 @@ import { listByStudent } from "@/lib/data";
 import { useAuth } from "@/lib/auth-context";
 import Modal from "@/components/ui/Modal";
 import Badge from "@/components/ui/Badge";
+import { downloadStudentsCsv } from "@/lib/csv-download";
+
+// ── Profile completeness engine ──────────────────────────────────────────────
+
+function computeReport(data, lists) {
+  // ── 1. Profile fields ──
+  const profileFields = [
+    { key: "name",    label: "Full Name",       weight: 2 },
+    { key: "email",   label: "Email",           weight: 2 },
+    { key: "phone",   label: "Phone",           weight: 1 },
+    { key: "gender",  label: "Gender",          weight: 1 },
+    { key: "dob",     label: "Date of Birth",   weight: 1 },
+    { key: "branch",  label: "Branch",          weight: 2 },
+    { key: "year",    label: "Year",            weight: 2 },
+    { key: "address", label: "Address",         weight: 1 },
+    { key: "linkedin",label: "LinkedIn",        weight: 1 },
+    { key: "github",  label: "GitHub",          weight: 1 },
+    { key: "rollNumber", label: "Roll Number",  weight: 2 },
+  ];
+  const totalWeight = profileFields.reduce((s, f) => s + f.weight, 0);
+  const filledWeight = profileFields.filter(f => !!data[f.key]).reduce((s, f) => s + f.weight, 0);
+  const profilePct = Math.round((filledWeight / totalWeight) * 100);
+  const missingProfile = profileFields.filter(f => !data[f.key]).map(f => f.label);
+
+  // ── 2. Academic analysis ──
+  const gpas = lists.academic
+    .map(r => ({ gpa: parseFloat(r.gpa), year: parseInt(r.year), sem: parseInt(r.semester) }))
+    .filter(r => !isNaN(r.gpa))
+    .sort((a, b) => a.year !== b.year ? a.year - b.year : a.sem - b.sem);
+
+  const avgGpa = gpas.length ? (gpas.reduce((s, r) => s + r.gpa, 0) / gpas.length).toFixed(2) : null;
+  const latestGpa = gpas.length ? gpas[gpas.length - 1].gpa.toFixed(2) : null;
+  const highestGpa = gpas.length ? Math.max(...gpas.map(r => r.gpa)).toFixed(2) : null;
+  const lowestGpa = gpas.length ? Math.min(...gpas.map(r => r.gpa)).toFixed(2) : null;
+
+  // GPA trend: compare first half vs second half
+  let gpaTrend = "stable";
+  if (gpas.length >= 4) {
+    const mid = Math.floor(gpas.length / 2);
+    const firstHalf = gpas.slice(0, mid).reduce((s, r) => s + r.gpa, 0) / mid;
+    const secondHalf = gpas.slice(mid).reduce((s, r) => s + r.gpa, 0) / (gpas.length - mid);
+    if (secondHalf - firstHalf > 0.3) gpaTrend = "improving";
+    else if (firstHalf - secondHalf > 0.3) gpaTrend = "declining";
+  }
+
+  const gpaRating = !avgGpa ? "none"
+    : parseFloat(avgGpa) >= 9.0 ? "exceptional"
+    : parseFloat(avgGpa) >= 8.0 ? "strong"
+    : parseFloat(avgGpa) >= 7.0 ? "average"
+    : parseFloat(avgGpa) >= 6.0 ? "below-average"
+    : "poor";
+
+  // ── 3. Achievements analysis ──
+  const achLevels = { international: 4, national: 3, state: 2, college: 1, other: 1 };
+  const achScore = lists.achievements.reduce((s, a) => s + (achLevels[a.level] || 1), 0);
+  const hasNational = lists.achievements.some(a => a.level === "national" || a.level === "international");
+  const achRating = achScore === 0 ? "none"
+    : achScore >= 8 ? "exceptional"
+    : achScore >= 4 ? "strong"
+    : achScore >= 2 ? "moderate"
+    : "minimal";
+
+  // ── 4. Activities analysis ──
+  const actTypes = [...new Set(lists.activities.map(a => a.type).filter(Boolean))];
+  const actDiversity = actTypes.length;
+  const actRating = lists.activities.length === 0 ? "none"
+    : lists.activities.length >= 5 && actDiversity >= 3 ? "exceptional"
+    : lists.activities.length >= 3 ? "strong"
+    : lists.activities.length >= 1 ? "moderate"
+    : "minimal";
+
+  // ── 5. Placement analysis ──
+  const placed = lists.placements.find(p => p.status === "placed");
+  const internships = lists.placements.filter(p => p.status === "intern");
+  const packages = lists.placements
+    .map(p => parseFloat(p.package))
+    .filter(p => !isNaN(p) && p > 0);
+  const maxPackage = packages.length ? Math.max(...packages) : null;
+  const placementRating = placed ? "placed"
+    : internships.length >= 2 ? "strong-intern"
+    : internships.length === 1 ? "interned"
+    : "none";
+
+  // ── 6. Section completeness scores ──
+  const sectionScores = [
+    { key: "academic",     label: "Academic Records",  min: 4, records: lists.academic,     icon: "📚" },
+    { key: "achievements", label: "Achievements",      min: 2, records: lists.achievements, icon: "🏆" },
+    { key: "activities",   label: "Activities",        min: 2, records: lists.activities,   icon: "⚡" },
+    { key: "placements",   label: "Placements",        min: 1, records: lists.placements,   icon: "💼" },
+  ].map(s => {
+    const count = s.records.length;
+    const pct = Math.min(100, Math.round((count / s.min) * 100));
+    return { ...s, count, pct, met: count >= s.min };
+  });
+
+  const avgSectionPct = Math.round(
+    sectionScores.reduce((sum, s) => sum + s.pct, 0) / sectionScores.length
+  );
+
+  // ── 7. Overall score (weighted) ──
+  // Profile 30% + Academic 25% + Sections 25% + Placement 20%
+  const academicScore = !avgGpa ? 0
+    : parseFloat(avgGpa) >= 9 ? 100
+    : parseFloat(avgGpa) >= 8 ? 85
+    : parseFloat(avgGpa) >= 7 ? 65
+    : parseFloat(avgGpa) >= 6 ? 45
+    : 25;
+
+  const placementScore = placed ? 100
+    : internships.length >= 2 ? 75
+    : internships.length === 1 ? 50
+    : 0;
+
+  const overall = Math.round(
+    profilePct * 0.30 +
+    academicScore * 0.25 +
+    avgSectionPct * 0.25 +
+    placementScore * 0.20
+  );
+
+  // ── 8. Readiness verdict ──
+  const verdict = overall >= 80 ? { label: "Placement Ready", color: "emerald" }
+    : overall >= 65 ? { label: "Developing", color: "brand" }
+    : overall >= 45 ? { label: "Needs Attention", color: "amber" }
+    : { label: "Incomplete Profile", color: "red" };
+
+  // ── 9. Recommendations ──
+  const recommendations = [];
+  if (missingProfile.length > 0)
+    recommendations.push(`Complete missing profile fields: ${missingProfile.slice(0, 3).join(", ")}`);
+  if (lists.academic.length < 4)
+    recommendations.push(`Add more academic records — only ${lists.academic.length} semester${lists.academic.length !== 1 ? "s" : ""} recorded`);
+  if (gpaTrend === "declining")
+    recommendations.push("GPA is declining — consider academic counselling");
+  if (lists.placements.length === 0)
+    recommendations.push("No internship or placement records — encourage industry exposure");
+  if (lists.achievements.length === 0)
+    recommendations.push("No achievements recorded — encourage participation in competitions");
+  if (actDiversity < 2 && lists.activities.length > 0)
+    recommendations.push("Activities are limited to one type — encourage diverse engagement");
+  if (!data.linkedin)
+    recommendations.push("LinkedIn profile missing — important for placement visibility");
+  if (!data.github && (lists.activities.some(a => a.type === "technical") || lists.achievements.length > 0))
+    recommendations.push("GitHub profile missing — add for technical credibility");
+
+  // ── 10. Strengths ──
+  const strengths = [];
+  if (gpaRating === "exceptional" || gpaRating === "strong")
+    strengths.push(`Strong academic record — Avg GPA ${avgGpa}`);
+  if (gpaTrend === "improving")
+    strengths.push("GPA is on an upward trend");
+  if (placed)
+    strengths.push(`Placed at ${placed.company}${placed.role ? ` as ${placed.role}` : ""}${maxPackage ? ` · ₹${maxPackage} LPA` : ""}`);
+  if (internships.length >= 2)
+    strengths.push(`${internships.length} internships completed — strong industry exposure`);
+  if (hasNational)
+    strengths.push("National/international level achievement — stands out");
+  if (lists.achievements.length >= 3)
+    strengths.push(`${lists.achievements.length} achievements — active extracurricular profile`);
+  if (actDiversity >= 3)
+    strengths.push(`Diverse activity profile across ${actDiversity} categories`);
+  if (profilePct === 100)
+    strengths.push("Profile 100% complete — all fields filled");
+
+  return {
+    overall, verdict,
+    profilePct, missingProfile,
+    sectionScores, avgSectionPct,
+    avgGpa, latestGpa, highestGpa, lowestGpa, gpaTrend, gpaRating,
+    achScore, achRating, hasNational,
+    actDiversity, actRating,
+    placed: !!placed, placedAt: placed,
+    internships, maxPackage, placementRating,
+    strengths, recommendations,
+    academicCount: lists.academic.length,
+  };
+}
+
+// ── Report popup ─────────────────────────────────────────────────────────────
+
+function ReportPopup({ data, lists, onClose }) {
+  const r = computeReport(data, lists);
+
+  const ringColor = r.overall >= 75 ? "#10b981" : r.overall >= 50 ? "#f59e0b" : "#ef4444";
+  const circumference = 2 * Math.PI * 36;
+  const offset = circumference * (1 - r.overall / 100);
+
+  const verdictColors = {
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    brand:   "bg-brand-50 text-brand-700 border-brand-200",
+    amber:   "bg-amber-50 text-amber-700 border-amber-200",
+    red:     "bg-red-50 text-red-700 border-red-200",
+  };
+
+  const barColor = (pct) =>
+    pct >= 80 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#ef4444";
+
+  return (
+    <Modal title="Student Profile Report" open={true} onClose={onClose} maxWidth="max-w-2xl">
+      <div className="flex flex-col gap-6 p-1">
+
+        {/* ── Header: score + identity ── */}
+        <div className="flex flex-col sm:flex-row items-center gap-5 p-5 rounded-2xl bg-slate-50 border border-slate-100">
+          <div className="relative flex items-center justify-center flex-shrink-0">
+            <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: "rotate(-90deg)" }}>
+              <circle cx="48" cy="48" r="36" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+              <circle cx="48" cy="48" r="36" fill="none" stroke={ringColor} strokeWidth="10"
+                strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+            </svg>
+            <div className="absolute flex flex-col items-center">
+              <span className="text-2xl font-black text-slate-900">{r.overall}</span>
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">/ 100</span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 text-center sm:text-left flex-1 min-w-0">
+            <p className="text-xl font-black text-slate-900 tracking-tight truncate">{data.name}</p>
+            <p className="text-xs text-slate-500 truncate">{data.email}</p>
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+              {data.branch && <Badge variant="brand">{data.branch}</Badge>}
+              {data.year && <Badge variant="brand">Year {data.year}</Badge>}
+              <span className={`px-3 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-widest ${verdictColors[r.verdict.color]}`}>
+                {r.verdict.label}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Quick stats row ── */}
+        <div className="flex flex-wrap gap-3">
+          {[
+            { label: "Avg GPA",      value: r.avgGpa || "—",       sub: r.gpaTrend !== "stable" ? r.gpaTrend : null },
+            { label: "Latest GPA",   value: r.latestGpa || "—",    sub: null },
+            { label: "Semesters",    value: r.academicCount,        sub: null },
+            { label: "Achievements", value: lists.achievements.length, sub: r.hasNational ? "Natl/Intl" : null },
+            { label: "Activities",   value: lists.activities.length,   sub: r.actDiversity > 0 ? `${r.actDiversity} types` : null },
+            { label: "Internships",  value: r.internships.length,      sub: r.placed ? "Placed ✓" : null },
+          ].map((s, i) => (
+            <div key={i} className="flex flex-col gap-0.5 flex-1 min-w-[90px] p-3 rounded-xl bg-white border border-slate-100 text-center">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{s.label}</p>
+              <p className="text-lg font-black text-slate-900">{s.value}</p>
+              {s.sub && <p className="text-[9px] font-bold text-brand-600 uppercase tracking-widest">{s.sub}</p>}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Profile completeness ── */}
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Profile Completeness</p>
+          <BarRow label="Profile Fields" pct={r.profilePct} barColor={barColor(r.profilePct)}
+            sub={r.missingProfile.length === 0 ? "All fields filled" : `Missing: ${r.missingProfile.slice(0, 3).join(", ")}${r.missingProfile.length > 3 ? ` +${r.missingProfile.length - 3}` : ""}`} />
+          {r.sectionScores.map(s => (
+            <BarRow key={s.key}
+              label={`${s.icon} ${s.label}`}
+              pct={s.pct}
+              barColor={barColor(s.pct)}
+              sub={s.met ? `${s.count} records — target met` : `${s.count} / ${s.min} minimum`}
+            />
+          ))}
+        </div>
+
+        {/* ── Academic performance ── */}
+        {r.avgGpa && (
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Academic Performance</p>
+            <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white border border-slate-100">
+              <div className="flex flex-wrap gap-4 text-xs">
+                <span><span className="font-black text-slate-900">{r.avgGpa}</span> <span className="text-slate-400">avg GPA</span></span>
+                <span><span className="font-black text-slate-900">{r.highestGpa}</span> <span className="text-slate-400">highest</span></span>
+                <span><span className="font-black text-slate-900">{r.lowestGpa}</span> <span className="text-slate-400">lowest</span></span>
+                <span className={`font-black uppercase tracking-widest ${r.gpaTrend === "improving" ? "text-emerald-600" : r.gpaTrend === "declining" ? "text-red-500" : "text-slate-400"}`}>
+                  {r.gpaTrend === "improving" ? "↑ Improving" : r.gpaTrend === "declining" ? "↓ Declining" : "→ Stable"}
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${Math.min((parseFloat(r.avgGpa) / 10) * 100, 100)}%`, background: barColor(parseFloat(r.avgGpa) >= 7 ? 80 : parseFloat(r.avgGpa) >= 6 ? 55 : 30) }} />
+              </div>
+              <p className="text-[10px] text-slate-400 capitalize">{r.gpaRating.replace("-", " ")} academic standing</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Placement status ── */}
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Placement Status</p>
+          <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white border border-slate-100">
+            {r.placed ? (
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-black text-emerald-700">✓ Placed</p>
+                <p className="text-xs text-slate-600">{r.placedAt.company}{r.placedAt.role ? ` · ${r.placedAt.role}` : ""}{r.maxPackage ? ` · ₹${r.maxPackage} LPA` : ""}</p>
+              </div>
+            ) : r.internships.length > 0 ? (
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-black text-brand-700">{r.internships.length} Internship{r.internships.length > 1 ? "s" : ""}</p>
+                <p className="text-xs text-slate-500">{r.internships.map(i => i.company).join(", ")}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 italic">No placement or internship records</p>
+            )}
+          </div>
+        </div>
+
+        {/* ── Strengths ── */}
+        {r.strengths.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Strengths</p>
+            {r.strengths.map((s, i) => (
+              <div key={i} className="flex items-start gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-xs text-emerald-800 font-medium">
+                <span className="flex-shrink-0 font-black">✓</span>{s}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Recommendations ── */}
+        {r.recommendations.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Recommendations</p>
+            {r.recommendations.map((rec, i) => (
+              <div key={i} className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100 text-xs text-amber-800 font-medium">
+                <span className="flex-shrink-0 font-black text-amber-500">{i + 1}.</span>{rec}
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+    </Modal>
+  );
+}
+
+function BarRow({ label, pct, barColor, sub }) {
+  return (
+    <div className="flex flex-col gap-1.5 p-3 sm:p-4 rounded-2xl bg-white border border-slate-100">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-black text-slate-700">{label}</span>
+        <span className="text-xs font-black flex-shrink-0" style={{ color: barColor }}>{Math.min(pct, 100)}%</span>
+      </div>
+      <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
+      </div>
+      {sub && <p className="text-[10px] text-slate-400">{sub}</p>}
+    </div>
+  );
+}
+
+// ── Main popup ────────────────────────────────────────────────────────────────
 
 export default function StudentInfoPopup({ uid, onClose }) {
   const { profile: currentUser } = useAuth();
   const [data, setData] = useState(null);
-  const [lists, setLists] = useState({
-    academic: [],
-    activities: [],
-    achievements: [],
-    placements: [],
-  });
+  const [lists, setLists] = useState({ academic: [], activities: [], achievements: [], placements: [] });
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [showReport, setShowReport] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
@@ -26,24 +368,15 @@ export default function StudentInfoPopup({ uid, onClose }) {
       if (!db) return;
       try {
         const snap = await getDoc(doc(db, "users", uid));
-        if (!snap.exists()) {
-          setErr("Student not found");
-          return;
-        }
+        if (!snap.exists()) { setErr("Student not found"); return; }
         setData({ id: snap.id, ...snap.data() });
-        const [academic, activities, achievements, placements] =
-          await Promise.all([
-            listByStudent("academicRecords", uid),
-            listByStudent("activities", uid),
-            listByStudent("achievements", uid),
-            listByStudent("placements", uid),
-          ]);
-        setLists({
-          academic,
-          activities,
-          achievements,
-          placements,
-        });
+        const [academic, activities, achievements, placements] = await Promise.all([
+          listByStudent("academicRecords", uid),
+          listByStudent("activities", uid),
+          listByStudent("achievements", uid),
+          listByStudent("placements", uid),
+        ]);
+        setLists({ academic, activities, achievements, placements });
       } catch (e) {
         setErr(e?.message || "Load failed");
       } finally {
@@ -53,99 +386,181 @@ export default function StudentInfoPopup({ uid, onClose }) {
     load();
   }, [uid]);
 
+  function handleCsvDownload() {
+    if (!data) return;
+    downloadStudentsCsv([data], `record-${data.name || uid}.csv`, { maskSensitive: false });
+  }
+
   return (
-    <Modal title="Student Profile" open={!!uid} onClose={onClose} fullScreen={true}>
-      {loading ? (
-        <p className="text-slate-500 animate-pulse text-center py-8">
-          Loading detailed records...
-        </p>
-      ) : data ? (
-        <div className="p-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">{data.name}</h2>
-            <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-600">
-              <Badge variant="brand">{data.branch || "—"}</Badge>
-              <Badge variant="brand">Year {data.year || "—"}</Badge>
-              {data.alumni && <Badge variant="success">Alumni</Badge>}
+    <>
+      {showReport && data && (
+        <ReportPopup data={data} lists={lists} onClose={() => setShowReport(false)} />
+      )}
+
+      <Modal title="Student Profile" open={!!uid} onClose={onClose} fullScreen={true}>
+        {loading ? (
+          <p className="text-slate-500 animate-pulse text-center py-12">Loading detailed records...</p>
+        ) : err ? (
+          <p className="py-12 text-center text-red-500">{err}</p>
+        ) : data ? (
+          <div className="flex flex-col gap-6 p-4 sm:p-6">
+
+            {/* Action buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+              <button
+                onClick={() => setShowReport(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-black uppercase tracking-widest transition-all active:scale-95 w-full sm:w-auto"
+              >
+                <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                View Profile Report
+              </button>
+              <button
+                onClick={handleCsvDownload}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-widest transition-all active:scale-95 w-full sm:w-auto"
+              >
+                <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Download CSV
+              </button>
+            </div>
+
+            {/* Profile header */}
+            <div className="flex flex-col gap-4 pb-5 border-b border-slate-100">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">{data.name}</h2>
+                  <p className="text-sm text-slate-500 truncate">{data.email}</p>
+                </div>
+                <span className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                  data.facultyVerification === "approved"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                    : "bg-amber-50 text-amber-700 border-amber-100"
+                }`}>
+                  {data.facultyVerification === "approved" ? "Verified" : "Pending"}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {data.branch && <Badge variant="brand">{data.branch}</Badge>}
+                {data.year && <Badge variant="brand">Year {data.year}</Badge>}
+                {data.alumni && <Badge variant="success">Alumni</Badge>}
+                {data.phone && <span className="text-xs text-slate-500 font-medium bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">{data.phone}</span>}
+                {data.gender && <span className="text-xs text-slate-500 font-medium bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">{data.gender}</span>}
+              </div>
+            </div>
+
+            {/* Sections */}
+            <div className="flex flex-col gap-6">
+              <Section title="Academic Records" count={lists.academic.length} countVariant="brand">
+                {lists.academic.length === 0 ? <Empty text="No academic records." /> :
+                  lists.academic.map((r) => (
+                    <Row key={r.id}>
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <p className="text-sm font-black text-slate-900">Year {r.year} · Sem {r.semester}</p>
+                        {r.branch && <p className="text-xs text-slate-400">{r.branch}</p>}
+                        {r.subjects && <p className="text-xs text-slate-500 line-clamp-2">{r.subjects}</p>}
+                      </div>
+                      <Chip color="emerald">{r.gpa} GPA</Chip>
+                    </Row>
+                  ))
+                }
+              </Section>
+
+              <Section title="Achievements" count={lists.achievements.length} countVariant="success">
+                {lists.achievements.length === 0 ? <Empty text="No achievements." /> :
+                  lists.achievements.map((r) => (
+                    <Row key={r.id}>
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <p className="text-sm font-black text-slate-900">{r.title}</p>
+                        {r.issuer && <p className="text-xs text-slate-500">{r.issuer}</p>}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                        <Chip color="brand">{r.level}</Chip>
+                        {r.date && <span className="text-xs text-slate-400">{r.date}</span>}
+                      </div>
+                    </Row>
+                  ))
+                }
+              </Section>
+
+              <Section title="Activities" count={lists.activities.length} countVariant="brand">
+                {lists.activities.length === 0 ? <Empty text="No activities." /> :
+                  lists.activities.map((r) => (
+                    <Row key={r.id}>
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <p className="text-sm font-black text-slate-900">{r.title}</p>
+                        {r.description && <p className="text-xs text-slate-500 line-clamp-1">{r.description}</p>}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                        <Chip color="slate">{r.type}</Chip>
+                        {r.date && <span className="text-xs text-slate-400">{r.date}</span>}
+                      </div>
+                    </Row>
+                  ))
+                }
+              </Section>
+
+              <Section title="Placements" count={lists.placements.length} countVariant="brand">
+                {lists.placements.length === 0 ? <Empty text="No placements." /> :
+                  lists.placements.map((r) => (
+                    <Row key={r.id}>
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <p className="text-sm font-black text-slate-900">{r.company}</p>
+                        {r.role && <p className="text-xs text-slate-500">{r.role}</p>}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                        <Chip color={r.status === "placed" ? "emerald" : "brand"}>{r.status}</Chip>
+                        {r.package && <span className="text-xs font-black text-emerald-600">₹ {r.package}</span>}
+                      </div>
+                    </Row>
+                  ))
+                }
+              </Section>
             </div>
           </div>
-
-          <div className="grid gap-6">
-            <section>
-              <h3 className="mb-3 border-b border-brand-100 pb-2 text-lg font-semibold text-slate-900">Academic</h3>
-              {lists.academic.length === 0 ? (
-                <p className="text-sm text-slate-500">No academic records.</p>
-              ) : (
-                <div className="space-y-3">
-                  {lists.academic.map((r) => (
-                    <div key={r.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold">Year {r.year} · Sem {r.semester}</p>
-                          <p className="text-sm text-slate-600">GPA: {r.gpa}</p>
-                        </div>
-                        <span className="rounded bg-brand-50 px-2 py-1 text-xs font-bold text-brand-600">
-                          GPA {r.gpa}
-                        </span>
-                      </div>
-                      {r.subjects && (
-                        <p className="mt-2 text-sm text-slate-600">{r.subjects}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section>
-              <h3 className="mb-3 border-b border-brand-100 pb-2 text-lg font-semibold text-slate-900">Activities</h3>
-              {lists.activities.length === 0 ? (
-                <p className="text-sm text-slate-500">No activities.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {lists.activities.map((r) => (
-                    <li key={r.id} className="text-sm text-slate-700">
-                      <strong>{r.title}</strong> ({r.type}) — {r.date}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section>
-              <h3 className="mb-3 border-b border-brand-100 pb-2 text-lg font-semibold text-slate-900">Achievements</h3>
-              {lists.achievements.length === 0 ? (
-                <p className="text-sm text-slate-500">No achievements.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {lists.achievements.map((r) => (
-                    <li key={r.id} className="text-sm text-slate-700">
-                      {r.title} ({r.level}) — {r.date}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section>
-              <h3 className="mb-3 border-b border-brand-100 pb-2 text-lg font-semibold text-slate-900">Placements</h3>
-              {lists.placements.length === 0 ? (
-                <p className="text-sm text-slate-500">No placements.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {lists.placements.map((r) => (
-                    <li key={r.id} className="text-sm text-slate-700">
-                      <strong>{r.company}</strong> — {r.role} ({r.status}) {r.package && `· ${r.package}`}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
-        </div>
-      ) : (
-        <p className="py-8 text-center text-slate-500">No student data available.</p>
-      )}
-    </Modal>
+        ) : (
+          <p className="py-12 text-center text-slate-500">No student data available.</p>
+        )}
+      </Modal>
+    </>
   );
+}
+
+function Section({ title, count, countVariant, children }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">{title}</h3>
+        <Badge variant={countVariant}>{count}</Badge>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Row({ children }) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 rounded-2xl bg-slate-50 border border-slate-100">
+      {children}
+    </div>
+  );
+}
+
+function Chip({ color = "slate", children }) {
+  const colors = {
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    brand:   "bg-brand-50 text-brand-700 border-brand-100",
+    slate:   "bg-slate-100 text-slate-600 border-slate-200",
+  };
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border uppercase ${colors[color] || colors.slate}`}>
+      {children}
+    </span>
+  );
+}
+
+function Empty({ text }) {
+  return <p className="text-sm text-slate-400 italic py-2">{text}</p>;
 }

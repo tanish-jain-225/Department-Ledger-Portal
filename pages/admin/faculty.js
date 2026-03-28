@@ -11,36 +11,14 @@ import {
 } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
 import { FacultyInfoPopup } from "@/components";
-import { Button, EmptyState, Badge, Skeleton, ConfirmDialog } from "@/components/ui";
+import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { getDb } from "@/lib/firebase";
 import { downloadStudentsCsv } from "@/lib/csv-download";
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
-
-function RoleButton({ label, role, currentRole, onClick }) {
-  const active = currentRole === role;
-  const activeStyles = {
-    student: "bg-sky-600 text-white border-sky-600 shadow-sky-200",
-    faculty: "bg-indigo-700 text-white border-indigo-700 shadow-indigo-200",
-    admin: "bg-slate-900 text-white border-slate-900 shadow-slate-200",
-  };
-  const idleStyles = {
-    student: "text-sky-700 bg-sky-50 border-sky-100 hover:bg-sky-100",
-    faculty: "text-indigo-700 bg-indigo-50 border-indigo-100 hover:bg-indigo-100",
-    admin: "text-slate-700 bg-slate-50 border-slate-100 hover:bg-slate-100",
-  };
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all duration-300 shadow-sm
-        ${active ? activeStyles[role] : idleStyles[role]}`}
-    >
-      {label}
-    </button>
-  );
-}
+import { PAGE_SIZE, USER_SUB_COLLECTIONS } from "@/lib/constants";
 
 export default function AdminFacultyDashboard() {
   const { user, loading } = useAuth();
@@ -58,11 +36,11 @@ export default function AdminFacultyDashboard() {
       try {
         const db = getDb();
         if (!db) return;
-        const q = query(collection(db, "users"), where("role", "==", "faculty"), limit(100));
+        const q = query(collection(db, "users"), where("role", "==", "faculty"), limit(PAGE_SIZE.ADMIN_DIRECTORY));
         const snap = await getDocs(q);
         setFaculty(snap.docs.map(d => ({ ...d.data(), id: d.id })));
       } catch (err) {
-        console.error(err);
+        addToast(err?.message || "Failed to load faculty records", "error");
       } finally {
         setBusy(false);
       }
@@ -147,7 +125,7 @@ export default function AdminFacultyDashboard() {
           setBusy(true);
           try {
             const db = getDb();
-            const subCollections = ["academicRecords", "activities", "achievements", "placements", "aiReports"];
+               const subCollections = USER_SUB_COLLECTIONS;
             for (const collName of subCollections) {
                const q = query(collection(db, collName), where("studentUid", "==", uid));
                const snap = await getDocs(q);

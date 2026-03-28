@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, forwardRef } from "react";
 import { useToast } from "@/lib/toast-context";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import EmptyState from "@/components/ui/EmptyState";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { DownloadPdfButton } from "@/components/ui";
 import { createNotification } from "@/lib/notifications";
 import { listByStudent, createRecord, removeRecord } from "@/lib/data";
+import { buildFilename } from "@/lib/pdf-download";
 
 export default function ReadinessInsight({ profile, academic, activities, achievements, placements, projects, skills }) {
   const { addToast } = useToast();
@@ -13,7 +15,6 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
   const [history, setHistory] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [pdfBusy, setPdfBusy] = useState(false);
   const pdfRef = useRef(null);
 
   const loadHistory = useCallback(async () => {
@@ -25,7 +26,7 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
         const db = b.createdAt?.toDate?.() || new Date(0);
         return db - da;
       }));
-    } catch (e) { console.error("History load failed", e); }
+    } catch (e) { /* history load is non-critical — fail silently */ }
   }, [profile?.id]);
 
   useEffect(() => {
@@ -62,54 +63,6 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
     }
   }
 
-  const handleDownloadPDF = () => {
-    const el = pdfRef.current;
-    if (!el) return;
-    setPdfBusy(true);
-
-    const doDownload = () => {
-      const pxHeight = el.scrollHeight;
-      const pxWidth = el.scrollWidth;
-      const mmWidth = 210;
-      const mmHeight = Math.ceil((pxHeight / pxWidth) * mmWidth) + 30;
-
-      window.html2pdf()
-        .set({
-          margin: 0,
-          filename: `Career_Report_${profile?.name || "Student"}.pdf`,
-          image: { type: "jpeg", quality: 1 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: "#ffffff",
-            width: pxWidth,
-            height: pxHeight,
-            windowWidth: pxWidth,
-            scrollX: 0,
-            scrollY: 0,
-          },
-          jsPDF: { unit: "mm", format: [mmWidth, mmHeight], orientation: "portrait" },
-        })
-        .from(el)
-        .save()
-        .then(() => setPdfBusy(false))
-        .catch(() => { addToast("PDF export failed.", "error"); setPdfBusy(false); });
-    };
-
-    const scriptId = "html2pdf-cdn";
-    if (document.getElementById(scriptId)) {
-      doDownload();
-    } else {
-      const s = document.createElement("script");
-      s.id = scriptId;
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-      s.onload = doDownload;
-      s.onerror = () => { addToast("PDF library failed to load.", "error"); setPdfBusy(false); };
-      document.body.appendChild(s);
-    }
-  };
-
   const scoreColor = (s) => s > 75 ? "text-emerald-500" : s >= 50 ? "text-amber-500" : "text-red-500";
   const scoreBg = (s) => s > 75 ? "bg-emerald-50 border-emerald-100" : s >= 50 ? "bg-amber-50 border-amber-100" : "bg-red-50 border-red-100";
   const labelColor = (s) => s > 75 ? "#10b981" : s >= 50 ? "#f59e0b" : "#ef4444";
@@ -137,106 +90,27 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
       <Modal
         open={!!selectedReport}
         onClose={() => { setSelectedReport(null); }}
-        title={
-          <div className="flex items-center justify-between w-full pr-2">
-            <span>Career Intelligence Report</span>
-            <button
-              onClick={handleDownloadPDF}
-              disabled={pdfBusy}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-60 ml-4"
-            >
-              {pdfBusy
-                ? <><div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</>
-                : <><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>Download PDF</>
-              }
-            </button>
-          </div>
-        }
-        maxWidth="max-w-2xl"
+        title="Career Intelligence Report"
+        maxWidth="max-w-3xl"
       >
         {selectedReport && (
-          /* This div is what gets captured by html2pdf */
-          <div
-            ref={pdfRef}
-            style={{
-              fontFamily: "Arial, sans-serif",
-              background: "#ffffff",
-              padding: "48px 52px",
-              color: "#0f172a",
-              width: "794px",
-              boxSizing: "border-box",
-            }}
-          >
-            {/* Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "3px solid #0ea5e9", paddingBottom: "18px", marginBottom: "24px" }}>
-              <div>
-                <p style={{ fontSize: "9px", fontWeight: 900, color: "#0ea5e9", textTransform: "uppercase", letterSpacing: "3px", margin: "0 0 4px" }}>Department Ledger Portal</p>
-                <h1 style={{ fontSize: "22px", fontWeight: 900, margin: "0 0 4px" }}>Career Intelligence Report</h1>
-                <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>{profile?.name} · {selectedReport.createdAtString}</p>
-              </div>
-              <div style={{ textAlign: "center", minWidth: "80px" }}>
-                <svg width="72" height="72" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)", display: "block" }}>
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="12" />
-                  <circle cx="50" cy="50" r="40" fill="none" stroke={labelColor(selectedReport.score)} strokeWidth="12"
-                    strokeDasharray={2 * Math.PI * 40}
-                    strokeDashoffset={2 * Math.PI * 40 * (1 - selectedReport.score / 100)}
-                    strokeLinecap="round" />
-                </svg>
-                <p style={{ fontSize: "20px", fontWeight: 900, margin: "-50px 0 0", textAlign: "center", color: "#0f172a" }}>{selectedReport.score}</p>
-                <p style={{ fontSize: "9px", fontWeight: 900, color: labelColor(selectedReport.score), textTransform: "uppercase", letterSpacing: "2px", marginTop: "18px" }}>{selectedReport.label}</p>
-              </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-end">
+              <DownloadPdfButton
+                elementRef={pdfRef}
+                filename={buildFilename("Career_Report", profile?.name || "Student")}
+                label="Download PDF"
+                orientation="portrait"
+                windowWidth={794}
+                className="text-xs px-3 py-1.5"
+              />
             </div>
-
-            {/* Summary */}
-            <div style={{ background: "#f0f9ff", borderLeft: "4px solid #0ea5e9", borderRadius: "8px", padding: "14px 18px", marginBottom: "20px" }}>
-              <p style={{ fontSize: "9px", fontWeight: 900, color: "#0ea5e9", textTransform: "uppercase", letterSpacing: "2px", margin: "0 0 6px" }}>Executive Summary</p>
-              <p style={{ fontSize: "12px", color: "#334155", lineHeight: 1.7, margin: 0 }}>{selectedReport.summary}</p>
-            </div>
-
-            {/* Strengths + Gaps */}
-            <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
-              <div style={{ flex: 1, background: "#f0fdf4", borderRadius: "8px", padding: "14px 18px" }}>
-                <p style={{ fontSize: "9px", fontWeight: 900, color: "#16a34a", textTransform: "uppercase", letterSpacing: "2px", margin: "0 0 10px" }}>Core Strengths</p>
-                {selectedReport.strengths?.map((s, i) => (
-                  <div key={i} style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
-                    <span style={{ color: "#16a34a", fontWeight: 900, fontSize: "12px" }}>✓</span>
-                    <p style={{ fontSize: "11px", color: "#166534", margin: 0, lineHeight: 1.5 }}>{s}</p>
-                  </div>
-                ))}
-              </div>
-              <div style={{ flex: 1, background: "#fff7ed", borderRadius: "8px", padding: "14px 18px" }}>
-                <p style={{ fontSize: "9px", fontWeight: 900, color: "#ea580c", textTransform: "uppercase", letterSpacing: "2px", margin: "0 0 10px" }}>Critical Gaps</p>
-                {selectedReport.weaknesses?.map((w, i) => (
-                  <div key={i} style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
-                    <span style={{ color: "#ea580c", fontWeight: 900, fontSize: "12px" }}>!</span>
-                    <p style={{ fontSize: "11px", color: "#9a3412", margin: 0, lineHeight: 1.5 }}>{w}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recommendations */}
-            <div style={{ background: "#eff6ff", borderRadius: "8px", padding: "14px 18px", marginBottom: "20px" }}>
-              <p style={{ fontSize: "9px", fontWeight: 900, color: "#2563eb", textTransform: "uppercase", letterSpacing: "2px", margin: "0 0 10px" }}>Action Roadmap</p>
-              {selectedReport.recommendations?.map((r, i) => (
-                <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "8px", alignItems: "flex-start" }}>
-                  <span style={{ background: "#2563eb", color: "#fff", borderRadius: "4px", minWidth: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: 900 }}>{i + 1}</span>
-                  <p style={{ fontSize: "11px", color: "#1e3a8a", margin: 0, lineHeight: 1.6 }}>{r}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Career Trajectory */}
-            <div style={{ background: "#0f172a", borderRadius: "8px", padding: "14px 18px", marginBottom: "20px" }}>
-              <p style={{ fontSize: "9px", fontWeight: 900, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "2px", margin: "0 0 6px" }}>Career Trajectory</p>
-              <p style={{ fontSize: "11px", color: "#cbd5e1", lineHeight: 1.7, margin: 0, fontStyle: "italic" }}>&ldquo;{selectedReport.careerRoadmap}&rdquo;</p>
-            </div>
-
-            {/* Footer */}
-            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "12px", display: "flex", justifyContent: "space-between" }}>
-              <p style={{ fontSize: "9px", color: "#94a3b8", margin: 0 }}>Department Ledger Portal · Powered by Gemini AI</p>
-              <p style={{ fontSize: "9px", color: "#94a3b8", margin: 0 }}>{selectedReport.createdAtString}</p>
-            </div>
+            <ReportContent
+              ref={pdfRef}
+              report={selectedReport}
+              profile={profile}
+              labelColor={labelColor}
+            />
           </div>
         )}
       </Modal>
@@ -310,3 +184,104 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
     </div>
   );
 }
+
+/**
+ * Responsive report card. Accepts a forwarded ref so the parent can pass
+ * it to DownloadPdfButton — pdf-download.js clones the element into a
+ * fixed-size body container before capturing, so overflow-hidden / scroll
+ * containers don't cause blank PDFs.
+ */
+const ReportContent = forwardRef(function ReportContent({ report, profile, labelColor }, ref) {
+  const circumference = 2 * Math.PI * 40;
+  const offset = circumference * (1 - report.score / 100);
+  const scoreCol = labelColor(report.score);
+
+  return (
+    <div ref={ref} className="flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden">
+
+      {/* Header — score badge stacks below on mobile, beside on sm+ */}
+      <div className="flex flex-col gap-4 border-b-4 border-sky-500 p-4 sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black text-sky-500 uppercase tracking-[3px] mb-1">Department Ledger Portal</p>
+            <h2 className="text-lg sm:text-2xl font-black text-slate-900 leading-tight">Career Intelligence Report</h2>
+            <p className="text-xs text-slate-500 mt-1 truncate">{profile?.name} · {report.createdAtString}</p>
+          </div>
+          {/* Score ring — always visible, no negative margin tricks */}
+          <div className="flex flex-col items-center flex-shrink-0 gap-1">
+            <div className="relative flex items-center justify-center">
+              <svg width="64" height="64" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="14" />
+                <circle cx="50" cy="50" r="40" fill="none" stroke={scoreCol} strokeWidth="14"
+                  strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+              </svg>
+              <span className="absolute text-lg font-black text-slate-900">{report.score}</span>
+            </div>
+            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: scoreCol }}>{report.label}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex flex-col gap-4 p-4 sm:p-6">
+
+        {/* Summary */}
+        <div className="flex flex-col gap-2 bg-sky-50 border-l-4 border-sky-500 rounded-lg p-4">
+          <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest">Executive Summary</p>
+          <p className="text-sm text-slate-700 leading-relaxed">{report.summary}</p>
+        </div>
+
+        {/* Strengths + Gaps — stack on mobile, side by side on sm+ */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-2 flex-1 bg-green-50 rounded-lg p-4">
+            <p className="text-[9px] font-black text-green-700 uppercase tracking-widest">Core Strengths</p>
+            <ul className="flex flex-col gap-1.5">
+              {report.strengths?.map((s, i) => (
+                <li key={i} className="flex gap-2 text-xs text-green-800 leading-relaxed">
+                  <span className="font-black text-green-600 flex-shrink-0 mt-px">✓</span>
+                  <span>{s}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex flex-col gap-2 flex-1 bg-orange-50 rounded-lg p-4">
+            <p className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Critical Gaps</p>
+            <ul className="flex flex-col gap-1.5">
+              {report.weaknesses?.map((w, i) => (
+                <li key={i} className="flex gap-2 text-xs text-orange-900 leading-relaxed">
+                  <span className="font-black text-orange-500 flex-shrink-0 mt-px">!</span>
+                  <span>{w}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Recommendations */}
+        <div className="flex flex-col gap-2 bg-blue-50 rounded-lg p-4">
+          <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Action Roadmap</p>
+          <ol className="flex flex-col gap-2">
+            {report.recommendations?.map((r, i) => (
+              <li key={i} className="flex gap-3 text-xs text-blue-900 leading-relaxed">
+                <span className="flex-shrink-0 flex items-center justify-center bg-blue-600 text-white rounded font-black text-[9px] h-5 w-5 mt-px">{i + 1}</span>
+                <span>{r}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* Career Trajectory */}
+        <div className="flex flex-col gap-2 bg-slate-900 rounded-lg p-4">
+          <p className="text-[9px] font-black text-sky-400 uppercase tracking-widest">Career Trajectory</p>
+          <p className="text-xs text-slate-300 leading-relaxed italic">&ldquo;{report.careerRoadmap}&rdquo;</p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 pt-2 border-t border-slate-100">
+          <p className="text-[9px] text-slate-400">Department Ledger Portal · Powered by Gemini AI</p>
+          <p className="text-[9px] text-slate-400">{report.createdAtString}</p>
+        </div>
+      </div>
+    </div>
+  );
+});

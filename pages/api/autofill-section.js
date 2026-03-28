@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { RATE_LIMIT } from "@/lib/constants";
 
 const VALID_SECTIONS = ["academic", "achievement", "activity", "placement", "project", "skill"];
 
@@ -11,18 +12,17 @@ const SECTION_FIELDS = {
   skill: ["name", "category", "proficiency"],
 };
 
-// Simple in-memory rate limiter: max 10 requests per IP per minute
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
 const rateLimitMap = new Map();
 function isRateLimited(ip) {
   const now = Date.now();
-  const windowMs = 60 * 1000;
-  const max = 10;
   const entry = rateLimitMap.get(ip) || { count: 0, start: now };
-  if (now - entry.start > windowMs) {
+  if (now - entry.start > RATE_LIMIT.WINDOW_MS) {
     rateLimitMap.set(ip, { count: 1, start: now });
     return false;
   }
-  if (entry.count >= max) return true;
+  if (entry.count >= RATE_LIMIT.AUTOFILL) return true;
   rateLimitMap.set(ip, { count: entry.count + 1, start: entry.start });
   return false;
 }
@@ -72,14 +72,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "A file is required for Smart Analysis." });
   }
 
-  // Reject files larger than ~10MB (base64 is ~33% larger than binary)
   const estimatedBytes = (fileData.length * 3) / 4;
-  if (estimatedBytes > 10 * 1024 * 1024) {
+  if (estimatedBytes > MAX_FILE_BYTES) {
     return res.status(413).json({ error: "File too large. Maximum size is 10MB." });
   }
 
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL || "gemini-2.5-flash";
+  const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL;
 
   if (!apiKey) {
     return res.status(500).json({ error: "Gemini API key not configured" });
@@ -139,11 +138,13 @@ No markdown, no explanation, no preamble. Just the JSON object.`;
       const data = JSON.parse(jsonStr);
       return res.status(200).json(data);
     } catch {
-      console.error("JSON Parse Error. Raw text:", text);
       return res.status(500).json({ error: "AI returned invalid JSON format" });
     }
   } catch (error) {
-    console.error("Gemini AutoFill Error:", error);
-    return res.status(500).json({ error: "Failed to generate suggestions" });
+    const msg = error?.message || "Failed to generate suggestions";
+    if (error?.status === 429) {
+      return res.status(429).json({ error: "AI quota exceeded. Please try again later." });
+    }
+    return res.status(500).json({ error: msg });
   }
 }

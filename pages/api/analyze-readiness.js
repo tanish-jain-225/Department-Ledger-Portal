@@ -1,17 +1,15 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { RATE_LIMIT } from "@/lib/constants";
 
-// Simple in-memory rate limiter: max 5 requests per IP per minute
 const rateLimitMap = new Map();
 function isRateLimited(ip) {
   const now = Date.now();
-  const windowMs = 60 * 1000;
-  const max = 5;
   const entry = rateLimitMap.get(ip) || { count: 0, start: now };
-  if (now - entry.start > windowMs) {
+  if (now - entry.start > RATE_LIMIT.WINDOW_MS) {
     rateLimitMap.set(ip, { count: 1, start: now });
     return false;
   }
-  if (entry.count >= max) return true;
+  if (entry.count >= RATE_LIMIT.ANALYZE) return true;
   rateLimitMap.set(ip, { count: entry.count + 1, start: entry.start });
   return false;
 }
@@ -29,7 +27,7 @@ export default async function handler(req, res) {
   const { profile, academic, activities, achievements, placements, projects, skills } = req.body;
 
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL || "gemini-2.5-flash";
+  const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL;
 
   if (!apiKey) {
     return res.status(500).json({ error: "Gemini API key not configured" });
@@ -109,12 +107,13 @@ export default async function handler(req, res) {
     try {
       const data = JSON.parse(jsonStr);
       res.status(200).json(data);
-    } catch (parseErr) {
-      console.error("JSON Parse Error. Raw text:", text);
-      res.status(500).json({ error: "AI returned invalid JSON format", raw: text });
+    } catch {
+      res.status(500).json({ error: "AI returned invalid JSON format" });
     }
   } catch (error) {
-    console.error("Gemini Analysis Error:", error);
+    if (error?.status === 429) {
+      return res.status(429).json({ error: "AI quota exceeded. Please try again later." });
+    }
     res.status(500).json({ error: "Failed to analyze profile" });
   }
 }

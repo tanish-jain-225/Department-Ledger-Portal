@@ -5,7 +5,7 @@ export default function FacultyCard({ data }) {
   if (!data) return null;
 
   return (
-    <article className="mx-auto w-full max-w-full sm:max-w-4xl rounded-xl border border-violet-200 bg-white p-4 sm:p-10 shadow-md print:border-0 print:shadow-none print:p-0 overflow-hidden print:overflow-visible">
+    <article className="mx-auto w-full max-w-full sm:max-w-4xl rounded-xl border border-violet-200 bg-white p-4 sm:p-10 shadow-md print:border-0 print:shadow-none print:p-0">
       {/* Header */}
       <header className="border-b-2 border-violet-100 pb-4 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

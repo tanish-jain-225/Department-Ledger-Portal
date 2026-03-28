@@ -7,40 +7,14 @@ import {
   where,
 } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
-import { Button, Badge, EmptyState, TableRowSkeleton, ConfirmDialog } from "@/components/ui";
+import { Button, Badge, EmptyState, TableRowSkeleton, ConfirmDialog, RoleButton } from "@/components/ui";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { logAudit } from "@/lib/audit";
-import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
+import { createNotification, syncAdminNotifications, purgeNotifications, notifyFaculty } from "@/lib/notifications";
+import { USER_SUB_COLLECTIONS } from "@/lib/constants";
 import { useToast } from "@/lib/toast-context";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
-
-function RoleButton({ label, role, currentRole, onClick }) {
-  const active = currentRole === role;
-  
-  const activeStyles = {
-    student: "bg-sky-600 text-white border-sky-600 shadow-sky-200",
-    faculty: "bg-indigo-700 text-white border-indigo-700 shadow-indigo-200",
-    admin: "bg-slate-900 text-white border-slate-900 shadow-slate-200",
-  };
-
-  const idleStyles = {
-    student: "text-sky-700 bg-sky-50 border-sky-100 hover:bg-sky-100",
-    faculty: "text-indigo-700 bg-indigo-50 border-indigo-100 hover:bg-indigo-100",
-    admin: "text-slate-700 bg-slate-50 border-slate-100 hover:bg-slate-100",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-300 shadow-sm
-        ${active ? activeStyles[role] : idleStyles[role]}`}
-    >
-      {active && <span className="mr-1.5 opacity-60">●</span>}
-      {label}
-    </button>
-  );
-}
 
 export default function AdminRequestsPage() {
   const { user } = useAuth();
@@ -140,6 +114,19 @@ export default function AdminRequestsPage() {
           link: "/profile"
         });
 
+        // Notify all faculty when a new student is approved
+        if (roleToAssign === "student") {
+          const approvedUser = rows.find(r => r.id === uid);
+          const studentName = approvedUser?.name || approvedUser?.email || "A new student";
+          await notifyFaculty({
+            title: "New Student Added",
+            message: `${studentName} has been approved and added to the student registry.`,
+            type: "info",
+            link: "/dashboard",
+            relatedId: `student_${uid}`,
+          }).catch(() => {}); // non-blocking — don't fail the approval if this errors
+        }
+
         addToast(`Clearance set to: ${roleToAssign}`, "success");
       } else if (action === "reject") {
           if (reqDocId) {
@@ -194,7 +181,7 @@ export default function AdminRequestsPage() {
           setDeleteTarget(null);
           
           const db = getDb();
-          const subCollections = ["academicRecords", "activities", "achievements", "placements", "aiReports"];
+          const subCollections = USER_SUB_COLLECTIONS;
           for (const collName of subCollections) {
             const q = query(collection(db, collName), where("studentUid", "==", uid));
             const snap = await getDocs(q);
@@ -207,12 +194,12 @@ export default function AdminRequestsPage() {
              try { 
                await deleteDoc(doc(db, "deletionRequests", reqDocId)); 
                await purgeNotifications(`del_${reqDocId}`);
-             } catch(e) {}
+             } catch(e) { addToast(e?.message || "Failed to clean up deletion request", "error"); }
              // If it was a role request that we just deleted the user for
              try { 
                await deleteDoc(doc(db, "roleRequests", reqDocId)); 
                await purgeNotifications(`role_${reqDocId}`);
-             } catch(e) {}
+             } catch(e) { addToast(e?.message || "Failed to clean up role request", "error"); }
           }
           
           await logAudit({
