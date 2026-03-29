@@ -1,4 +1,4 @@
-# 🚀 Department Ledger Portal — Ultimate README
+# 🚀 Department Ledger Portal
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-11.1-orange?style=flat&logo=firebase)](https://firebase.google.com/)
@@ -33,7 +33,7 @@ The **Department Ledger Portal** is a production-grade, AI-powered academic reco
 
 ## Technical Architecture
 
-**Stack:** Next.js (Pages Router), React, Firebase (Auth, Firestore), Google Gemini AI, Tailwind CSS
+**Stack:** Next.js (Pages Router), Firebase (Auth, Firestore), Google Gemini AI, Tailwind CSS
 
 **Layers:**
 - **Client:** React components, Auth/Toast context, role-based navigation, notification center.

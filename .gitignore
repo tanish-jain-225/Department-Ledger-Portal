@@ -35,7 +35,5 @@ next-env.d.ts
 *.tsbuildinfo
 
 # Dev tools
-.vscode/
-.kiro/
 __mocks__/
 __tests__/

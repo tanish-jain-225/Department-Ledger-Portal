@@ -1,8 +1,161 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // ── Helper functions ──────────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function userRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : "";
+    }
+
+    function isAdmin()  { return isAuth() && userRole() == 'admin'; }
+
+    // ── users ─────────────────────────────────────────────────────────────
+    // READ:
+    //   - Any authenticated user can read any user doc.
+    //     Needed by: auth-context (loadProfile, login role check),
+    //                notifyAdmins/notifyFaculty (query by role),
+    //                admin pages (list all users),
+    //                faculty dashboard (listStudentsForDashboard),
+    //                StudentInfoPopup (getDoc by uid)
+    // WRITE:
+    //   - A user can update their own doc (profile edits, lastLogin).
+    //   - Admin can update any user doc (role assignment, facultyVerification).
+    //   - New user doc created during registration (setDoc with own uid).
+    //   - Admin can delete any user doc (purge flow).
+    match /users/{userId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && uid() == userId;
+      allow update: if isAuth() && (uid() == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ── Student ledger collections ────────────────────────────────────────
+    // Shared rules for: academicRecords, achievements, activities,
+    //                   placements, projects, skills, aiReports
+    //
+    // READ:   Any authenticated user (faculty/admin need to read student records).
+    // CREATE: Only the owner — studentUid must match the caller's uid.
+    // UPDATE/DELETE: Owner or admin only.
+    //   Admin needs delete for the cascade purge flow in admin pages.
+
+    match /academicRecords/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+    }
+
+    match /achievements/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+    }
+
+    match /activities/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+    }
+
+    match /placements/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+    }
+
+    match /projects/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+    }
+
+    match /skills/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+    }
+
+    match /aiReports/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+    }
+
+    // ── roleRequests ──────────────────────────────────────────────────────
+    // READ:   Owner can read their own request. Admin can read all.
+    //         syncAdminNotifications queries all pending — admin only.
+    //         admin/requests.js queries all — admin only.
+    // CREATE: Any authenticated user (registration flow creates this).
+    //         Also admin/students.js creates with status=processed_manual.
+    // UPDATE: Admin only (status changes: processed_manual, rejected).
+    //         Also admin/students.js and admin/faculty.js update status.
+    // DELETE: Admin only (approve flow deletes the request doc).
+    match /roleRequests/{docId} {
+      allow read:   if isAuth() && (resource.data.uid == uid() || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── deletionRequests ──────────────────────────────────────────────────
+    // READ:   Owner or admin.
+    // CREATE: Any authenticated user (student/faculty submit deletion requests).
+    // UPDATE: Admin only (reject_deletion sets status=rejected).
+    //         Also admin/students.js and admin/faculty.js update status.
+    // DELETE: Admin only (purge flow deletes the deletion request doc).
+    match /deletionRequests/{docId} {
+      allow read:   if isAuth() && (resource.data.uid == uid() || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── notifications ─────────────────────────────────────────────────────
+    // READ:   User can only read their own notifications.
+    //         NotificationCenter queries where userUid == uid().
+    //         syncAdminNotifications reads admin's own notifications.
+    // CREATE: Any authenticated user.
+    //         createNotification, notifyAdmins, notifyFaculty all create
+    //         notifications for other users — this requires create to be
+    //         open to any authenticated caller (not just the recipient).
+    // UPDATE: User can update their own (markAllAsRead sets read=true).
+    //         Admin can update any (purgeNotifications uses batch delete).
+    // DELETE: Admin only (purgeNotifications batch deletes by relatedId).
+    //         Note: purgeNotifications queries by relatedId across all users
+    //         so admin delete is required.
+    match /notifications/{docId} {
+      allow read:   if isAuth() && resource.data.userUid == uid();
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.userUid == uid() || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ── auditLogs ─────────────────────────────────────────────────────────
+    // READ:   Admin only (audit page, admin dashboard recent audits).
+    // CREATE: Any authenticated user (logAudit called from many places).
+    // UPDATE: Nobody — immutable by design.
+    // DELETE: Nobody — append-only, tamper-proof.
+    match /auditLogs/{docId} {
+      allow read:   if isAdmin();
+      allow create: if isAuth();
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }
