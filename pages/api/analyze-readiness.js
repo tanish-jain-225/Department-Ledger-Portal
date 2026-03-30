@@ -1,18 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { RATE_LIMIT } from "@/lib/constants";
-
-const rateLimitMap = new Map();
-function isRateLimited(ip) {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip) || { count: 0, start: now };
-  if (now - entry.start > RATE_LIMIT.WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, start: now });
-    return false;
-  }
-  if (entry.count >= RATE_LIMIT.ANALYZE) return true;
-  rateLimitMap.set(ip, { count: entry.count + 1, start: entry.start });
-  return false;
-}
+import { isRateLimited } from "@/lib/rate-limit";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -20,14 +8,14 @@ export default async function handler(req, res) {
   }
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
-  if (isRateLimited(ip)) {
+  if (isRateLimited(`analyze:${ip}`, RATE_LIMIT.ANALYZE, RATE_LIMIT.WINDOW_MS)) {
     return res.status(429).json({ error: "Too many requests. Please wait a moment." });
   }
 
   const { profile, academic, activities, achievements, placements, projects, skills } = req.body;
 
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL;
+  const apiKey = process.env.GEMINI_API_KEY;
+  const modelName = process.env.GEMINI_MODEL;
 
   if (!apiKey) {
     return res.status(500).json({ error: "Gemini API key not configured" });

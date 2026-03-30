@@ -147,9 +147,9 @@ export default function Home() {
             
             <div className="relative z-10 grid gap-12 md:grid-cols-3 text-center">
               {[
-                { label: "Active Institutions", value: "50+", suffix: "" },
-                { label: "Credentials Tracked", value: "10", suffix: "k+" },
-                { label: "Uptime Guarantee", value: "99.9", suffix: "%" },
+                { label: "AI Features", value: "2", suffix: "" },
+                { label: "Role Systems", value: "3", suffix: "" },
+                { label: "Firestore Collections", value: "12", suffix: "" },
               ].map((stat) => (
                 <div key={stat.label}>
                   <p className="text-4xl sm:text-6xl font-black text-white tracking-tighter mb-2">

@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { RATE_LIMIT } from "@/lib/constants";
+import { isRateLimited } from "@/lib/rate-limit";
 
 const VALID_SECTIONS = ["academic", "achievement", "activity", "placement", "project", "skill"];
 
@@ -13,19 +14,6 @@ const SECTION_FIELDS = {
 };
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
-
-const rateLimitMap = new Map();
-function isRateLimited(ip) {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip) || { count: 0, start: now };
-  if (now - entry.start > RATE_LIMIT.WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, start: now });
-    return false;
-  }
-  if (entry.count >= RATE_LIMIT.AUTOFILL) return true;
-  rateLimitMap.set(ip, { count: entry.count + 1, start: entry.start });
-  return false;
-}
 
 export function buildPrompt(section, existingData = [], fileContext = "") {
   const fields = SECTION_FIELDS[section];
@@ -58,7 +46,7 @@ export default async function handler(req, res) {
   }
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
-  if (isRateLimited(ip)) {
+  if (isRateLimited(`autofill:${ip}`, RATE_LIMIT.AUTOFILL, RATE_LIMIT.WINDOW_MS)) {
     return res.status(429).json({ error: "Too many requests. Please wait a moment." });
   }
 
@@ -77,8 +65,8 @@ export default async function handler(req, res) {
     return res.status(413).json({ error: "File too large. Maximum size is 10MB." });
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL;
+  const apiKey = process.env.GEMINI_API_KEY;
+  const modelName = process.env.GEMINI_MODEL;
 
   if (!apiKey) {
     return res.status(500).json({ error: "Gemini API key not configured" });
@@ -88,9 +76,6 @@ export default async function handler(req, res) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: modelName });
 
-    let result;
-
-    // File is always present — send as inline data part
     const fields = SECTION_FIELDS[section];
     const existingJson = JSON.stringify(existingData, null, 2);
 
@@ -114,7 +99,7 @@ Extract values for these fields: ${fields.join(", ")}.
 Return ONLY a valid JSON object with exactly these keys: ${fields.join(", ")}.
 No markdown, no explanation, no preamble. Just the JSON object.`;
 
-    result = await model.generateContent([
+    const result = await model.generateContent([
       prompt,
       {
         inlineData: {

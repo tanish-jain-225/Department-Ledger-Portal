@@ -36,4 +36,3 @@ next-env.d.ts
 
 # Dev tools
 __mocks__/
-__tests__/

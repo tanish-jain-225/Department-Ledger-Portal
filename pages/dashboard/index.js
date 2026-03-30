@@ -12,9 +12,16 @@ import EmptyState from "@/components/ui/EmptyState";
 export default function DashboardPage() {
   const { profile, loading } = useAuth();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(false);
   const [selectedStudentUid, setSelectedStudentUid] = useState(null);
+
+  // Debounce search input — only fire the query 350ms after the user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,7 +29,7 @@ export default function DashboardPage() {
       setBusy(true);
       try {
         const data = await listStudentsForDashboard({
-          search,
+          search: debouncedSearch,
           pageSize: 50,
         });
         if (!cancelled) setRows(data);
@@ -31,10 +38,8 @@ export default function DashboardPage() {
       }
     }
     run();
-    return () => {
-      cancelled = true;
-    };
-  }, [search]);
+    return () => { cancelled = true; };
+  }, [debouncedSearch]);
 
   return (
     <Layout title="Instructional Intelligence" access={ACCESS.STAFF}>
