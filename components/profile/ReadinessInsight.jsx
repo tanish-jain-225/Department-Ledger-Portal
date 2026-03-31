@@ -8,6 +8,7 @@ import { DownloadPdfButton } from "@/components/ui";
 import { createNotification } from "@/lib/notifications";
 import { listByStudent, createRecord, removeRecord } from "@/lib/data";
 import { buildFilename } from "@/lib/pdf-download";
+import { getIdToken } from "@/lib/get-id-token";
 
 export default function ReadinessInsight({ profile, academic, activities, achievements, placements, projects, skills }) {
   const { addToast } = useToast();
@@ -36,9 +37,13 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
   async function analyze() {
     setLoading(true);
     try {
+      const token = await getIdToken();
       const resp = await fetch("/api/analyze-readiness", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ profile, academic, activities, achievements, placements, projects, skills }),
       });
       const result = await resp.json();

@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { createRecord, removeRecord, updateRecord } from "@/lib/data";
-import { useToast } from "@/lib/toast-context";
+import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
@@ -11,39 +10,26 @@ import SmartAssistant from "./SmartAssistant";
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300";
 
 export default function ActivitySection({ uid, rows, onRefresh }) {
-  const { addToast } = useToast();
-  const [type, setType] = useState("none");
-  const [title, setTitle] = useState("");
+  const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
+    useLedgerSection("activities", uid, onRefresh);
+
+  const [type, setType]               = useState("none");
+  const [title, setTitle]             = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [link, setLink] = useState("");
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [date, setDate]               = useState("");
+  const [link, setLink]               = useState("");
 
-  async function add(e) {
+  async function handleAdd(e) {
     if (e) e.preventDefault();
-    try {
-      await createRecord("activities", { studentUid: uid, type, title, description, date, link }, {
-        actorUid: uid, description: `Added activity: ${title}`
-      });
-      addToast(`Added: ${title}`, "success");
-      setTitle(""); setDescription(""); setDate(""); setLink("");
-      onRefresh();
-    } catch { addToast("Failed to add activity", "error"); }
+    await add({ type, title, description, date, link }, `Added activity: ${title}`);
+    setTitle(""); setDescription(""); setDate(""); setLink("");
   }
 
-  async function handleUpdate() {
-    if (!editingRecord) return;
-    try {
-      await updateRecord("activities", editingRecord.id, {
-        type: editingRecord.type, title: editingRecord.title,
-        description: editingRecord.description, date: editingRecord.date, link: editingRecord.link,
-      }, { actorUid: uid, description: `Updated: ${editingRecord.title}` });
-      addToast("Activity updated", "success");
-      setEditingRecord(null);
-      onRefresh();
-    } catch { addToast("Failed to update", "error"); }
-  }
+  const handleUpdate = () => save(
+    { type: editingRecord?.type, title: editingRecord?.title,
+      description: editingRecord?.description, date: editingRecord?.date, link: editingRecord?.link },
+    `Updated: ${editingRecord?.title}`
+  );
 
   return (
     <section className="premium-card p-4 sm:p-6 lg:p-8 animate-slide-up">

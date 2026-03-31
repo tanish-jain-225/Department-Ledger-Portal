@@ -5,6 +5,7 @@ import {
   query,
   orderBy,
   where,
+  limit,
 } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
 import { Button, Badge, EmptyState, TableRowSkeleton, ConfirmDialog, RoleButton } from "@/components/ui";
@@ -12,9 +13,10 @@ import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications, notifyFaculty } from "@/lib/notifications";
-import { USER_SUB_COLLECTIONS } from "@/lib/constants";
+import { purgeUser } from "@/lib/data";
 import { useToast } from "@/lib/toast-context";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { PAGE_SIZE } from "@/lib/constants";
 
 export default function AdminRequestsPage() {
   const { user } = useAuth();
@@ -22,16 +24,41 @@ export default function AdminRequestsPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState(null); // { uid, reqDocId }
+
+  // Debounce search — avoids re-filtering on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
   async function load() {
     const db = getDb();
     if (!db) return;
     setLoading(true);
     try {
-      const qUsers = query(collection(db, "users"), orderBy("createdAt", "desc"));
-      const snapUsers = await getDocs(qUsers);
+      // Server-side: if searching by name use prefix range query, otherwise load recent users
+      const term = debouncedSearch.trim();
+      let usersQuery;
+      if (term) {
+        const end = term + "\uf8ff";
+        usersQuery = query(
+          collection(db, "users"),
+          orderBy("name"),
+          where("name", ">=", term),
+          where("name", "<=", end),
+          limit(PAGE_SIZE.ADMIN_DIRECTORY)
+        );
+      } else {
+        usersQuery = query(
+          collection(db, "users"),
+          orderBy("createdAt", "desc"),
+          limit(PAGE_SIZE.ADMIN_DIRECTORY)
+        );
+      }
+      const snapUsers = await getDocs(usersQuery);
       
       const qReqs = query(collection(db, "roleRequests"), where("status", "==", "pending"));
       const snapReqs = await getDocs(qReqs);
@@ -72,7 +99,7 @@ export default function AdminRequestsPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [debouncedSearch]);
 
   async function decide(uid, action, reqDocId, assignedRole = null) {
     const db = getDb();
@@ -161,13 +188,9 @@ export default function AdminRequestsPage() {
   }
 
   const filtered = rows.filter((r) => {
-    const matchesSearch = 
-      r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (roleFilter === "pending") return (r.pendingRoleReq || r.pendingDeletion) && matchesSearch;
-    if (roleFilter !== "all") return r.role === roleFilter && matchesSearch;
-    return matchesSearch;
+    if (roleFilter === "pending") return r.pendingRoleReq || r.pendingDeletion;
+    if (roleFilter !== "all") return r.role === roleFilter;
+    return true;
   });
 
   return (
@@ -179,39 +202,18 @@ export default function AdminRequestsPage() {
         onConfirm={async () => {
           const { uid, reqDocId } = deleteTarget;
           setDeleteTarget(null);
-          
-          const db = getDb();
-          const subCollections = USER_SUB_COLLECTIONS;
-          for (const collName of subCollections) {
-            const q = query(collection(db, collName), where("studentUid", "==", uid));
-            const snap = await getDocs(q);
-            for (const d of snap.docs) await deleteDoc(doc(db, collName, d.id));
+          try {
+            await purgeUser(uid, user.uid, `Permanently purged user entity and all professional records for ID: ${uid}`);
+            // Clean up any associated role/deletion request docs
+            if (reqDocId) {
+              try { await deleteDoc(doc(getDb(), "deletionRequests", reqDocId)); await purgeNotifications(`del_${reqDocId}`); } catch { /* already gone */ }
+              try { await deleteDoc(doc(getDb(), "roleRequests",    reqDocId)); await purgeNotifications(`role_${reqDocId}`); } catch { /* already gone */ }
+            }
+            addToast("User entity and records purged successfully.", "success");
+            setRows(prev => prev.filter(r => r.id !== uid));
+          } catch (e) {
+            addToast(e?.message || "Purge failed", "error");
           }
-
-          await deleteDoc(doc(db, "users", uid));
-          if (reqDocId) {
-             // If it came from a deletion request
-             try { 
-               await deleteDoc(doc(db, "deletionRequests", reqDocId)); 
-               await purgeNotifications(`del_${reqDocId}`);
-             } catch(e) { addToast(e?.message || "Failed to clean up deletion request", "error"); }
-             // If it was a role request that we just deleted the user for
-             try { 
-               await deleteDoc(doc(db, "roleRequests", reqDocId)); 
-               await purgeNotifications(`role_${reqDocId}`);
-             } catch(e) { addToast(e?.message || "Failed to clean up role request", "error"); }
-          }
-          
-          await logAudit({
-            action: "user_deleted",
-            actorUid: user.uid,
-            targetUid: uid,
-            description: `Permanently purged user entity and all professional records for ID: ${uid}`,
-            details: { requestDoc: reqDocId || "manual" }
-          });
-
-          addToast("User entity and records purged successfully.", "success");
-          setRows(prev => prev.filter(r => r.id !== uid));
         }}
         onCancel={() => setDeleteTarget(null)}
         variant="danger"

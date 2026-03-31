@@ -1,11 +1,35 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { RATE_LIMIT } from "@/lib/constants";
 import { isRateLimited } from "@/lib/rate-limit";
+import { verifyAuthToken } from "@/lib/api-auth";
+
+// ── Input validation ──────────────────────────────────────────────────────────
+
+/**
+ * Validates and sanitises the academic array before sending to Gemini.
+ * Returns an error string if invalid, or null if clean.
+ */
+function validateAcademic(academic) {
+  if (!Array.isArray(academic)) return null; // optional field
+  for (const r of academic) {
+    if (r.gpa !== undefined && r.gpa !== "") {
+      const gpa = parseFloat(r.gpa);
+      if (isNaN(gpa) || gpa < 0 || gpa > 10) {
+        return `Invalid GPA value "${r.gpa}" — must be a number between 0 and 10.`;
+      }
+    }
+  }
+  return null;
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  // ── Auth check ──────────────────────────────────────────────────────────────
+  const uid = await verifyAuthToken(req, res);
+  if (!uid) return;
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
   if (isRateLimited(`analyze:${ip}`, RATE_LIMIT.ANALYZE, RATE_LIMIT.WINDOW_MS)) {
@@ -25,6 +49,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Profile data is required" });
   }
 
+  // ── Input validation ────────────────────────────────────────────────────────
+  const gpaError = validateAcademic(academic);
+  if (gpaError) return res.status(400).json({ error: gpaError });
+
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: modelName });
@@ -35,7 +63,7 @@ export default async function handler(req, res) {
       
       STUDENT METRICS:
       - Name: ${profile?.name}
-      - Roll Number: ${profile?.rollNumber}
+      - Roll Number: ${academic?.length > 0 ? (academic[0]?.rollNumber || "N/A") : "N/A"}
       - Gender: ${profile?.gender}
       - Alumni Status: ${profile?.alumni ? "Alumni" : "Current Student"}
       
@@ -50,8 +78,6 @@ export default async function handler(req, res) {
       
       INDUSTRY EXPOSURE (Placements/Internships):
       ${JSON.stringify(placements, null, 2)}
-      
-
       
       TECHNICAL PROJECTS & ARCHITECTURE:
       ${JSON.stringify(projects, null, 2)}
@@ -80,8 +106,7 @@ export default async function handler(req, res) {
     `;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = result.response.text();
 
     // Robustly extract JSON object using regex
     let jsonStr = text;

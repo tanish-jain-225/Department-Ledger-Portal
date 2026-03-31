@@ -1,14 +1,5 @@
 import { useEffect, useState } from "react";
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  limit, 
-  doc, 
-  updateDoc, 
-  deleteDoc 
-} from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, updateDoc } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
 import { StudentInfoPopup } from "@/components";
 import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
@@ -18,7 +9,8 @@ import { downloadStudentsCsv } from "@/lib/csv-download";
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
-import { PAGE_SIZE, USER_SUB_COLLECTIONS } from "@/lib/constants";
+import { purgeUser } from "@/lib/data";
+import { PAGE_SIZE } from "@/lib/constants";
 
 export default function AdminStudentsDashboard() {
   const { user, loading } = useAuth();
@@ -124,22 +116,7 @@ export default function AdminStudentsDashboard() {
           setDeleteTarget(null);
           setBusy(true);
           try {
-            const db = getDb();
-            const subCollections = USER_SUB_COLLECTIONS;
-            for (const collName of subCollections) {
-              const q = query(collection(db, collName), where("studentUid", "==", uid));
-              const snap = await getDocs(q);
-              for (const d of snap.docs) await deleteDoc(doc(db, collName, d.id));
-            }
-            await deleteDoc(doc(db, "users", uid));
-            
-            await logAudit({
-              action: "user_deleted",
-              actorUid: user.uid,
-              targetUid: uid,
-              description: `Manual Purge: Deleted student entity ${uid}`
-            });
-
+            await purgeUser(uid, user.uid, `Manual Purge: Deleted student entity ${uid}`);
             addToast("Scholar purged from ledger.", "success");
             setStudents(prev => prev.filter(s => s.id !== uid));
             await syncAdminNotifications(user.uid);

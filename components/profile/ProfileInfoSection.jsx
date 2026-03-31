@@ -1,21 +1,12 @@
-import { useEffect, useState } from "react";
-import { getDb } from "@/lib/firebase";
-import { doc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
-import { logAudit } from "@/lib/audit";
-import { createRecord } from "@/lib/data";
-import { useToast } from "@/lib/toast-context";
-import { notifyAdmins } from "@/lib/notifications";
+import { useState } from "react";
+import { useProfileEdit } from "@/lib/use-profile-edit";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 export default function ProfileInfoSection({ user, profile, refreshProfile, onViewCard }) {
-  const { addToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [pendingDeletion, setPendingDeletion] = useState(false);
-  const [loadingDeletion, setLoadingDeletion] = useState(true);
   const [form, setForm] = useState({
     name: profile?.name || "",
     phone: profile?.phone || "",
@@ -26,91 +17,22 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
     github: profile?.github || "",
     alumni: !!profile?.alumni,
   });
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  useEffect(() => {
-    async function checkDeletionStatus() {
-      if (!user?.uid) return;
-      try {
-        const db = getDb();
-        const q = query(
-          collection(db, "deletionRequests"),
-          where("uid", "==", user?.uid),
-          where("status", "==", "pending"),
-          limit(1)
-        );
-        const snap = await getDocs(q);
-        setPendingDeletion(!snap.empty);
-      } catch (err) {
-        // Non-critical check — fail silently
-      } finally {
-        setLoadingDeletion(false);
-      }
-    }
-    checkDeletionStatus();
-  }, [user?.uid]);
+  const {
+    saving, pendingDeletion, loadingDeletion,
+    showDeleteConfirm, setShowDeleteConfirm,
+    saveProfile, requestDeletion,
+  } = useProfileEdit(user?.uid, user?.email, profile?.name, refreshProfile);
 
-  async function saveProfile(e) {
+  async function handleSave(e) {
     e.preventDefault();
-    if (!user?.uid) return;
-    setSaving(true);
-    try {
-      const db = getDb();
-      if (!db) throw new Error("Firebase not configured");
-      await updateDoc(doc(db, "users", user.uid), {
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        address: form.address.trim(),
-        alumni: form.alumni,
-        dob: form.dob,
-        gender: form.gender,
-        linkedin: form.linkedin.trim(),
-        github: form.github.trim(),
-        updatedAt: serverTimestamp(),
-      });
-      await refreshProfile();
-      await logAudit({
-        action: "profile_updated",
-        actorUid: user.uid,
-        targetUid: user.uid,
-        description: `Updated personal profile information`,
-        details: { fields: Object.keys(form) }
-      });
-      addToast("Profile saved successfully!", "success");
-      setIsEditing(false);
-    } catch (error) {
-      addToast(error?.message || "Save failed", "error");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function requestDeletion() {
-    setShowDeleteConfirm(false);
-    try {
-      const delDocId = await createRecord("deletionRequests", {
-        uid: user?.uid,
-        email: user?.email,
-        name: profile?.name || "",
-        status: "pending",
-        createdAt: new Date(),
-      }, {
-        actorUid: user.uid,
-        description: "Requested account and data deletion"
-      });
-      addToast("Deletion request transmitted. An admin will review it.", "success");
-
-      await notifyAdmins({
-        title: "Deletion Request",
-        message: `User ${profile?.name || user.email} has requested data deletion.`,
-        type: "warning",
-        link: "/admin/requests",
-        relatedId: `del_${delDocId}`
-      });
-      setPendingDeletion(true);
-    } catch (err) {
-      addToast("Failed to transmit request", "error");
-    }
+    const ok = await saveProfile({
+      name: form.name.trim(), phone: form.phone.trim(),
+      address: form.address.trim(), alumni: form.alumni,
+      dob: form.dob, gender: form.gender,
+      linkedin: form.linkedin.trim(), github: form.github.trim(),
+    });
+    if (ok) setIsEditing(false);
   }
 
   return (
@@ -186,7 +108,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
           </div>
         </div>
       ) : (
-        <form onSubmit={saveProfile} className="space-y-6 max-w-2xl animate-fade-in">
+        <form onSubmit={handleSave} className="space-y-6 max-w-2xl animate-fade-in">
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Full Legal Name</label>

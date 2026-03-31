@@ -9,7 +9,7 @@ import Layout, { ACCESS } from "@/components/Layout";
 import Link from "next/link";
 import { listByStudent } from "@/lib/data";
 import StudentCard from "@/components/StudentCard";
-import { DownloadPdfButton } from "@/components/ui";
+import { DownloadPdfButton, Skeleton } from "@/components/ui";
 import { buildFilename } from "@/lib/pdf-download";
 
 export default function StudentCardPage() {
@@ -17,7 +17,7 @@ export default function StudentCardPage() {
   const { uid } = router.query;
   const { user, profile, loading: authLoading } = useAuth();
   const [data, setData] = useState(null);
-  const [extra, setExtra] = useState({ academic: [], placements: [] });
+  const [extra, setExtra] = useState({ academic: [], activities: [], achievements: [], placements: [] });
   const [err, setErr] = useState("");
   const cardRef = useRef(null);
 
@@ -38,20 +38,30 @@ export default function StudentCardPage() {
         const userData = { id: snap.id, ...snap.data() };
         if (userData.role !== "student") { setErr("Profile is not a student record"); return; }
         setData(userData);
-        const [academic, placements] = await Promise.all([
+        const [academic, activities, achievements, placements] = await Promise.all([
           listByStudent("academicRecords", uid),
+          listByStudent("activities", uid),
+          listByStudent("achievements", uid),
           listByStudent("placements", uid),
         ]);
-        setExtra({ academic, placements });
+        setExtra({ academic, activities, achievements, placements });
       } catch (e) { setErr(e?.message || "Failed to load"); }
     }
     load();
   }, [router.isReady, authLoading, uid, user, role, canView, router]);
 
-  if (!router.isReady) {
+  if (!router.isReady || authLoading) {
     return (
-      <Layout title="Student card" access={ACCESS.AUTH}>
-        <p className="text-slate-600">Loading…</p>
+      <Layout title="Student Card" access={ACCESS.AUTH}>
+        <div className="max-w-4xl mx-auto py-10 px-4 space-y-6 animate-pulse">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-5 w-16 rounded-xl" />
+            <Skeleton className="h-10 w-52 rounded-xl" />
+          </div>
+          <Skeleton className="h-8 w-48 rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-[2rem]" />
+          <Skeleton className="h-48 w-full rounded-[2rem]" />
+        </div>
       </Layout>
     );
   }
@@ -89,7 +99,9 @@ export default function StudentCardPage() {
           <div ref={cardRef}>
             <StudentCard 
               data={data} 
-              academic={extra.academic} 
+              academic={extra.academic}
+              activities={extra.activities}
+              achievements={extra.achievements}
               placements={extra.placements} 
             />
           </div>

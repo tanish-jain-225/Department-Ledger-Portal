@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { createRecord, removeRecord, updateRecord } from "@/lib/data";
 import { useToast } from "@/lib/toast-context";
+import { useLedgerSection } from "@/lib/use-ledger-section";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -12,40 +12,43 @@ const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 tex
 
 export default function AcademicSection({ uid, rows, onRefresh }) {
   const { addToast } = useToast();
-  const [year, setYear] = useState("");
-  const [semester, setSemester] = useState("");
-  const [rollNumber, setRollNumber] = useState("");
-  const [gpa, setGpa] = useState("");
-  const [subjects, setSubjects] = useState("");
-  const [branch, setBranch] = useState("");
-  const [link, setLink] = useState("");
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
+    useLedgerSection("academicRecords", uid, onRefresh);
 
-  async function add(e) {
+  const [year, setYear]           = useState("");
+  const [semester, setSemester]   = useState("");
+  const [rollNumber, setRollNumber] = useState("");
+  const [gpa, setGpa]             = useState("");
+  const [subjects, setSubjects]   = useState("");
+  const [branch, setBranch]       = useState("");
+  const [link, setLink]           = useState("");
+
+  async function handleAdd(e) {
     if (e) e.preventDefault();
-    try {
-      await createRecord("academicRecords", { studentUid: uid, year, semester, gpa, subjects, rollNumber, branch, resultLink: link }, {
-        actorUid: uid, description: `Added academic record for Year ${year} Sem ${semester}`
-      });
-      addToast(`Added Year ${year} Sem ${semester}`, "success");
-      setYear(""); setSemester(""); setGpa(""); setSubjects(""); setRollNumber(""); setBranch(""); setLink("");
-      onRefresh();
-    } catch { addToast("Failed to add record", "error"); }
+    const gpaNum = parseFloat(gpa);
+    if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 10) {
+      addToast("GPA must be a number between 0 and 10.", "error");
+      return;
+    }
+    await add(
+      { year, semester, gpa, subjects, rollNumber, branch, resultLink: link },
+      `Added academic record for Year ${year} Sem ${semester}`
+    );
+    setYear(""); setSemester(""); setGpa(""); setSubjects(""); setRollNumber(""); setBranch(""); setLink("");
   }
 
   async function handleUpdate() {
-    if (!editingRecord) return;
-    try {
-      await updateRecord("academicRecords", editingRecord.id, {
-        year: editingRecord.year, semester: editingRecord.semester, gpa: editingRecord.gpa,
+    const gpaNum = parseFloat(editingRecord?.gpa);
+    if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 10) {
+      addToast("GPA must be a number between 0 and 10.", "error");
+      return;
+    }
+    await save(
+      { year: editingRecord.year, semester: editingRecord.semester, gpa: editingRecord.gpa,
         subjects: editingRecord.subjects, rollNumber: editingRecord.rollNumber,
-        branch: editingRecord.branch, resultLink: editingRecord.resultLink,
-      }, { actorUid: uid, description: `Updated Year ${editingRecord.year} Sem ${editingRecord.semester}` });
-      addToast("Record updated", "success");
-      setEditingRecord(null);
-      onRefresh();
-    } catch { addToast("Failed to update record", "error"); }
+        branch: editingRecord.branch, resultLink: editingRecord.resultLink },
+      `Updated Year ${editingRecord.year} Sem ${editingRecord.semester}`
+    );
   }
 
   return (
@@ -79,7 +82,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
         </div>
 
         {/* Form */}
-        <form onSubmit={add} className="flex flex-col gap-3">
+        <form onSubmit={handleAdd} className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <Input required placeholder="Year (e.g. 2024)" value={year} onChange={e => setYear(e.target.value)} />
             <Input required placeholder="Semester (e.g. 5)" value={semester} onChange={e => setSemester(e.target.value)} />
@@ -164,7 +167,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
           </div>
           <div className="flex justify-end gap-3 mt-2">
             <Button variant="ghost" onClick={() => setEditingRecord(null)}>Cancel</Button>
-            <Button onClick={handleUpdate}>Save Changes</Button>
+            <Button onClick={handleUpdate} disabled={saving}>Save Changes</Button>
           </div>
         </div>
       </Modal>
@@ -176,12 +179,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
           if (!deleteTarget) return;
-          try {
-            await removeRecord(deleteTarget.collection, deleteTarget.id, { actorUid: uid, targetUid: uid, description: `Deleted: ${deleteTarget.label}` });
-            addToast(`Deleted: ${deleteTarget.label}`, "success");
-            setDeleteTarget(null);
-            onRefresh();
-          } catch { addToast("Failed to delete", "error"); }
+          await confirmDelete(`Deleted: ${deleteTarget.label}`);
         }}
       />
     </div>

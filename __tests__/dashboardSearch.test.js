@@ -1,6 +1,10 @@
 /**
- * Tests for the client-side search fallback logic used in listStudentsForDashboard.
- * We test the filter predicate directly — no Firestore mocking needed.
+ * Tests for the search filter predicate used in listStudentsForDashboard's
+ * graceful-degradation fallback path (in-memory filtering when Firestore
+ * index is not yet available).
+ *
+ * The server-side prefix query path is tested implicitly via integration,
+ * but the fallback predicate is pure and testable here without Firestore mocks.
  */
 
 const students = [

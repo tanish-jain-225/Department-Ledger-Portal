@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { createRecord, removeRecord, updateRecord } from "@/lib/data";
 import { useToast } from "@/lib/toast-context";
+import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
@@ -33,39 +33,28 @@ const PROFICIENCY_DOT = {
 
 export default function SkillSection({ uid, rows, onRefresh }) {
   const { addToast } = useToast();
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("languages");
-  const [proficiency, setProficiency] = useState("intermediate");
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
+    useLedgerSection("skills", uid, onRefresh);
 
-  async function add(e) {
+  const [name, setName]             = useState("");
+  const [category, setCategory]     = useState("languages");
+  const [proficiency, setProficiency] = useState("intermediate");
+
+  async function handleAdd(e) {
     if (e) e.preventDefault();
     if (!name.trim()) return;
     if (rows.find(s => s.name.toLowerCase() === name.trim().toLowerCase())) {
-      return addToast("Skill already exists in your ledger", "error");
+      addToast("Skill already exists in your ledger", "error");
+      return;
     }
-    try {
-      await createRecord("skills", { studentUid: uid, name: name.trim(), category, proficiency }, {
-        actorUid: uid, description: `Added skill: ${name.trim()}`
-      });
-      addToast(`Added: ${name.trim()}`, "success");
-      setName("");
-      onRefresh();
-    } catch { addToast("Failed to add skill", "error"); }
+    await add({ name: name.trim(), category, proficiency }, `Added skill: ${name.trim()}`);
+    setName("");
   }
 
-  async function handleUpdate() {
-    if (!editingRecord) return;
-    try {
-      await updateRecord("skills", editingRecord.id, {
-        name: editingRecord.name, category: editingRecord.category, proficiency: editingRecord.proficiency,
-      }, { actorUid: uid, description: `Updated: ${editingRecord.name}` });
-      addToast("Skill updated", "success");
-      setEditingRecord(null);
-      onRefresh();
-    } catch { addToast("Failed to update", "error"); }
-  }
+  const handleUpdate = () => save(
+    { name: editingRecord?.name, category: editingRecord?.category, proficiency: editingRecord?.proficiency },
+    `Updated: ${editingRecord?.name}`
+  );
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">

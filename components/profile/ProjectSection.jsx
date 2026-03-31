@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { createRecord, removeRecord, updateRecord } from "@/lib/data";
-import { useToast } from "@/lib/toast-context";
+import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
@@ -11,39 +10,26 @@ import SmartAssistant from "./SmartAssistant";
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300";
 
 export default function ProjectSection({ uid, rows, onRefresh }) {
-  const { addToast } = useToast();
-  const [title, setTitle] = useState("");
-  const [techStack, setTechStack] = useState("");
-  const [link, setLink] = useState("");
-  const [github, setGithub] = useState("");
+  const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
+    useLedgerSection("projects", uid, onRefresh);
+
+  const [title, setTitle]           = useState("");
+  const [techStack, setTechStack]   = useState("");
+  const [link, setLink]             = useState("");
+  const [github, setGithub]         = useState("");
   const [description, setDescription] = useState("");
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
 
-  async function add(e) {
+  async function handleAdd(e) {
     if (e) e.preventDefault();
-    try {
-      await createRecord("projects", { studentUid: uid, title, techStack, link, github, description, createdAt: new Date() }, {
-        actorUid: uid, description: `Added project: ${title}`
-      });
-      addToast(`Added: ${title}`, "success");
-      setTitle(""); setTechStack(""); setLink(""); setGithub(""); setDescription("");
-      onRefresh();
-    } catch { addToast("Failed to add project", "error"); }
+    await add({ title, techStack, link, github, description }, `Added project: ${title}`);
+    setTitle(""); setTechStack(""); setLink(""); setGithub(""); setDescription("");
   }
 
-  async function handleUpdate() {
-    if (!editingRecord) return;
-    try {
-      await updateRecord("projects", editingRecord.id, {
-        title: editingRecord.title, techStack: editingRecord.techStack,
-        link: editingRecord.link, github: editingRecord.github, description: editingRecord.description,
-      }, { actorUid: uid, description: `Updated: ${editingRecord.title}` });
-      addToast("Project updated", "success");
-      setEditingRecord(null);
-      onRefresh();
-    } catch { addToast("Failed to update", "error"); }
-  }
+  const handleUpdate = () => save(
+    { title: editingRecord?.title, techStack: editingRecord?.techStack,
+      link: editingRecord?.link, github: editingRecord?.github, description: editingRecord?.description },
+    `Updated: ${editingRecord?.title}`
+  );
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">

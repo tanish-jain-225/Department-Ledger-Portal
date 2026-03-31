@@ -1,6 +1,5 @@
 export { default as Alert } from "./Alert";
 export { default as Badge } from "./Badge";
-export { default as Breadcrumb } from "./Breadcrumb";
 export { default as Button } from "./Button";
 export { default as Card } from "./Card";
 export { default as CommonFooter } from "./CommonFooter";
@@ -10,6 +9,5 @@ export { default as SectionCard } from "./SectionCard";
 export { default as Input } from "./Input";
 export { default as Modal } from "./Modal";
 export { default as RoleButton } from "./RoleButton";
-export { default as Select } from "./Select";
 export { Skeleton, ProfileSkeleton, CardSkeleton, TableRowSkeleton } from "./Skeleton";
 export { default as DownloadPdfButton } from "./DownloadPdfButton";

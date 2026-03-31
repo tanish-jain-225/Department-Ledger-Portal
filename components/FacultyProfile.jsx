@@ -1,126 +1,36 @@
 import { useState, useEffect } from "react";
-import { doc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
-import { getDb } from "@/lib/firebase";
-import { useToast } from "@/lib/toast-context";
-import { logAudit } from "@/lib/audit";
-import { createRecord } from "@/lib/data";
-import { notifyAdmins } from "@/lib/notifications";
+import { useProfileEdit } from "@/lib/use-profile-edit";
 import Button from "./ui/Button";
 import IdentityCardPopup from "./IdentityCardPopup";
 
 export default function FacultyProfile({ profile, onRefresh }) {
-  const { addToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [pendingDeletion, setPendingDeletion] = useState(false);
-  const [loadingDeletion, setLoadingDeletion] = useState(true);
-  const [err, setErr] = useState("");
-
+  const [showCardModal, setShowCardModal] = useState(false);
   const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    dob: "",
-    gender: "",
-    linkedin: "",
-    github: "",
-    bio: "",
+    name: "", phone: "", address: "", dob: "", gender: "", linkedin: "", github: "", bio: "",
   });
 
   useEffect(() => {
     if (profile) {
       setForm({
-        name: profile.name || "",
-        phone: profile.phone || "",
-        address: profile.address || "",
-        dob: profile.dob || "",
-        gender: profile.gender || "",
-        linkedin: profile.linkedin || "",
-        github: profile.github || "",
-        bio: profile.bio || "",
+        name: profile.name || "", phone: profile.phone || "",
+        address: profile.address || "", dob: profile.dob || "",
+        gender: profile.gender || "", linkedin: profile.linkedin || "",
+        github: profile.github || "", bio: profile.bio || "",
       });
     }
   }, [profile]);
 
-  useEffect(() => {
-    async function checkDeletionStatus() {
-      if (!profile?.id) return;
-      try {
-        const db = getDb();
-        const q = query(
-          collection(db, "deletionRequests"),
-          where("uid", "==", profile.id),
-          where("status", "==", "pending"),
-          limit(1)
-        );
-        const snap = await getDocs(q);
-        setPendingDeletion(!snap.empty);
-      } catch (err) {
-        // Deletion status check is non-critical — fail silently
-      } finally {
-        setLoadingDeletion(false);
-      }
-    }
-    checkDeletionStatus();
-  }, [profile?.id]);
+  const {
+    saving, pendingDeletion, loadingDeletion,
+    saveProfile, requestDeletion,
+  } = useProfileEdit(profile?.id, profile?.email, profile?.name, onRefresh);
 
-  async function save(e) {
+  async function handleSave(e) {
     if (e) e.preventDefault();
-    setSaving(true);
-    setErr("");
-    try {
-      const db = getDb();
-      if (!db) return;
-      await updateDoc(doc(db, "users", profile.id), {
-        ...form,
-        updatedAt: serverTimestamp(),
-      });
-      await logAudit({
-        action: "profile_updated",
-        actorUid: profile.id,
-        targetUid: profile.id,
-        description: `Updated faculty profile information`,
-        details: { fields: Object.keys(form) }
-      });
-      await onRefresh();
-      addToast("Professional profile updated.", "success");
-      setIsEditing(false);
-    } catch (error) {
-      addToast(error.message || "Failed to update profile", "error");
-      setErr(error.message);
-    } finally {
-      setSaving(false);
-    }
+    const ok = await saveProfile(form);
+    if (ok) setIsEditing(false);
   }
-
-  async function requestDeletion() {
-    try {
-      const delDocId = await createRecord("deletionRequests", {
-        uid: profile.id,
-        email: profile.email || "",
-        name: profile.name || "",
-        status: "pending",
-        createdAt: new Date(),
-      }, {
-        actorUid: profile.id,
-        description: "Requested professional account and data deletion"
-      });
-      addToast("Deletion request transmitted. An admin will review it.", "success");
-
-      await notifyAdmins({
-        title: "Staff Deletion Request",
-        message: `Faculty member ${profile.name || profile.email} has requested data deletion.`,
-        type: "warning",
-        link: "/admin/requests",
-        relatedId: `del_${delDocId}`
-      });
-      setPendingDeletion(true);
-    } catch (err) {
-      addToast("Failed to transmit request", "error");
-    }
-  }
-
-  const [showCardModal, setShowCardModal] = useState(false);
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 animate-fade-in no-print pb-24">
@@ -233,7 +143,7 @@ export default function FacultyProfile({ profile, onRefresh }) {
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Button type="button" onClick={save} disabled={saving} className="flex-1">
+                <Button type="button" onClick={handleSave} disabled={saving} className="flex-1">
                   {saving ? "Saving Changes..." : "Secure Save"}
                 </Button>
                 <Button variant="secondary" onClick={() => setIsEditing(false)} className="flex-1">

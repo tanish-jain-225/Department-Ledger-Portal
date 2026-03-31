@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { RATE_LIMIT } from "@/lib/constants";
 import { isRateLimited } from "@/lib/rate-limit";
+import { verifyAuthToken } from "@/lib/api-auth";
 
 const VALID_SECTIONS = ["academic", "achievement", "activity", "placement", "project", "skill"];
 
@@ -44,6 +45,10 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  // ── Auth check ──────────────────────────────────────────────────────────────
+  const uid = await verifyAuthToken(req, res);
+  if (!uid) return;
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
   if (isRateLimited(`autofill:${ip}`, RATE_LIMIT.AUTOFILL, RATE_LIMIT.WINDOW_MS)) {

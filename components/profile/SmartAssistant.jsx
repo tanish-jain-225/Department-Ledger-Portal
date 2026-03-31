@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useToast } from "@/lib/toast-context";
+import { getIdToken } from "@/lib/get-id-token";
 
 // Accepted file types for Gemini inline data
 const ACCEPTED_TYPES = {
@@ -36,10 +37,14 @@ export default function SmartAssistant({
     setIsLoading(true);
     try {
       const base64 = await fileToBase64(file);
+      const token = await getIdToken();
 
       const res = await fetch("/api/autofill-section", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           section: mode,
           existingData,

@@ -33,6 +33,3 @@ yarn-error.log*
 # typescript (if added later)
 next-env.d.ts
 *.tsbuildinfo
-
-# Dev tools
-__mocks__/
