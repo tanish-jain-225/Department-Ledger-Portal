@@ -44,7 +44,7 @@ service cloud.firestore {
     //                   placements, projects, skills, aiReports
     //
     // READ:   Any authenticated user (faculty/admin need to read student records).
-    // CREATE: Only the owner — studentUid must match the caller's uid.
+    // CREATE: Only the owner - studentUid must match the caller's uid.
     // UPDATE/DELETE: Owner or admin only.
     //   Admin needs delete for the cascade purge flow in admin pages.
 
@@ -99,8 +99,8 @@ service cloud.firestore {
 
     // ── roleRequests ──────────────────────────────────────────────────────
     // READ:   Owner can read their own request. Admin can read all.
-    //         syncAdminNotifications queries all pending — admin only.
-    //         admin/requests.js queries all — admin only.
+    //         syncAdminNotifications queries all pending - admin only.
+    //         admin/requests.js queries all - admin only.
     // CREATE: Any authenticated user (registration flow creates this).
     //         Also admin/students.js creates with status=processed_manual.
     // UPDATE: Admin only (status changes: processed_manual, rejected).
@@ -132,7 +132,7 @@ service cloud.firestore {
     //         syncAdminNotifications reads admin's own notifications.
     // CREATE: Any authenticated user.
     //         createNotification, notifyAdmins, notifyFaculty all create
-    //         notifications for other users — this requires create to be
+    //         notifications for other users - this requires create to be
     //         open to any authenticated caller (not just the recipient).
     // UPDATE: User can update their own (markAllAsRead sets read=true).
     //         Admin can update any (purgeNotifications uses batch delete).
@@ -149,8 +149,8 @@ service cloud.firestore {
     // ── auditLogs ─────────────────────────────────────────────────────────
     // READ:   Admin only (audit page, admin dashboard recent audits).
     // CREATE: Any authenticated user (logAudit called from many places).
-    // UPDATE: Nobody — immutable by design.
-    // DELETE: Nobody — append-only, tamper-proof.
+    // UPDATE: Nobody - immutable by design.
+    // DELETE: Nobody - append-only, tamper-proof.
     match /auditLogs/{docId} {
       allow read:   if isAdmin();
       allow create: if isAuth();

@@ -86,7 +86,7 @@ export default async function handler(req, res) {
 
     const hasExisting = existingData.length > 0;
     const existingNote = hasExisting
-      ? `The student already has these ${section} records saved — DO NOT repeat or duplicate any of them:
+      ? `The student already has these ${section} records saved - DO NOT repeat or duplicate any of them:
 ${existingJson}
 
 Your job is to extract a NEW, DIFFERENT entry from the document that is not already in the list above.

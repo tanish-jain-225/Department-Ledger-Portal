@@ -38,8 +38,8 @@ export default function RegisterPage() {
   return (
     <Layout title="Register" access={ACCESS.GUEST}>
       <Head>
-        <title>Create Account — Department Ledger Portal</title>
-        <meta name="description" content="Create your Department Ledger Portal account to access AI-powered academic records, placement tracking, and career readiness reports." />
+        <title>Create Account - Department Ledger Portal</title>
+        <meta name="description" content="Create your Department Ledger Portal account to access AI-powered academic records, placement tracking and career readiness reports." />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className="mx-auto max-w-lg pt-12 pb-24 px-6 animate-fade-in">

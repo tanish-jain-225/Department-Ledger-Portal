@@ -47,9 +47,9 @@ export default function StudentCard({
 
         <dl className="grid grid-cols-3 gap-3">
           {[
-            { label: "Gender", value: data.gender || "—" },
-            { label: "Phone", value: data.phone || "—" },
-            { label: "Date of Birth", value: data.dob || "—" }
+            { label: "Gender", value: data.gender || "-" },
+            { label: "Phone", value: data.phone || "-" },
+            { label: "Date of Birth", value: data.dob || "-" }
           ].map((item, i) => (
             <div key={i} className="bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm">
               <dt className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-1">{item.label}</dt>
@@ -62,7 +62,7 @@ export default function StudentCard({
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm grow h-full">
             <h4 className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-2">Residential Address</h4>
             <p className="text-sm font-bold text-slate-800 leading-relaxed">
-              {data.address || "No address provided —"}
+              {data.address || "No address provided -"}
             </p>
             <div className="mt-4 pt-3 border-t border-slate-200">
                <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${data.alumni ? "bg-emerald-100 text-emerald-700" : "bg-brand-100 text-brand-700"}`}>
@@ -91,8 +91,8 @@ export default function StudentCard({
                 </div>
                 <div className="space-y-2">
                   <div className="flex flex-wrap gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
-                    <span className="bg-slate-50 px-2 py-1 rounded border border-slate-100">Roll: {r.rollNumber || "—"}</span>
-                    <span className="bg-slate-50 px-2 py-1 rounded border border-slate-100">Branch: {r.branch || "—"}</span>
+                    <span className="bg-slate-50 px-2 py-1 rounded border border-slate-100">Roll: {r.rollNumber || "-"}</span>
+                    <span className="bg-slate-50 px-2 py-1 rounded border border-slate-100">Branch: {r.branch || "-"}</span>
                   </div>
                   {r.subjects && (
                     <p className="text-xs text-slate-500 leading-relaxed italic line-clamp-2">

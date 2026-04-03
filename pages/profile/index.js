@@ -78,7 +78,7 @@ export default function ProfilePage() {
       setSkills(sk);
       setListsLoaded(true);
     } catch (e) {
-      // Profile lists load failure is non-critical — page still renders
+      // Profile lists load failure is non-critical - page still renders
     }
   }, [user?.uid]);
 

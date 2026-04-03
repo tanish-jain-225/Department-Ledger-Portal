@@ -12,9 +12,9 @@ export default function Home() {
   return (
     <Layout title="Department Ledger" access={ACCESS.PUBLIC}>
       <Head>
-        <title>Department Ledger Portal — AI-Powered Academic Records</title>
+        <title>Department Ledger Portal - AI-Powered Academic Records</title>
         <meta name="description" content="The modern academic ledger for departments. Track student GPA, placements, achievements and generate AI-powered placement readiness reports using Gemini." />
-        <meta property="og:title" content="Department Ledger Portal — AI-Powered Academic Records" />
+        <meta property="og:title" content="Department Ledger Portal - AI-Powered Academic Records" />
         <meta property="og:description" content="The modern academic ledger for departments. Track student GPA, placements, achievements and generate AI-powered placement readiness reports using Gemini." />
         <script
           type="application/ld+json"
@@ -59,7 +59,7 @@ export default function Home() {
           </h1>
           
           <p className="mt-8 text-xl sm:text-2xl text-slate-500 max-w-3xl mx-auto leading-relaxed font-medium animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            A high-intelligence platform for academic records, student performance tracking, and departmental oversight. Precision engineered for elite institutions.
+            A high-intelligence platform for academic records, student performance tracking and departmental oversight. Precision engineered for elite institutions.
           </p>
 
           <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "0.3s" }}>
@@ -106,7 +106,7 @@ export default function Home() {
             },
             {
               title: "Comprehensive Tracking",
-              desc: "Track academic performance, activities, achievements, and placements in one unified platform.",
+              desc: "Track academic performance, activities, achievements and placements in one unified platform.",
               icon: (
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />

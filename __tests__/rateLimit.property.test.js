@@ -8,7 +8,7 @@ beforeEach(() => {
   if (globalThis.__rateLimitStore) globalThis.__rateLimitStore.clear();
 });
 
-describe("isRateLimited — property-based", () => {
+describe("isRateLimited - property-based", () => {
   it("never blocks the first request for any key", () => {
     fc.assert(fc.property(
       fc.string({ minLength: 1, maxLength: 40 }),

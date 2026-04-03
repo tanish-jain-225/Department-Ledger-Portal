@@ -13,7 +13,7 @@ function InfoItem({ label, value, wide }) {
   return (
     <div className={wide ? "sm:col-span-2" : ""}>
       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
-      <p className="text-sm font-semibold text-slate-800">{value || "—"}</p>
+      <p className="text-sm font-semibold text-slate-800">{value || "-"}</p>
     </div>
   );
 }
@@ -195,10 +195,10 @@ export default function StudentDetailPage() {
               <ul className="mt-4 space-y-2">
                 {lists.activities.map((r) => (
                   <li key={r.id} className="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                    <span className="flex-shrink-0 rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-slate-500 capitalize">{r.type}</span>
+                    <span className="flex-shrink-0 rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-slate-500">{r.type}</span>
                     <div>
                       <p className="text-sm font-bold text-slate-900">{r.title}</p>
-                      <p className="text-xs text-slate-500">{r.date}{r.description ? ` — ${r.description}` : ""}</p>
+                      <p className="text-xs text-slate-500">{r.date}{r.description ? ` - ${r.description}` : ""}</p>
                     </div>
                   </li>
                 ))}
@@ -222,7 +222,7 @@ export default function StudentDetailPage() {
               <ul className="mt-4 space-y-2">
                 {lists.achievements.map((r) => (
                   <li key={r.id} className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                    <span className="flex-shrink-0 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest capitalize">{r.level}</span>
+                    <span className="flex-shrink-0 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">{r.level}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-900 truncate">{r.title}</p>
                       <p className="text-xs text-slate-500">{r.date}</p>

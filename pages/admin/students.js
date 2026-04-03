@@ -110,7 +110,7 @@ export default function AdminStudentsDashboard() {
       <ConfirmDialog
         open={!!deleteTarget}
         title="Protocol: Permanent Purge"
-        message="CRITICAL: You are about to permanently erase this scholar from the global ledger. This includes all academic records, activities, and professional achievements. This action is irreversible."
+        message="CRITICAL: You are about to permanently erase this scholar from the global ledger. This includes all academic records, activities and professional achievements. This action is irreversible."
         onConfirm={async () => {
           const uid = deleteTarget;
           setDeleteTarget(null);
@@ -236,7 +236,7 @@ export default function AdminStudentsDashboard() {
                     </div>
                     <div className="flex flex-col">
                        <span className="text-[8px] font-black uppercase text-slate-300">Section</span>
-                       <span className="text-xs font-bold text-slate-900 mt-0.5">{s.section || "—"}</span>
+                       <span className="text-xs font-bold text-slate-900 mt-0.5">{s.section || "-"}</span>
                     </div>
                   </div>
 

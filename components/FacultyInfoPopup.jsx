@@ -74,7 +74,7 @@ export default function FacultyInfoPopup({ uid, onClose }) {
 
           <div className="grid gap-6">
             <div className="flex flex-wrap gap-2 text-sm text-slate-500">
-              <Badge variant="neutral" className="capitalize">{data.gender || "—"}</Badge>
+              <Badge variant="neutral" className="capitalize">{data.gender || "-"}</Badge>
               <Badge variant={data.facultyVerification === "approved" ? "success" : "warning"}>
                 {data.facultyVerification || "Pending"}
               </Badge>
@@ -83,7 +83,7 @@ export default function FacultyInfoPopup({ uid, onClose }) {
             <div className="grid sm:grid-cols-2 gap-4">
                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
                   <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Phone Number</span>
-                  <p className="text-sm text-slate-700 font-medium">{data.phone || "—"}</p>
+                  <p className="text-sm text-slate-700 font-medium">{data.phone || "-"}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
                   <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Created</span>
@@ -99,7 +99,7 @@ export default function FacultyInfoPopup({ uid, onClose }) {
 
             <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
               <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Residential Address</span>
-              <p className="text-sm text-slate-700 leading-relaxed font-medium">{data.address || "No address provided —"}</p>
+              <p className="text-sm text-slate-700 leading-relaxed font-medium">{data.address || "No address provided -"}</p>
             </div>
 
             <div className="flex gap-3 text-sm">

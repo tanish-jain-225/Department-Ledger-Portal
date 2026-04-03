@@ -81,14 +81,14 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
             <div key={item.label} className="space-y-1.5 p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</p>
               <p className={`text-base font-bold text-slate-900 ${item.capitalize ? "capitalize" : ""}`}>
-                {item.value || "—"}
+                {item.value || "-"}
               </p>
             </div>
           ))}
           
           <div className="sm:col-span-2 space-y-1.5 p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Primary Address</p>
-            <p className="text-base font-bold text-slate-900">{profile?.address || "—"}</p>
+            <p className="text-base font-bold text-slate-900">{profile?.address || "-"}</p>
           </div>
 
           {[
@@ -97,7 +97,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
           ].map((item) => (
             <div key={item.label} className="space-y-1.5 p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</p>
-              <p className="text-sm font-black text-brand-600 truncate">{item.value || "—"}</p>
+              <p className="text-sm font-black text-brand-600 truncate">{item.value || "-"}</p>
             </div>
           ))}
 

@@ -91,7 +91,7 @@ export default function SkillSection({ uid, rows, onRefresh }) {
         <Button type="submit" className="w-full py-4 uppercase tracking-widest text-[10px] font-black">Register Skill in Ledger</Button>
       </form>
 
-      {/* Skill cards — flex column, no grid */}
+      {/* Skill cards - flex column, no grid */}
       <div className="flex flex-col gap-3">
         {rows.length === 0 ? (
           <div className="flex items-center justify-center py-16 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-100">

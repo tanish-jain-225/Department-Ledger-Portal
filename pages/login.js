@@ -53,8 +53,8 @@ export default function LoginPage() {
   return (
     <Layout title="Sign In" access={ACCESS.GUEST}>
       <Head>
-        <title>Sign In — Department Ledger Portal</title>
-        <meta name="description" content="Sign in to your Department Ledger Portal account to access your academic records, AI reports, and departmental dashboard." />
+        <title>Sign In - Department Ledger Portal</title>
+        <meta name="description" content="Sign in to your Department Ledger Portal account to access your academic records, AI reports and departmental dashboard." />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className="mx-auto max-w-lg pt-12 pb-24 px-6 animate-fade-in">

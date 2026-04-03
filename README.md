@@ -7,7 +7,7 @@
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat&logo=vercel)](https://vercel.com/)
 [![Tests](https://img.shields.io/badge/Tests-44_passing-brightgreen?style=flat)](/__tests__)
 
-An AI-powered academic record management system for educational departments. Students manage their full academic profile, faculty oversee student progress, and admins govern the entire system — all backed by Gemini AI, Firebase, and a zero-trust security model.
+An AI-powered academic record management system for educational departments. Students manage their full academic profile, faculty oversee student progress and admins govern the entire system, all backed by Gemini AI, Firebase and a zero-trust security model.
 
 **Live Demo:** https://department-ledger-portal.vercel.app
 
@@ -39,7 +39,7 @@ An AI-powered academic record management system for educational departments. Stu
 
 ## What It Does
 
-The Department Ledger Portal solves "data stagnation" in academic institutions — where student records are locked in fragmented spreadsheets and manual processes. It provides:
+The Department Ledger Portal solves "data stagnation" in academic institutions, where student records are locked in fragmented spreadsheets and manual processes. It provides:
 
 - A unified master ledger for all student academic data (GPA, achievements, placements, projects, skills)
 - AI-powered document parsing that extracts structured data from uploaded PDFs and images in ~10 seconds vs 20 minutes of manual entry
@@ -55,7 +55,7 @@ The Department Ledger Portal solves "data stagnation" in academic institutions �
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 15 (Pages Router), React 18, Tailwind CSS 3.4 |
-| AI | Google Gemini 2.5 Flash (multimodal — text + PDF + image) |
+| AI | Google Gemini 2.5 Flash (multimodal text + PDF + image) |
 | Database | Firebase Firestore (NoSQL, real-time) |
 | Auth | Firebase Authentication (email/password) + firebase-admin (server-side token verification) |
 | Hosting | Vercel (serverless, edge-optimized) |
@@ -127,7 +127,7 @@ Route-level access is enforced in `Layout.jsx` using the `ACCESS` enum:
 
 ## AI Features
 
-### Smart Analysis — `POST /api/autofill-section`
+### Smart Analysis - `POST /api/autofill-section`
 
 Accepts a base64-encoded PDF or image and the target ledger section. Uses Gemini's multimodal capability to extract structured data and return a JSON object matching the section's field schema. Requires a valid Firebase ID token in the `Authorization` header.
 
@@ -146,7 +146,7 @@ The prompt includes existing records so the model avoids duplicating entries alr
 
 Accepted file types: PDF, PNG, JPEG, WEBP, HEIC, HEIF, TXT (max 10MB)
 
-### Career Pulse — `POST /api/analyze-readiness`
+### Career Pulse - `POST /api/analyze-readiness`
 
 Sends the student's full profile to Gemini with a structured evaluation prompt. GPA values are validated (0–10) before the request is forwarded. Requires a valid Firebase ID token.
 
@@ -277,18 +277,18 @@ Rate limit: 5 requests per IP per minute.
 
 **Authentication:** Firebase Auth (email/password). New users are signed out immediately after registration and cannot log in until an admin assigns a role.
 
-**RBAC enforcement — three layers:**
-1. `lib/auth-context.js` — checks role on every `onAuthStateChanged` event. If role is not approved, signs the user out.
-2. `Layout.jsx` — checks `ACCESS` level on every route render. Redirects unauthorized users.
-3. Firestore security rules — enforced server-side, independent of the client.
+**RBAC enforcement - three layers:**
+1. `lib/auth-context.js` - checks role on every `onAuthStateChanged` event. If role is not approved, signs the user out.
+2. `Layout.jsx` - checks `ACCESS` level on every route render. Redirects unauthorized users.
+3. Firestore security rules - enforced server-side, independent of the client.
 
 **AI route protection:** Both `/api/autofill-section` and `/api/analyze-readiness` call `verifyAuthToken()` from `lib/api-auth.js` which uses `firebase-admin` to verify the Firebase ID token server-side. Unauthenticated requests receive a `401` before any Gemini API call is made.
 
-**Audit trail:** Every admin action calls `logAudit()` which writes to `auditLogs`. The Firestore rule sets `update: if false` and `delete: if false` — the collection is append-only and tamper-proof.
+**Audit trail:** Every admin action calls `logAudit()` which writes to `auditLogs`. The Firestore rule sets `update: if false` and `delete: if false` - the collection is append-only and tamper-proof.
 
 **Data masking:** CSV exports use `maskEmail()` and `maskPhone()` from `lib/export-utils.js` when `maskSensitive: true`. Faculty exports are masked; admin exports are unmasked.
 
-**API key security:** `GEMINI_API_KEY` has no `NEXT_PUBLIC_` prefix — it is never included in the client-side JavaScript bundle. Only server-side API routes can read it.
+**API key security:** `GEMINI_API_KEY` has no `NEXT_PUBLIC_` prefix - it is never included in the client-side JavaScript bundle. Only server-side API routes can read it.
 
 **Dependency security:** Transitive vulnerability in `@tootallnate/once` is resolved via `overrides` in `package.json`. Run `npm audit` to verify 0 vulnerabilities.
 
@@ -299,13 +299,13 @@ Rate limit: 5 requests per IP per minute.
 Key rules summary:
 
 ```
-users            — read: any auth; write: own doc or admin
+users            - read: any auth; write: own doc or admin
 academicRecords/achievements/activities/placements/projects/skills/aiReports
-                 — read: any auth; create: owner only (studentUid == uid); update/delete: owner or admin
-roleRequests     — read: owner or admin; create: any auth; update/delete: admin only
-deletionRequests — read: owner or admin; create: any auth; update/delete: admin only
-notifications    — read: own only; create: any auth; update: own or admin; delete: admin only
-auditLogs        — read: admin only; create: any auth; update: NEVER; delete: NEVER
+                 - read: any auth; create: owner only (studentUid == uid); update/delete: owner or admin
+roleRequests     - read: owner or admin; create: any auth; update/delete: admin only
+deletionRequests - read: owner or admin; create: any auth; update/delete: admin only
+notifications    - read: own only; create: any auth; update: own or admin; delete: admin only
+auditLogs        - read: admin only; create: any auth; update: NEVER; delete: NEVER
 ```
 
 Full rules are in `firebase/firestore.rules`.
@@ -353,11 +353,11 @@ For multi-instance persistent rate limiting, swap the store for [Upstash Redis](
 The design system is built on Tailwind CSS with custom tokens defined in `tailwind.config.js` and `styles/globals.css`.
 
 **Custom classes:**
-- `.premium-card` — rounded-[2.5rem] card with subtle shadow and hover lift
-- `.glass` — frosted glass background
-- `.glass-island` — floating island nav style
-- `.btn-premium` — base button with active scale
-- `.animate-slide-up`, `.animate-fade-in`, `.animate-scale-up`, `.animate-float` — keyframe animations
+- `.premium-card` - rounded-[2.5rem] card with subtle shadow and hover lift
+- `.glass` - frosted glass background
+- `.glass-island` - floating island nav style
+- `.btn-premium` - base button with active scale
+- `.animate-slide-up`, `.animate-fade-in`, `.animate-scale-up`, `.animate-float` - keyframe animations
 
 **Component variants (Button):** `primary`, `secondary`, `soft`, `danger`, `ghost`
 
@@ -426,7 +426,7 @@ await logAudit({
 });
 ```
 
-The `auditLogs` Firestore collection has `update: if false` and `delete: if false` in security rules — it is physically impossible to modify or delete audit records from the client.
+The `auditLogs` Firestore collection has `update: if false` and `delete: if false` in security rules - it is physically impossible to modify or delete audit records from the client.
 
 Logged actions include: `profile_updated`, `user_role_assigned`, `user_deleted`, `*_created`, `*_updated`, `*_deleted` for all ledger collections.
 
@@ -486,7 +486,7 @@ npm test
 Create `.env.local` from `.env.local.example`:
 
 ```env
-# Firebase (client-side — safe to expose)
+# Firebase (client-side - safe to expose)
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=
@@ -494,12 +494,12 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 
-# Server-only — never expose these to the client bundle
+# Server-only - never expose these to the client bundle
 GEMINI_API_KEY=
 GEMINI_MODEL=
 ```
 
-`GEMINI_API_KEY` has no `NEXT_PUBLIC_` prefix intentionally — it is only read by server-side API routes and is never included in the client bundle.
+`GEMINI_API_KEY` has no `NEXT_PUBLIC_` prefix intentionally - it is only read by server-side API routes and is never included in the client bundle.
 
 For Vercel deployment, add these same variables in the Vercel dashboard under Settings → Environment Variables.
 
@@ -518,7 +518,7 @@ npm start
 **Vercel setup:**
 1. Connect GitHub repo to Vercel
 2. Add all environment variables in Vercel dashboard
-3. Deploy — Vercel handles the rest
+3. Deploy - Vercel handles the rest
 
 **Firebase setup:**
 1. Create a Firebase project

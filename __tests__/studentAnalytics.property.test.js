@@ -35,7 +35,7 @@ const placementArb = fc.record({
 const profileArb = fc.record({
   name:       fc.string({ minLength: 0, maxLength: 50 }),
   // Use a simple string instead of fc.emailAddress() to avoid shrinking issues
-  // in some environments — the email field is only used for display in computeReport
+  // in some environments - the email field is only used for display in computeReport
   email:      fc.string({ minLength: 0, maxLength: 40 }),
   phone:      fc.oneof(fc.constant(""), fc.string({ minLength: 10, maxLength: 15 })),
   gender:     fc.oneof(fc.constant(""), fc.constantFrom("male", "female", "other")),
@@ -60,7 +60,7 @@ const listsArb = fc.record({
 const VALID_VERDICTS = ["Placement Ready", "Developing", "Needs Attention", "Incomplete Profile"];
 const VALID_COLORS   = ["emerald", "brand", "amber", "red"];
 
-describe("computeReport — property-based", () => {
+describe("computeReport - property-based", () => {
   it("overall score is always between 0 and 100", () => {
     fc.assert(fc.property(profileArb, listsArb, (profile, lists) => {
       const { overall } = computeReport(profile, lists);

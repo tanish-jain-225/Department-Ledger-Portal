@@ -60,8 +60,8 @@ function ReportPopup({ data, lists, onClose }) {
         {/* ── Quick stats row ── */}
         <div className="flex flex-wrap gap-3">
           {[
-            { label: "Avg GPA",      value: r.avgGpa || "—",       sub: r.gpaTrend !== "stable" ? r.gpaTrend : null },
-            { label: "Latest GPA",   value: r.latestGpa || "—",    sub: null },
+            { label: "Avg GPA",      value: r.avgGpa || "-",       sub: r.gpaTrend !== "stable" ? r.gpaTrend : null },
+            { label: "Latest GPA",   value: r.latestGpa || "-",    sub: null },
             { label: "Semesters",    value: r.academicCount,        sub: null },
             { label: "Achievements", value: lists.achievements.length, sub: r.hasNational ? "Natl/Intl" : null },
             { label: "Activities",   value: lists.activities.length,   sub: r.actDiversity > 0 ? `${r.actDiversity} types` : null },
@@ -85,7 +85,7 @@ function ReportPopup({ data, lists, onClose }) {
               label={`${s.icon} ${s.label}`}
               pct={s.pct}
               barColor={barColor(s.pct)}
-              sub={s.met ? `${s.count} records — target met` : `${s.count} / ${s.min} minimum`}
+              sub={s.met ? `${s.count} records - target met` : `${s.count} / ${s.min} minimum`}
             />
           ))}
         </div>

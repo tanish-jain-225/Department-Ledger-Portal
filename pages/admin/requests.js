@@ -28,7 +28,7 @@ export default function AdminRequestsPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState(null); // { uid, reqDocId }
 
-  // Debounce search — avoids re-filtering on every keystroke
+  // Debounce search - avoids re-filtering on every keystroke
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
     return () => clearTimeout(t);
@@ -151,7 +151,7 @@ export default function AdminRequestsPage() {
             type: "info",
             link: "/dashboard",
             relatedId: `student_${uid}`,
-          }).catch(() => {}); // non-blocking — don't fail the approval if this errors
+          }).catch(() => {}); // non-blocking - don't fail the approval if this errors
         }
 
         addToast(`Clearance set to: ${roleToAssign}`, "success");
@@ -198,7 +198,7 @@ export default function AdminRequestsPage() {
       <ConfirmDialog
         open={!!deleteTarget}
         title="Protocol: Permanent Purge"
-        message="CRITICAL: You are about to permanently erase this entity from the global ledger. This includes all academic records, activities, and professional achievements. This action is irreversible."
+        message="CRITICAL: You are about to permanently erase this entity from the global ledger. This includes all academic records, activities and professional achievements. This action is irreversible."
         onConfirm={async () => {
           const { uid, reqDocId } = deleteTarget;
           setDeleteTarget(null);
@@ -223,7 +223,7 @@ export default function AdminRequestsPage() {
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Requests</h1>
-            <p className="text-base text-slate-400 mt-2 font-medium">Coordinate clearance, policy overrides, and data lifecycle protocols.</p>
+            <p className="text-base text-slate-400 mt-2 font-medium">Coordinate clearance, policy overrides and data lifecycle protocols.</p>
           </div>
           <div className="flex items-center gap-3 glass-island p-1 px-4 border shadow-sm">
              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Global Activity</span>

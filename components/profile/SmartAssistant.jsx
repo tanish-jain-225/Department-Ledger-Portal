@@ -61,7 +61,7 @@ export default function SmartAssistant({
 
       const data = await res.json();
 
-      // Auto-fill immediately — no confirmation
+      // Auto-fill immediately - no confirmation
       if (onExtract) onExtract(data);
       addToast("Form filled from your document!", "success");
 
@@ -123,7 +123,7 @@ export default function SmartAssistant({
             <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            {label} — Upload file to auto-fill
+            {label} - Upload file to auto-fill
           </>
         )}
       </label>

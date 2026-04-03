@@ -27,7 +27,7 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
         const db = b.createdAt?.toDate?.() || new Date(0);
         return db - da;
       }));
-    } catch (e) { /* history load is non-critical — fail silently */ }
+    } catch (e) { /* history load is non-critical - fail silently */ }
   }, [profile?.id]);
 
   useEffect(() => {
@@ -192,7 +192,7 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
 
 /**
  * Responsive report card. Accepts a forwarded ref so the parent can pass
- * it to DownloadPdfButton — pdf-download.js clones the element into a
+ * it to DownloadPdfButton - pdf-download.js clones the element into a
  * fixed-size body container before capturing, so overflow-hidden / scroll
  * containers don't cause blank PDFs.
  */
@@ -204,7 +204,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
   return (
     <div ref={ref} className="flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden">
 
-      {/* Header — score badge stacks below on mobile, beside on sm+ */}
+      {/* Header - score badge stacks below on mobile, beside on sm+ */}
       <div className="flex flex-col gap-4 border-b-4 border-sky-500 p-4 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -212,7 +212,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
             <h2 className="text-lg sm:text-2xl font-black text-slate-900 leading-tight">Career Intelligence Report</h2>
             <p className="text-xs text-slate-500 mt-1 truncate">{profile?.name} · {report.createdAtString}</p>
           </div>
-          {/* Score ring — always visible, no negative margin tricks */}
+          {/* Score ring - always visible, no negative margin tricks */}
           <div className="flex flex-col items-center flex-shrink-0 gap-1">
             <div className="relative flex items-center justify-center">
               <svg width="64" height="64" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
@@ -236,7 +236,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
           <p className="text-sm text-slate-700 leading-relaxed">{report.summary}</p>
         </div>
 
-        {/* Strengths + Gaps — stack on mobile, side by side on sm+ */}
+        {/* Strengths + Gaps - stack on mobile, side by side on sm+ */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex flex-col gap-2 flex-1 bg-green-50 rounded-lg p-4">
             <p className="text-[9px] font-black text-green-700 uppercase tracking-widest">Core Strengths</p>

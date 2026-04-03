@@ -1,8 +1,8 @@
-# 🏆 Winning Project PPT — Department Ledger Portal
+# 🏆 Winning Project PPT - Department Ledger Portal
 
 **Direct Copy-Paste Style Guide**
 
-This content is meticulously mapped to the 15-slide official `template.pdf`. Each slide is designed with a "Winner’s Edge"—focusing on high-density AI intelligence and institutional scalability.
+This content is meticulously mapped to the 15-slide official `template.pdf`. Each slide is designed with a "Winner’s Edge"-focusing on high-density AI intelligence and institutional scalability.
 
 ---
 
@@ -16,19 +16,19 @@ This content is meticulously mapped to the 15-slide official `template.pdf`. Eac
 ## Slide 2: Team Details
 - **a. Team name**: Tanish Jain
 - **b. Team leader name**: Tanish Jain
-- **c. Problem Statement**: Educational institutions face a "Data Stagnation" crisis—where thousands of academic marksheets, certificates, and skills are locked in physical paper or fragmented digital files. This results in **massive manual overhead**, **human error in data entry**, and a complete **lack of real-time career-readiness oversight** for faculty and administrators.
+- **c. Problem Statement**: Educational institutions face a "Data Stagnation" crisis-where thousands of academic marksheets, certificates and skills are locked in physical paper or fragmented digital files. This results in **massive manual overhead**, **human error in data entry** and a complete **lack of real-time career-readiness oversight** for faculty and administrators.
 
 ---
 
 ## Slide 3: Brief About Your Solution
-The **Department Ledger Portal** is an AI-first "Master Ledger" system. It leverages **Google Gemini 2.5 Flash** to provide multimodal document parsing—meaning a student uploads a marksheet, and the AI instantly extract and populates the records. It bridges the gap between raw documents and structured, actionable career intelligence, featuring an automated **Career Pulse** engine for placement readiness.
+The **Department Ledger Portal** is an AI-first "Master Ledger" system. It leverages **Google Gemini 2.5 Flash** to provide multimodal document parsing-meaning a student uploads a marksheet and the AI instantly extract and populates the records. It bridges the gap between raw documents and structured, actionable career intelligence, featuring an automated **Career Pulse** engine for placement readiness.
 
 ---
 
 ## Slide 4: Opportunities
 - **a. How different is it?**: While traditional portals are simple CRUD systems, ours is **Intelligent & Proactive**. It doesn't just store data; it reads and understands documents like a human assistant, deduplicating records and generating SWOT analysis on-the-fly.
 - **b. Solving the Problem**: We eliminate ~90% of manual entry effort. A 10-second AI parse replaces a 20-minute manual data entry session, ensuring 100% data fidelity and real-time oversight for faculty.
-- **c. USP of the Solution**: **Zero-Trust AI Document-to-Ledger Protocol**. Using Gemini's multimodal capabilities, we provide 100% accurate field extraction while maintaining an immutable audit trail for every single record change—unmatched in institutional systems.
+- **c. USP of the Solution**: **Zero-Trust AI Document-to-Ledger Protocol**. Using Gemini's multimodal capabilities, we provide 100% accurate field extraction while maintaining an immutable audit trail for every single record change-unmatched in institutional systems.
 
 ---
 
@@ -99,4 +99,4 @@ The **Department Ledger Portal** is an AI-first "Master Ledger" system. It lever
 ---
 
 ## Slide 15: Thank You!
-- **Speaker Point**: "We are not just building a portal; we are building a foundation for data-driven academic success. Thank you! — Tanish Jain"
+- **Speaker Point**: "We are not just building a portal; we are building a foundation for data-driven academic success. Thank you! - Tanish Jain"

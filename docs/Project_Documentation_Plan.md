@@ -1,6 +1,6 @@
-# 📔 The Project Bible — Department Ledger Portal [Tanish Jain]
+# 📔 The Project Bible - Department Ledger Portal [Tanish Jain]
 
-This document is the definitive, end-to-end source of truth for the **Department Ledger Portal**. It is designed to be shared with judges, stakeholders, and developers to provide a complete understanding of the project's architecture, intelligence, and impact.
+This document is the definitive, end-to-end source of truth for the **Department Ledger Portal**. It is designed to be shared with judges, stakeholders and developers to provide a complete understanding of the project's architecture, intelligence and impact.
 
 ---
 
@@ -11,7 +11,7 @@ To bridge the gap between fragmented academic records and actionable career inte
 
 ### The Problem
 Educational institutions are drowning in manual data entry.
-- **Data Stagnation**: Thousands of marksheets, certificates, and resumes are locked in physical/digital silos.
+- **Data Stagnation**: Thousands of marksheets, certificates and resumes are locked in physical/digital silos.
 - **Manual Overhead**: Students and staff spend ~200+ hours/year manually entering data.
 - **Lack of Oversight**: Faculty lack a real-time "Pulse" on department-wide placement readiness.
 - **Decision Paralysis**: Students don't know where they stand in the job market until it's too late.
@@ -20,7 +20,7 @@ Educational institutions are drowning in manual data entry.
 
 ## 2. 🏛️ Technical Architecture
 
-The portal is built on a modern, serverless, and highly scalable stack designed for institutional performance.
+The portal is built on a modern, serverless and highly scalable stack designed for institutional performance.
 
 ```mermaid
 graph TD
@@ -45,7 +45,7 @@ graph TD
 
 ## 3. 🧠 AI Intelligence Deep-Dive (X-Factor)
 
-Our "X-Factor" is the integration of **Multimodal Gemini 2.5 Flash** for deep document parsing—not just simple text extraction.
+Our "X-Factor" is the integration of **Multimodal Gemini 2.5 Flash** for deep document parsing-not just simple text extraction.
 
 ### Feature A: Smart Analysis (Document-to-JSON)
 When a student uploads a marksheet (PDF/Image), Gemini is prompted with a "Zero-Duplication" context.
@@ -54,7 +54,7 @@ When a student uploads a marksheet (PDF/Image), Gemini is prompted with a "Zero-
 
 ### Feature B: Career Pulse (Readiness Audit)
 Gemini analyzes the *entire* profile to generate a SWOT analysis.
-- **Prompt Strategy**: "Act as an elite Career Strategist. Analyze GPA, projects, skills, and internships. Identify 3 strengths and 3 actionable weaknesses."
+- **Prompt Strategy**: "Act as an elite Career Strategist. Analyze GPA, projects, skills and internships. Identify 3 strengths and 3 actionable weaknesses."
 
 #### Sample AI Output (Raw JSON):
 ```json
@@ -74,7 +74,7 @@ Gemini analyzes the *entire* profile to generate a SWOT analysis.
 ## 4. 👮 Security, Governance & Scalability
 
 ### Zero-Trust RBAC
-- **Roles**: Admin, Faculty, Student, and Pending.
+- **Roles**: Admin, Faculty, Student and Pending.
 - **Logic**: No user can access the dashboard unless their role has been manually elevated by an Admin.
 - **Security**: Every API route is IP-rate-limited and role-validated server-side.
 
@@ -112,9 +112,9 @@ Gemini analyzes the *entire* profile to generate a SWOT analysis.
 
 Why this project wins:
 1.  **Direct AI Impact**: We used Gemini for a high-value institutional problem, not just a gimmick.
-2.  **Multimodal Mastery**: The project handles images, PDFs, and text—demonstrating deep AI integration.
+2.  **Multimodal Mastery**: The project handles images, PDFs and text-demonstrating deep AI integration.
 3.  **Governance Focus**: Judges love features like Audit Logs and RBAC as they show "real-world" readiness.
-4.  **Premium UX**: Used Glassmorphism, Shimmer loaders, and responsive layouts to maximize the "WOW" factor.
+4.  **Premium UX**: Used Glassmorphism, Shimmer loaders and responsive layouts to maximize the "WOW" factor.
 
 ---
 
@@ -127,4 +127,4 @@ Why this project wins:
 
 ---
 
-**"We are not just storing data—we are building a career intelligence foundation for the next generation." — Tanish Jain**
+**"We are not just storing data-we are building a career intelligence foundation for the next generation." - Tanish Jain**

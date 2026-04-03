@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           </Section>
 
           <Section title="3. Data Storage & Security">
-            <p>All data is stored in Google Firebase (Firestore and Firebase Auth), hosted on Google Cloud infrastructure. Access is controlled by role-based permissions — students can only access their own records, while faculty and administrators have supervised read access.</p>
+            <p>All data is stored in Google Firebase (Firestore and Firebase Auth), hosted on Google Cloud infrastructure. Access is controlled by role-based permissions - students can only access their own records, while faculty and administrators have supervised read access.</p>
             <p>Documents uploaded for AI analysis are processed in-memory and are not stored on our servers. They are sent directly to the Google Gemini API for extraction and discarded immediately after.</p>
           </Section>
 
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
           </Section>
 
           <Section title="7. Your Rights">
-            <p>You have the right to access, correct, and request deletion of your personal data. Contact your department administrator to exercise these rights.</p>
+            <p>You have the right to access, correct and request deletion of your personal data. Contact your department administrator to exercise these rights.</p>
           </Section>
 
           <Section title="8. Contact">

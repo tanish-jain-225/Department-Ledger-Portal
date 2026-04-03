@@ -88,7 +88,7 @@ export default function StudentLedger({ uid, data, onRefresh }) {
           </span>
         </div>
 
-        {/* Tabs — 2-col grid on mobile, single row on sm+ */}
+        {/* Tabs - 2-col grid on mobile, single row on sm+ */}
         <nav className="grid grid-cols-2 sm:flex sm:flex-row px-2 gap-1 pb-0">
           {SUB_TABS.map((tab) => (
             <button

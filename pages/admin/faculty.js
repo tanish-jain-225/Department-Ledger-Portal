@@ -22,7 +22,7 @@ export default function AdminFacultyDashboard() {
   const [selectedFacultyUid, setSelectedFacultyUid] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Debounce — 350ms after user stops typing
+  // Debounce - 350ms after user stops typing
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
     return () => clearTimeout(t);

@@ -136,8 +136,8 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
   return (
     <>
       <Head>
-        <title>{title ? `${title} — Department Ledger` : "Department Ledger Portal"}</title>
-        <meta name="description" content="A high-intelligence platform for academic records, student performance tracking, and departmental oversight." />
+        <title>{title ? `${title} - Department Ledger` : "Department Ledger Portal"}</title>
+        <meta name="description" content="A high-intelligence platform for academic records, student performance tracking and departmental oversight." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#4f46e5" />
       </Head>

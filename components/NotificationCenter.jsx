@@ -30,7 +30,7 @@ export default function NotificationCenter() {
         setNotifications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       },
       (err) => {
-        // Listener errors are non-fatal — silently ignore permission/auth errors
+        // Listener errors are non-fatal - silently ignore permission/auth errors
       }
     );
 

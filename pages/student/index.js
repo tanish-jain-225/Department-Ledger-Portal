@@ -29,7 +29,7 @@ export default function StudentStarterPage() {
             </div>
             <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">The Profile</h2>
             <p className="text-slate-500 text-base font-medium leading-relaxed mb-8">
-              Manage your academic records, achievements, and AI-driven placement insights.
+              Manage your academic records, achievements and AI-driven placement insights.
             </p>
             <div className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-600 border-b-2 border-brand-200 pb-1 group-hover:border-brand-600 transition-all">
               Launch Console
@@ -47,7 +47,7 @@ export default function StudentStarterPage() {
             </div>
             <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Student Records</h2>
             <p className="text-slate-500 text-base font-medium leading-relaxed mb-8">
-              Verify your academic history, professional achievements, and AI-driven placement insights.
+              Verify your academic history, professional achievements and AI-driven placement insights.
             </p>
             <div className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600 border-b-2 border-indigo-200 pb-1 group-hover:border-indigo-600 transition-all">
               Inspect Records

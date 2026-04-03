@@ -15,7 +15,7 @@ function validateAcademic(academic) {
     if (r.gpa !== undefined && r.gpa !== "") {
       const gpa = parseFloat(r.gpa);
       if (isNaN(gpa) || gpa < 0 || gpa > 10) {
-        return `Invalid GPA value "${r.gpa}" — must be a number between 0 and 10.`;
+        return `Invalid GPA value "${r.gpa}" - must be a number between 0 and 10.`;
       }
     }
   }

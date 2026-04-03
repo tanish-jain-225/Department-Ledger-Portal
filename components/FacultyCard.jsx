@@ -36,9 +36,9 @@ export default function FacultyCard({ data }) {
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              { label: "Gender", value: data.gender || "—" },
-              { label: "Phone", value: data.phone || "—" },
-              { label: "Date of Birth", value: data.dob || "—" }
+              { label: "Gender", value: data.gender || "-" },
+              { label: "Phone", value: data.phone || "-" },
+              { label: "Date of Birth", value: data.dob || "-" }
             ].map((item, i) => (
               <div key={i} className="bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm">
                 <dt className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-1">{item.label}</dt>
@@ -57,13 +57,13 @@ export default function FacultyCard({ data }) {
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm">
               <h4 className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-2">Residential Address</h4>
               <p className="text-sm font-bold text-slate-800 leading-relaxed">
-                {data.address || "No address provided —"}
+                {data.address || "No address provided -"}
               </p>
             </div>
             <div className="bg-violet-50/30 p-4 rounded-xl border border-violet-100 shadow-sm">
               <h4 className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-2">Professional Biography</h4>
               <p className="text-sm text-slate-600 leading-relaxed italic">
-                {data.bio || "No biography provided —"}
+                {data.bio || "No biography provided -"}
               </p>
             </div>
           </div>

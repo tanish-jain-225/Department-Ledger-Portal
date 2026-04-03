@@ -1,7 +1,7 @@
 import { Html, Head, Main, NextScript } from "next/document";
 
 const APP_NAME = "Department Ledger Portal";
-const APP_DESC = "AI-powered academic records platform for departments. Track student performance, placements, achievements and generate AI readiness reports — all in one place.";
+const APP_DESC = "AI-powered academic records platform for departments. Track student performance, placements, achievements and generate AI readiness reports - all in one place.";
 
 export default function Document() {
   return (

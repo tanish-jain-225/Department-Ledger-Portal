@@ -22,7 +22,7 @@ export default function DashboardPage() {
   // Firestore cursor for the next page
   const lastDocRef = useRef(null);
 
-  // Debounce — only fire query 350ms after user stops typing
+  // Debounce - only fire query 350ms after user stops typing
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350);
     return () => clearTimeout(t);
@@ -148,11 +148,11 @@ export default function DashboardPage() {
             <div className="flex flex-wrap gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-10 pt-6 border-t border-slate-50">
               <div className="flex flex-col gap-1">
                 <span className="text-slate-300">Phone</span>
-                <span>{s.phone || "—"}</span>
+                <span>{s.phone || "-"}</span>
               </div>
               <div className="flex flex-col gap-1 pl-4 border-l border-slate-100">
                 <span className="text-slate-300">Year</span>
-                <span>{s.year || "—"}</span>
+                <span>{s.year || "-"}</span>
               </div>
             </div>
 

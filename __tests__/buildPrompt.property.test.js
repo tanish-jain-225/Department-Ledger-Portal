@@ -11,7 +11,7 @@ const existingRecordArb = fc.array(
   { maxLength: 5 }
 );
 
-describe("buildPrompt — property-based", () => {
+describe("buildPrompt - property-based", () => {
   it("always returns a non-empty string for any valid section", () => {
     fc.assert(fc.property(
       fc.constantFrom(...VALID_SECTIONS),
@@ -52,7 +52,7 @@ describe("buildPrompt — property-based", () => {
       ),
       (section, existing) => {
         const prompt = buildPrompt(section, existing);
-        // existing data is JSON.stringify'd into the prompt — check serialized form
+        // existing data is JSON.stringify'd into the prompt - check serialized form
         const serialized = JSON.stringify(existing, null, 2);
         return prompt.includes(serialized);
       }

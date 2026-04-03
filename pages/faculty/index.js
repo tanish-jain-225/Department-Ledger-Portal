@@ -29,7 +29,7 @@ export default function FacultyStarterPage() {
             </div>
             <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Staff ID</h2>
             <p className="text-slate-500 text-base font-medium leading-relaxed mb-8">
-              Manage your personal and professional identity, contact information, and verification status.
+              Manage your personal and professional identity, contact information and verification status.
             </p>
             <div className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600 border-b-2 border-indigo-200 pb-1 group-hover:border-indigo-600 transition-all">
               Manage Profile
@@ -47,7 +47,7 @@ export default function FacultyStarterPage() {
             </div>
             <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Student Records</h2>
             <p className="text-slate-500 text-base font-medium leading-relaxed mb-8">
-              Search, audit, and oversee student records for your department. Full data governance enabled.
+              Search, audit and oversee student records for your department. Full data governance enabled.
             </p>
             <div className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-600 border-b-2 border-brand-200 pb-1 group-hover:border-brand-600 transition-all">
               Initialize Dashboard

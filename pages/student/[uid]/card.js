@@ -69,7 +69,7 @@ export default function StudentCardPage() {
   return (
     <Layout title="Student card" access={ACCESS.AUTH}>
       <Head>
-        <title>Student card — {data?.name || "Student"}</title>
+        <title>Student card - {data?.name || "Student"}</title>
       </Head>
       {err && (
         <p className="text-red-600" role="alert">
