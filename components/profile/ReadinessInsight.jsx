@@ -122,7 +122,6 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
 
       {/* Generate button */}
       <section className="premium-card p-12 text-center border-2 border-dashed border-brand-200 bg-brand-50/20 hover:bg-brand-50/40 group overflow-hidden relative">
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-500/5 rounded-full blur-3xl group-hover:bg-brand-500/10 transition-all duration-700" />
         <div className="max-w-md mx-auto relative z-10">
           <div className="mb-8 inline-flex h-24 w-24 items-center justify-center rounded-[2.5rem] bg-white text-brand-600 group-hover:rotate-[10deg] transition-all duration-500 shadow-2xl shadow-brand-500/10 border border-brand-100">
             <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">

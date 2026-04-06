@@ -165,7 +165,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
       <div className="flex min-h-screen bg-slate-50/50">
         {!showSidebar && (
           <header className={`no-print fixed top-6 left-1/2 -translate-x-1/2 z-[100] transition-all duration-700 w-[calc(100%-3rem)] max-w-7xl
-            ${scrolled ? "glass-island py-3 px-8 rounded-[2rem] shadow-2xl" : "bg-transparent py-4 px-6"}`}>
+            ${scrolled ? "bg-white border border-slate-200 shadow-sm py-3 px-8 rounded-2xl" : "bg-transparent py-4 px-6"}`}>
             <div className="flex items-center justify-between gap-4">
               <Link href={logoHref} className="flex items-center gap-3 transition-transform hover:scale-[1.02] active:scale-[0.98]">
                 <div className="bg-white p-2 rounded-2xl shadow-xl border border-slate-100">
@@ -221,7 +221,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
 
         {/* Mobile Navbar for Dashboard */}
         {showSidebar && (
-          <header className={`md:hidden no-print fixed top-4 left-4 right-4 z-[100] transition-all duration-500 glass-island py-4 px-6 rounded-[2rem] shadow-2xl`}>
+          <header className={`md:hidden no-print fixed top-4 left-4 right-4 z-[100] transition-all duration-500 bg-white border border-slate-200 shadow-sm py-4 px-6 rounded-2xl`}>
              <div className="flex items-center justify-between">
                 <Link href={logoHref} className="flex items-center gap-3">
                   <div className="bg-white p-2 rounded-xl shadow-lg border border-slate-100">

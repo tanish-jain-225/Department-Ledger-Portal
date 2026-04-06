@@ -10,7 +10,7 @@ export default function FacultyStarterPage() {
       <div className="flex min-h-[70vh] flex-col items-center justify-center py-12 animate-fade-in">
         <div className="text-center mb-16 px-6">
           <h1 className="text-5xl font-black text-slate-900 tracking-tighter sm:text-7xl leading-none">
-            Welcome, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-brand-600">{profile?.name || "Professor"}</span>
+            Welcome, <span className="text-indigo-600">{profile?.name || "Professor"}</span>
           </h1>
           <p className="mt-6 text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed italic">
             &ldquo;Orchestrate departmental records and oversee student academic integrity with precision.&rdquo;

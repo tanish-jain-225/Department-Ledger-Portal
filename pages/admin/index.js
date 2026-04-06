@@ -179,7 +179,7 @@ function QuickActionLink({ href, title, icon, color }) {
   return (
     <Link 
       href={href}
-      className="flex items-center gap-5 p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all group border border-white/5 active:scale-[0.98]"
+      className="flex items-center gap-5 p-5 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group border border-white/10 active:scale-[0.98]"
     >
       <div className={`${color} h-10 w-10 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all`}>
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

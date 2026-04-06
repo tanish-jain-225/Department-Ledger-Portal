@@ -261,7 +261,7 @@ export default function AdminRequestsPage() {
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Requests</h1>
             <p className="text-base text-slate-400 mt-2 font-medium">Coordinate clearance, policy overrides and data lifecycle protocols.</p>
           </div>
-          <div className="flex items-center gap-3 glass-island p-1 px-4 border shadow-sm">
+          <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-sm p-1 px-4 rounded-2xl">
             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Global Activity</span>
             <Badge variant="brand" className="animate-pulse">
               {rows.length} RECORDED
@@ -270,8 +270,7 @@ export default function AdminRequestsPage() {
         </div>
 
         {/* Search & Filter Island */}
-        <div className="premium-card p-2 rounded-[3rem] bg-white/70 backdrop-blur-2xl border-slate-200/50 shadow-2xl shadow-slate-200/40 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-500/5 to-transparent pointer-events-none" />
+        <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
 
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
             {/* Search Core */}

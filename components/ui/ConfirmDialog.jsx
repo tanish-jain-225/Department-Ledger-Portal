@@ -50,13 +50,13 @@ export default function ConfirmDialog({
       aria-modal="true"
       aria-label={title}
     >
-      {/* Premium Light Glassmorphic Backdrop */}
-      <div 
-        className="absolute inset-0 bg-white/20 backdrop-blur-3xl animate-fade-in" 
-        onClick={onCancel} 
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-slate-900/40 animate-fade-in"
+        onClick={onCancel}
       />
 
-      <div className="relative w-full max-w-sm bg-white/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_128px_-16px_rgba(0,0,0,0.1)] border-2 border-white/60 overflow-hidden animate-scale-in">
+      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-scale-in">
         <div className="p-6 text-center text-slate-900 border-none">
           {/* Icon */}
           <div
@@ -83,7 +83,7 @@ export default function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-white/20 bg-white/50 px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-white transition-all active:scale-95 uppercase tracking-widest"
+            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 transition-all active:scale-95 uppercase tracking-widest"
           >
             {cancelLabel}
           </button>

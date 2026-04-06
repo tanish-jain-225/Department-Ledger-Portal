@@ -172,8 +172,7 @@ export default function AdminFacultyDashboard() {
           </Button>
         </div>
 
-        <div className="premium-card p-2 rounded-[3rem] bg-white/70 backdrop-blur-2xl border-slate-200/50 shadow-2xl shadow-slate-200/40 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-transparent pointer-events-none" />
+        <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
             <div className="relative flex-1 group">
               <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>

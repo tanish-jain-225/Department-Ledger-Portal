@@ -74,9 +74,9 @@ export default function StudentLedger({ uid, data, onRefresh }) {
   };
 
   return (
-    <div className="flex flex-col bg-white/40 backdrop-blur-3xl rounded-[2rem] border border-white/40 shadow-2xl overflow-hidden animate-fade-in">
+    <div className="flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden animate-fade-in">
       {/* Header + Tab bar */}
-      <div className="flex flex-col bg-slate-900/5 border-b border-white/20">
+      <div className="flex flex-col bg-slate-50 border-b border-slate-200">
         {/* Title row */}
         <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-3">
           <div>
@@ -97,7 +97,7 @@ export default function StudentLedger({ uid, data, onRefresh }) {
               className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-3 sm:px-4 rounded-xl sm:rounded-t-xl sm:rounded-b-none text-[10px] sm:text-xs font-black transition-all duration-200 uppercase tracking-widest border-2 sm:border-b-2 sm:border-x-0 sm:border-t-0 ${
                 activeSubTab === tab.id
                   ? "bg-white text-slate-900 border-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-800 hover:bg-white/40 border-transparent"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 border-transparent"
               }`}
             >
               {tab.icon}
@@ -108,7 +108,7 @@ export default function StudentLedger({ uid, data, onRefresh }) {
       </div>
 
       {/* Content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-white/20 to-transparent">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-white">
         {renderContent()}
       </main>
     </div>

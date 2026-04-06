@@ -42,24 +42,24 @@ export default function Modal({
       aria-modal="true"
       aria-label={title || "Dialog"}
     >
-      {/* Premium Light Glassmorphic Backdrop */}
-      <div 
-        className="absolute inset-0 bg-white/20 backdrop-blur-3xl animate-fade-in"
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-slate-900/40 animate-fade-in"
         onClick={onClose}
       />
 
-      {/* Glassmorphic Modal Container */}
+      {/* Modal Container */}
       <div
         className={clsx(
-          "relative overflow-hidden bg-white/80 backdrop-blur-2xl flex flex-col border-white/60 animate-scale-up transition-all duration-500",
-          fullScreen ? "w-screen h-screen rounded-none border-0" : [maxWidth, "w-full rounded-[2.5rem] border-2 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.1)]"],
+          "relative overflow-hidden bg-white flex flex-col border border-slate-200 animate-scale-up transition-all duration-500",
+          fullScreen ? "w-screen h-screen rounded-none border-0" : [maxWidth, "w-full rounded-2xl shadow-xl"],
           className
         )}
         style={{ maxHeight: fullScreen ? "100vh" : "calc(100vh - 4rem)" }}
       >
-        {/* Sticky Header with Glass Effect */}
+        {/* Sticky Header */}
         <div className={clsx(
-          "sticky top-0 z-20 flex flex-col gap-3 border-b border-white/30 bg-white/30 backdrop-blur-xl transition-all",
+          "sticky top-0 z-20 flex flex-col gap-3 border-b border-slate-200 bg-white transition-all",
           fullScreen ? "px-10 py-8" : "px-8 py-6"
         )}>
           <div className="flex w-full items-center justify-between gap-3 min-w-0">

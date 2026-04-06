@@ -31,8 +31,6 @@
   body {
     @apply min-h-screen bg-[#F8FAFC] antialiased;
     color: rgb(var(--slate-900));
-    background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.03) 0, transparent 50%), 
-                      radial-gradient(at 50% 0%, rgba(139, 92, 246, 0.03) 0, transparent 50%);
   }
   body::selection {
     background-color: rgb(var(--brand-100));
@@ -42,11 +40,11 @@
 
 @layer components {
   .glass {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+    @apply bg-white border border-slate-200 shadow-sm;
   }
 
   .glass-island {
-    @apply bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.03)] ring-1 ring-black/[0.02];
+    @apply bg-white border border-slate-200 shadow-sm ring-1 ring-black/[0.02];
   }
   
   .premium-card {
@@ -180,6 +178,6 @@ textarea {
 }
 .skeleton::after {
   content: "";
-  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full;
+  @apply absolute inset-0 bg-slate-100 -translate-x-full;
   animation: shimmer 1.5s infinite;
 }

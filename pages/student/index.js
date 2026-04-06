@@ -10,7 +10,7 @@ export default function StudentStarterPage() {
       <div className="flex min-h-[70vh] flex-col items-center justify-center py-12 animate-fade-in">
         <div className="text-center mb-16 px-6">
           <h1 className="text-5xl font-black text-slate-900 tracking-tighter sm:text-7xl leading-none transition-all">
-            Welcome, <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600">{profile?.name || "Scholar"}</span>
+            Welcome, <span className="text-brand-600">{profile?.name || "Scholar"}</span>
           </h1>
           <p className="mt-6 text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed italic">
             &ldquo;Your academic legacy, secured by the ledger. Access your professional profile and verified records.&rdquo;
