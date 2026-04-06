@@ -238,7 +238,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
           )}
 
           <ConfirmDialog 
-            show={showDeleteConfirm}
+            open={showDeleteConfirm}
             title="Account Purge Protocol"
             message="You are about to submit a request for permanent account and record deletion. This action will initiate an administrative workflow to remove your professional profile from the ledger. Are you sure you wish to proceed?"
             onConfirm={requestDeletion}

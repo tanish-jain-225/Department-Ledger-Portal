@@ -86,7 +86,9 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
     router.events.on("routeChangeError", handleStop);
 
     const saved = localStorage.getItem("sidebar_collapsed");
-    if (saved !== null) setSidebarCollapsed(saved === "true");
+    if (saved !== null) {
+      setSidebarCollapsed(saved === "true");
+    }
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -292,7 +294,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
             )}
           </main>
           
-          {!showSidebar && <CommonFooter />}
+          <CommonFooter />
         </div>
       </div>
     </>

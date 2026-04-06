@@ -24,7 +24,7 @@ The portal is built on a modern, serverless and highly scalable stack designed f
 
 ```mermaid
 graph TD
-    A[User: Student/Faculty/Admin] --> B[Next.js 15 Frontend]
+    A[User: Student/Faculty/Admin] --> B[Next.js 16 Frontend]
     B --> C[Firebase Auth & RBAC]
     B --> D[Next.js Serverless API Routes]
     D --> E[Google Gemini 2.5 Flash]
@@ -35,7 +35,7 @@ graph TD
 ```
 
 ### Key Infrastructure:
-- **Frontend**: Next.js 15 (Pages Router) + Tailwind CSS + Framer Motion.
+- **Frontend**: Next.js 16 (Pages Router) + Tailwind CSS + Framer Motion.
 - **Backend**: Next.js Serverless API Routes.
 - **Database**: Firebase Firestore (NoSQL) with composite indexing.
 - **Intelligence Core**: Google Gemini API (`gemini-2.5-flash`).

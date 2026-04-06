@@ -11,6 +11,8 @@ const variants = {
   secondary:
     "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900",
   soft: "bg-brand-50 text-brand-700 border border-brand-100/50 hover:bg-brand-100 hover:text-brand-800",
+  brand:
+    "bg-brand-600 text-white shadow-xl shadow-brand-500/20 hover:bg-brand-700 hover:shadow-brand-500/30",
   danger:
     "bg-red-600 text-white shadow-xl shadow-red-500/10 hover:bg-red-700 hover:shadow-red-500/20",
   ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",

@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
 import { getDoc, doc } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
-import { listByStudent } from "@/lib/data";
+import { listByStudent, listStudentDocuments } from "@/lib/data";
 import { useAuth } from "@/lib/auth-context";
 import Modal from "@/components/ui/Modal";
+import DocumentPreview from "@/components/profile/DocumentPreview";
 import Badge from "@/components/ui/Badge";
-import { downloadStudentsCsv } from "@/lib/csv-download";
+import {
+  downloadAdminStudentRecordsCsv,
+  downloadFacultyStudentRecordsCsv,
+  STUDENT_RECORD_FIELDS,
+} from "@/lib/csv-download";
 import { computeReport } from "@/lib/student-analytics";
 
 // ── Report popup ─────────────────────────────────────────────────────────────
@@ -65,6 +70,7 @@ function ReportPopup({ data, lists, onClose }) {
             { label: "Semesters",    value: r.academicCount,        sub: null },
             { label: "Achievements", value: lists.achievements.length, sub: r.hasNational ? "Natl/Intl" : null },
             { label: "Activities",   value: lists.activities.length,   sub: r.actDiversity > 0 ? `${r.actDiversity} types` : null },
+            { label: "Documents",    value: lists.uploadedDocuments.length, sub: r.documentRating && r.documentRating !== "none" ? r.documentRating.replace(/-/g, " ") : null },
             { label: "Internships",  value: r.internships.length,      sub: r.placed ? "Placed ✓" : null },
           ].map((s, i) => (
             <div key={i} className="flex flex-col gap-0.5 flex-1 min-w-[90px] p-3 rounded-xl bg-white border border-slate-100 text-center">
@@ -180,10 +186,11 @@ function BarRow({ label, pct, barColor, sub }) {
 export default function StudentInfoPopup({ uid, onClose }) {
   const { profile: currentUser } = useAuth();
   const [data, setData] = useState(null);
-  const [lists, setLists] = useState({ academic: [], activities: [], achievements: [], placements: [] });
+  const [lists, setLists] = useState({ academic: [], activities: [], achievements: [], placements: [], uploadedDocuments: [] });
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [showReport, setShowReport] = useState(false);
+
 
   useEffect(() => {
     if (!uid) return;
@@ -195,13 +202,14 @@ export default function StudentInfoPopup({ uid, onClose }) {
         const snap = await getDoc(doc(db, "users", uid));
         if (!snap.exists()) { setErr("Student not found"); return; }
         setData({ id: snap.id, ...snap.data() });
-        const [academic, activities, achievements, placements] = await Promise.all([
+        const [academic, activities, achievements, placements, uploadedDocuments] = await Promise.all([
           listByStudent("academicRecords", uid),
           listByStudent("activities", uid),
           listByStudent("achievements", uid),
           listByStudent("placements", uid),
+          listStudentDocuments(uid),
         ]);
-        setLists({ academic, activities, achievements, placements });
+        setLists({ academic, activities, achievements, placements, uploadedDocuments });
       } catch (e) {
         setErr(e?.message || "Load failed");
       } finally {
@@ -213,7 +221,91 @@ export default function StudentInfoPopup({ uid, onClose }) {
 
   function handleCsvDownload() {
     if (!data) return;
-    downloadStudentsCsv([data], `record-${data.name || uid}.csv`, { maskSensitive: false });
+    const report = computeReport(data, lists);
+    const normalizeSection = (sectionName) => {
+      const section = String(sectionName || "other").toLowerCase();
+      const mapping = {
+        academic: "academic",
+        academics: "academic",
+        academicrecords: "academic",
+        achievement: "achievement",
+        achievements: "achievement",
+        activity: "activity",
+        activities: "activity",
+        placement: "placement",
+        placements: "placement",
+        project: "project",
+        projects: "project",
+        skill: "skill",
+        skills: "skill",
+      };
+      return mapping[section] || "other";
+    };
+
+    const documentLinks = lists.uploadedDocuments.reduce((acc, item) => {
+      const section = normalizeSection(item.section);
+      const link = `${window.location.origin}/document/${encodeURIComponent(item.id)}`;
+      const key = `${section}_document`;
+      acc[key] = acc[key] || [];
+      acc[key].push(link);
+      return acc;
+    }, {});
+
+    const exportRow = {
+      name: data.name || "",
+      email: data.email || "",
+      phone: data.phone || "",
+      role: data.role || "",
+      year: data.year || "",
+      branch: data.branch || "",
+      alumni: data.alumni ? "yes" : "no",
+      gender: data.gender || "",
+      dob: data.dob || "",
+      address: data.address || "",
+      linkedin: data.linkedin || "",
+      github: data.github || "",
+      rollNumber: data.rollNumber || "",
+      facultyVerification: data.facultyVerification || "",
+      academicCount: lists.academic.length,
+      achievementsCount: lists.achievements.length,
+      activitiesCount: lists.activities.length,
+      placementsCount: lists.placements.length,
+      uploadedDocumentsCount: lists.uploadedDocuments.length,
+      overallScore: report.overall,
+      readinessVerdict: report.verdict.label,
+      profileCompletenessPct: report.profilePct,
+      missingProfileFields: report.missingProfile.join(" | "),
+      avgGpa: report.avgGpa || "",
+      latestGpa: report.latestGpa || "",
+      highestGpa: report.highestGpa || "",
+      lowestGpa: report.lowestGpa || "",
+      gpaTrend: report.gpaTrend,
+      gpaRating: report.gpaRating,
+      achievementScore: report.achScore,
+      achievementRating: report.achRating,
+      hasNationalAchievement: report.hasNational ? "yes" : "no",
+      activityDiversity: report.actDiversity,
+      activityRating: report.actRating,
+      documentRating: report.documentRating,
+      placed: report.placed ? "yes" : "no",
+      placedCompany: report.placedAt?.company || "",
+      placedRole: report.placedAt?.role || "",
+      placedPackage: report.maxPackage ?? "",
+      internshipCount: report.internships.length,
+      strengths: report.strengths.join(" | "),
+      recommendations: report.recommendations.join(" | "),
+      ...Object.fromEntries(
+        Object.entries(documentLinks).map(([key, links]) => [key, links.join(" | ")])
+      ),
+    };
+
+    const download = currentUser?.role === "admin"
+      ? downloadAdminStudentRecordsCsv
+      : downloadFacultyStudentRecordsCsv;
+
+    download([exportRow], `record-${data.name || uid}.csv`, {
+      fields: STUDENT_RECORD_FIELDS,
+    });
   }
 
   return (
@@ -287,7 +379,10 @@ export default function StudentInfoPopup({ uid, onClose }) {
                         {r.branch && <p className="text-xs text-slate-400">{r.branch}</p>}
                         {r.subjects && <p className="text-xs text-slate-500 line-clamp-2">{r.subjects}</p>}
                       </div>
-                      <Chip color="emerald">{r.gpa} GPA</Chip>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Chip color="emerald">{r.gpa} GPA</Chip>
+                        {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}
+                      </div>
                     </Row>
                   ))
                 }
@@ -304,6 +399,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                       <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                         <Chip color="brand">{r.level}</Chip>
                         {r.date && <span className="text-xs text-slate-400">{r.date}</span>}
+                        {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}
                       </div>
                     </Row>
                   ))
@@ -321,6 +417,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                       <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                         <Chip color="slate">{r.type}</Chip>
                         {r.date && <span className="text-xs text-slate-400">{r.date}</span>}
+                        {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}
                       </div>
                     </Row>
                   ))
@@ -338,6 +435,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                       <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                         <Chip color={r.status === "placed" ? "emerald" : "brand"}>{r.status}</Chip>
                         {r.package && <span className="text-xs font-black text-emerald-600">₹ {r.package}</span>}
+                        {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}
                       </div>
                     </Row>
                   ))

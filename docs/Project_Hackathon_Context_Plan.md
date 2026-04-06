@@ -84,7 +84,7 @@ Build a **working prototype** that:
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 15, React, Tailwind CSS |
+| Frontend | Next.js 16, React 19, Tailwind CSS |
 | Backend | Next.js API Routes (serverless) |
 | Database | Firebase Firestore |
 | Auth | Firebase Authentication |

@@ -1,9 +1,9 @@
 # Department Ledger Portal
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-11.1-orange?style=flat&logo=firebase)](https://firebase.google.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.2-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-12.11-orange?style=flat&logo=firebase)](https://firebase.google.com/)
 [![Gemini AI](https://img.shields.io/badge/AI-Gemini_2.5_Flash-blue?style=flat&logo=google-gemini)](https://ai.google.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.2.2-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat&logo=vercel)](https://vercel.com/)
 [![Tests](https://img.shields.io/badge/Tests-44_passing-brightgreen?style=flat)](/__tests__)
 
@@ -54,7 +54,7 @@ The Department Ledger Portal solves "data stagnation" in academic institutions, 
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 15 (Pages Router), React 18, Tailwind CSS 3.4 |
+| Frontend | Next.js 16.2.2 (Pages Router), React 19.2.4, Tailwind CSS 4.2.2 |
 | AI | Google Gemini 2.5 Flash (multimodal text + PDF + image) |
 | Database | Firebase Firestore (NoSQL, real-time) |
 | Auth | Firebase Authentication (email/password) + firebase-admin (server-side token verification) |

@@ -1,15 +1,18 @@
 import { useState } from "react";
+import { useToast } from "@/lib/toast-context";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
+import DocumentPreview from "./DocumentPreview";
 import SmartAssistant from "./SmartAssistant";
 
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300";
 
 export default function ActivitySection({ uid, rows, onRefresh }) {
+  const { addToast } = useToast();
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("activities", uid, onRefresh);
 
@@ -17,17 +20,18 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
   const [title, setTitle]             = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate]               = useState("");
-  const [link, setLink]               = useState("");
+  const [document, setDocument]       = useState(null);
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
-    await add({ type, title, description, date, link }, `Added activity: ${title}`);
-    setTitle(""); setDescription(""); setDate(""); setLink("");
+    await add({ type, title, description, date, document }, `Added activity: ${title}`);
+    setType("none"); setTitle(""); setDescription(""); setDate(""); setDocument(null);
   }
 
   const handleUpdate = () => save(
     { type: editingRecord?.type, title: editingRecord?.title,
-      description: editingRecord?.description, date: editingRecord?.date, link: editingRecord?.link },
+      description: editingRecord?.description, date: editingRecord?.date,
+      document: editingRecord?.document || document },
     `Updated: ${editingRecord?.title}`
   );
 
@@ -43,18 +47,19 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="activity" existingData={rows}
+        <SmartAssistant mode="activity" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.type) setType(d.type);
             if (d.title) setTitle(d.title);
             if (d.date) setDate(d.date);
             if (d.description) setDescription(d.description);
           }}
+          onDocumentSaved={setDocument}
           label="AI Activity Assistant" description="Get AI suggestions for your activity"
         />
       </div>
 
-      <form onSubmit={add} className="flex flex-col gap-3">
+      <form onSubmit={handleAdd} className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3">
           <select value={type} onChange={e => setType(e.target.value)} className={field}>
             <option value="none">Select Type</option>
@@ -68,7 +73,6 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <Input type="date" required value={date} onChange={e => setDate(e.target.value)} />
-          <Input placeholder="Evidence / Portfolio Link (Optional)" value={link} onChange={e => setLink(e.target.value)} />
         </div>
         <textarea placeholder="Short description, role, or impact..." value={description} onChange={e => setDescription(e.target.value)} rows={2} className={field} />
         <Button type="submit" className="w-full py-4">Add Activity</Button>
@@ -102,6 +106,9 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" /></svg>
                       Portfolio
                     </a>
+                  )}
+                  {r.document && (
+                    <DocumentPreview document={r.document} triggerLabel="View uploaded file" />
                   )}
                 </div>
                 {r.description && <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{r.description}</p>}
@@ -141,11 +148,12 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Date</label>
               <Input type="date" value={editingRecord?.date || ""} onChange={e => setEditingRecord({...editingRecord, date: e.target.value})} />
             </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Evidence URL</label>
-              <Input value={editingRecord?.link || ""} onChange={e => setEditingRecord({...editingRecord, link: e.target.value})} />
-            </div>
           </div>
+          {editingRecord?.document && (
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-[11px] text-slate-600">
+              Uploaded document: {editingRecord.document.fileName} (Firestore)
+            </div>
+          )}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Description</label>
             <textarea value={editingRecord?.description || ""} onChange={e => setEditingRecord({...editingRecord, description: e.target.value})} rows={3} className={field} />
@@ -163,12 +171,7 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
           if (!deleteTarget) return;
-          try {
-            await removeRecord("activities", deleteTarget.id, { actorUid: uid, targetUid: uid, description: `Deleted: ${deleteTarget.title}` });
-            addToast(`Deleted: ${deleteTarget.title}`, "success");
-            setDeleteTarget(null);
-            onRefresh();
-          } catch { addToast("Failed to delete", "error"); }
+          await confirmDelete(`Deleted: ${deleteTarget.title}`);
         }}
       />
     </section>

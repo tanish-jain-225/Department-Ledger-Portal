@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 export default function ConfirmDialog({
-  open,
+  open: openProp,
+  show,
   title = "Are you sure?",
   message,
-  confirmLabel = "Delete",
+  confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   variant = "danger",
   onConfirm,
   onCancel,
 }) {
+  const open = openProp ?? show;
   const confirmRef = useRef(null);
   const [mounted, setMounted] = useState(false);
 

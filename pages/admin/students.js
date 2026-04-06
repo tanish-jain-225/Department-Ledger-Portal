@@ -5,11 +5,12 @@ import { StudentInfoPopup } from "@/components";
 import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { getDb } from "@/lib/firebase";
-import { downloadStudentsCsv } from "@/lib/csv-download";
+import { downloadAdminStudentsCsv, STUDENT_RECORD_FIELDS } from "@/lib/csv-download";
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
-import { purgeUser } from "@/lib/data";
+import { purgeUser, listByStudent, listStudentDocuments } from "@/lib/data";
+import { computeReport } from "@/lib/student-analytics";
 import { PAGE_SIZE } from "@/lib/constants";
 
 export default function AdminStudentsDashboard() {
@@ -21,6 +22,7 @@ export default function AdminStudentsDashboard() {
   const [selectedStudentUid, setSelectedStudentUid] = useState(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [roleChangeTarget, setRoleChangeTarget] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -30,7 +32,22 @@ export default function AdminStudentsDashboard() {
         if (!db) return;
         const q = query(collection(db, "users"), where("role", "==", "student"), limit(PAGE_SIZE.ADMIN_DIRECTORY));
         const snap = await getDocs(q);
-        setStudents(snap.docs.map(d => ({ ...d.data(), id: d.id })));
+        const delSnap = await getDocs(query(collection(db, "deletionRequests"), where("status", "==", "pending")));
+        const delMap = {};
+        const delDocIds = {};
+        delSnap.forEach((d) => {
+          const data = d.data();
+          if (data.uid) {
+            delMap[data.uid] = true;
+            delDocIds[data.uid] = d.id;
+          }
+        });
+        setStudents(snap.docs.map(d => ({
+          ...d.data(),
+          id: d.id,
+          pendingDeletion: delMap[d.id] || false,
+          delDocId: delDocIds[d.id] || null,
+        })));
       } catch (err) {
         addToast(err?.message || "Failed to load student records", "error");
       } finally {
@@ -38,15 +55,127 @@ export default function AdminStudentsDashboard() {
       }
     }
     load();
-  }, []);
+  }, [addToast]);
 
-  async function decide(uid, action, assignedRole = null) {
+  async function exportGlobalRegistry() {
+    const db = getDb();
+    if (!db) return;
+    setBusy(true);
+
+    try {
+      const q = query(collection(db, "users"), where("role", "==", "student"));
+      const snap = await getDocs(q);
+      const usersAll = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      const rows = [];
+      for (const user of usersAll) {
+        const [academic, activities, achievements, placements, uploadedDocuments] = await Promise.all([
+          listByStudent("academicRecords", user.id),
+          listByStudent("activities", user.id),
+          listByStudent("achievements", user.id),
+          listByStudent("placements", user.id),
+          listStudentDocuments(user.id, 200),
+        ]);
+
+        const report = computeReport(user, { academic, activities, achievements, placements, uploadedDocuments });
+        const normalizeSection = (sectionName) => {
+          const section = String(sectionName || "other").toLowerCase();
+          const mapping = {
+            academic: "academic",
+            academics: "academic",
+            academicrecords: "academic",
+            achievement: "achievement",
+            achievements: "achievement",
+            activity: "activity",
+            activities: "activity",
+            placement: "placement",
+            placements: "placement",
+            project: "project",
+            projects: "project",
+            skill: "skill",
+            skills: "skill",
+          };
+          return mapping[section] || "other";
+        };
+
+        const documentLinks = uploadedDocuments.reduce((acc, item) => {
+          const section = normalizeSection(item.section);
+          const link = `${window.location.origin}/document/${encodeURIComponent(item.id)}`;
+          const key = `${section}_document`;
+          acc[key] = acc[key] || [];
+          acc[key].push(link);
+          return acc;
+        }, {});
+
+        rows.push({
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          role: user.role || "",
+          year: user.year || "",
+          branch: user.branch || "",
+          alumni: user.alumni ? "yes" : "no",
+          gender: user.gender || "",
+          dob: user.dob || "",
+          address: user.address || "",
+          linkedin: user.linkedin || "",
+          github: user.github || "",
+          rollNumber: user.rollNumber || "",
+          facultyVerification: user.facultyVerification || "",
+          academicCount: academic.length,
+          achievementsCount: achievements.length,
+          activitiesCount: activities.length,
+          placementsCount: placements.length,
+          uploadedDocumentsCount: uploadedDocuments.length,
+          overallScore: report.overall,
+          readinessVerdict: report.verdict.label,
+          profileCompletenessPct: report.profilePct,
+          missingProfileFields: report.missingProfile.join(" | "),
+          avgGpa: report.avgGpa || "",
+          latestGpa: report.latestGpa || "",
+          highestGpa: report.highestGpa || "",
+          lowestGpa: report.lowestGpa || "",
+          gpaTrend: report.gpaTrend,
+          gpaRating: report.gpaRating,
+          achievementScore: report.achScore,
+          achievementRating: report.achRating,
+          hasNationalAchievement: report.hasNational ? "yes" : "no",
+          activityDiversity: report.actDiversity,
+          activityRating: report.actRating,
+          documentRating: report.documentRating,
+          placed: report.placed ? "yes" : "no",
+          placedCompany: report.placedAt?.company || "",
+          placedRole: report.placedAt?.role || "",
+          placedPackage: report.maxPackage ?? "",
+          internshipCount: report.internships.length,
+          strengths: report.strengths.join(" | "),
+          recommendations: report.recommendations.join(" | "),
+          ...Object.fromEntries(
+            Object.entries(documentLinks).map(([key, links]) => [key, links.join(" | ")])
+          ),
+        });
+      }
+
+      downloadAdminStudentsCsv(rows, "global-student-registry.csv", { fields: STUDENT_RECORD_FIELDS });
+      addToast("Global student registry export downloaded.", "success");
+    } catch (error) {
+      addToast(error?.message || "Failed to export global registry", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function askRoleChange(uid, role) {
+    setRoleChangeTarget({ uid, role });
+  }
+
+  async function decide(uid, action, reqDocId = null, assignedRole = null) {
     const db = getDb();
     if (!db || !uid) return;
     
     try {
       if (action === "delete") {
-        setDeleteTarget(uid);
+        setDeleteTarget({ uid, reqDocId });
         return;
       }
       
@@ -72,11 +201,16 @@ export default function AdminStudentsDashboard() {
 
         addToast(`Clearance set to ${roleToAssign}`, "success");
         
-        // Optimistic Update: If role changed from student, remove from this list
         if (roleToAssign !== 'student') {
             setStudents(prev => prev.filter(s => s.id !== uid));
         } else {
             setStudents(prev => prev.map(s => s.id === uid ? { ...s, role: roleToAssign } : s));
+        }
+      } else if (action === "reject_deletion") {
+        if (reqDocId) {
+          await updateDoc(doc(db, "deletionRequests", reqDocId), { status: "rejected" });
+          await purgeNotifications(`del_${reqDocId}`);
+          addToast("Purge request dismissed.", "info");
         }
       }
 
@@ -107,6 +241,19 @@ export default function AdminStudentsDashboard() {
 
   return (
     <Layout title="Student Directory" access={ACCESS.ADMIN}>
+      <ConfirmDialog
+        open={!!roleChangeTarget}
+        title="Confirm Role Change"
+        message={`Confirm update role to ${roleChangeTarget?.role?.toUpperCase()}? This will immediately change access level for the selected user.`}
+        onConfirm={async () => {
+          const target = roleChangeTarget;
+          setRoleChangeTarget(null);
+          if (target?.uid && target?.role) {
+            await decide(target.uid, "approve", null, target.role);
+          }
+        }}
+        onCancel={() => setRoleChangeTarget(null)}
+      />
       <ConfirmDialog
         open={!!deleteTarget}
         title="Protocol: Permanent Purge"
@@ -139,7 +286,7 @@ export default function AdminStudentsDashboard() {
             <p className="text-base text-slate-400 mt-2 font-medium">Comprehensive registry of all scholars currently in the ledger.</p>
           </div>
           <Button
-            onClick={() => downloadStudentsCsv(students, "student-directory.csv", { maskSensitive: false })}
+            onClick={exportGlobalRegistry}
             className="lg:w-auto w-full group shadow-xl shadow-brand-500/10"
           >
             <svg className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -220,6 +367,9 @@ export default function AdminStudentsDashboard() {
                    <div className="flex flex-col items-end">
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sector</span>
                       <Badge variant="gray" className="mt-1">{s.department || "GEN"}</Badge>
+                      {s.pendingDeletion && (
+                        <Badge variant="danger" className="mt-2">Purge Request</Badge>
+                      )}
                    </div>
                 </div>
 
@@ -244,19 +394,41 @@ export default function AdminStudentsDashboard() {
                   {s.id !== user?.uid && (
                     <div className="bg-slate-50/50 rounded-2xl p-3 border border-slate-100 space-y-3">
                       <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest block text-center">Manual Oversight Protocol</span>
-                      <div className="flex flex-wrap items-center justify-center gap-1.5">
-                          <RoleButton label="S" role="student" currentRole={s.role} onClick={() => decide(s.id, "approve", "student")} />
-                          <RoleButton label="F" role="faculty" currentRole={s.role} onClick={() => decide(s.id, "approve", "faculty")} />
-                          <RoleButton label="A" role="admin" currentRole={s.role} onClick={() => decide(s.id, "approve", "admin")} />
-                          <button 
-                            onClick={() => decide(s.id, "delete")}
-                            className="ml-1 p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm"
-                            title="Purge Legacy Data"
-                          >
-                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        {s.pendingDeletion ? (
+                          <>
+                            <Button
+                              onClick={() => decide(s.id, "delete", s.delDocId)}
+                              variant="secondary"
+                              className="!py-2 !px-5 text-[9px] font-black uppercase border border-rose-100 hover:bg-rose-500 hover:text-white transition-all"
+                            >
+                              Accept Purge
+                            </Button>
+                            <Button
+                              onClick={() => decide(s.id, "reject_deletion", s.delDocId)}
+                              variant="ghost"
+                              className="!py-2 !px-5 text-[9px] font-black uppercase text-rose-500 border border-rose-100 hover:bg-rose-50 transition-all"
+                            >
+                              Dismiss Request
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <RoleButton label="S" role="student" currentRole={s.role} onClick={() => askRoleChange(s.id, "student")} />
+                            <RoleButton label="F" role="faculty" currentRole={s.role} onClick={() => askRoleChange(s.id, "faculty")} />
+                            <RoleButton label="A" role="admin" currentRole={s.role} onClick={() => askRoleChange(s.id, "admin")} />
+                            <button 
+                              onClick={() => decide(s.id, "delete")}
+                              className="ml-1 p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm"
+                              title="Purge Legacy Data"
+                            >
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              <span className="sr-only">Purge Legacy Data</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
@@ -269,15 +441,6 @@ export default function AdminStudentsDashboard() {
                      className="flex-1 text-[10px] font-black uppercase"
                    >
                      Inspect Profile
-                   </Button>
-                   <Button
-                     onClick={() => downloadStudentsCsv([s], `student-${s.name}.csv`)}
-                     variant="ghost"
-                     className="px-4 border border-slate-100"
-                   >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
                    </Button>
                 </div>
               </div>

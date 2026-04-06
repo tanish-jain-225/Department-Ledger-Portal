@@ -5,7 +5,7 @@ import { FacultyInfoPopup } from "@/components";
 import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { getDb } from "@/lib/firebase";
-import { downloadStudentsCsv } from "@/lib/csv-download";
+import { downloadAdminFacultyRecordsCsv } from "@/lib/csv-download";
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
@@ -21,6 +21,7 @@ export default function AdminFacultyDashboard() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedFacultyUid, setSelectedFacultyUid] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [roleChangeTarget, setRoleChangeTarget] = useState(null);
 
   // Debounce - 350ms after user stops typing
   useEffect(() => {
@@ -49,7 +50,22 @@ export default function AdminFacultyDashboard() {
         constraints.push(limit(PAGE_SIZE.ADMIN_DIRECTORY));
         const q = query(collection(db, "users"), ...constraints);
         const snap = await getDocs(q);
-        setFaculty(snap.docs.map(d => ({ ...d.data(), id: d.id })));
+        const delSnap = await getDocs(query(collection(db, "deletionRequests"), where("status", "==", "pending")));
+        const delMap = {};
+        const delDocIds = {};
+        delSnap.forEach((d) => {
+          const data = d.data();
+          if (data.uid) {
+            delMap[data.uid] = true;
+            delDocIds[data.uid] = d.id;
+          }
+        });
+        setFaculty(snap.docs.map(d => ({
+          ...d.data(),
+          id: d.id,
+          pendingDeletion: delMap[d.id] || false,
+          delDocId: delDocIds[d.id] || null,
+        })));
       } catch (err) {
         addToast(err?.message || "Failed to load faculty records", "error");
       } finally {
@@ -57,13 +73,13 @@ export default function AdminFacultyDashboard() {
       }
     }
     load();
-  }, [debouncedSearch]);
+  }, [debouncedSearch, addToast]);
 
-  async function decide(uid, action, assignedRole = null) {
+  async function decide(uid, action, reqDocId = null, assignedRole = null) {
     const db = getDb();
     if (!db || !uid) return;
     try {
-      if (action === "delete") { setDeleteTarget(uid); return; }
+      if (action === "delete") { setDeleteTarget({ uid, reqDocId }); return; }
       if (action === "approve") {
         const roleToAssign = assignedRole || "faculty";
         await updateDoc(doc(db, "users", uid), {
@@ -77,6 +93,12 @@ export default function AdminFacultyDashboard() {
         addToast(`Clearance set to ${roleToAssign}`, "success");
         if (roleToAssign !== "faculty") setFaculty(prev => prev.filter(f => f.id !== uid));
         else setFaculty(prev => prev.map(f => f.id === uid ? { ...f, role: roleToAssign } : f));
+      } else if (action === "reject_deletion") {
+        if (reqDocId) {
+          await updateDoc(doc(db, "deletionRequests", reqDocId), { status: "rejected" });
+          await purgeNotifications(`del_${reqDocId}`);
+          addToast("Purge request dismissed.", "info");
+        }
       }
       await syncAdminNotifications(user.uid);
       const qR = query(collection(db, "roleRequests"), where("uid", "==", uid), where("status", "==", "pending"));
@@ -87,18 +109,43 @@ export default function AdminFacultyDashboard() {
     } catch (e) { addToast(e.message, "error"); }
   }
 
+  function askRoleChange(uid, role) {
+    setRoleChangeTarget({ uid, role });
+  }
+
   return (
     <Layout title="Faculty Directory" access={ACCESS.ADMIN}>
+      <ConfirmDialog
+        open={!!roleChangeTarget}
+        title="Confirm Role Change"
+        message={`Confirm update role to ${roleChangeTarget?.role?.toUpperCase()}? This will immediately change access privileges for the selected staff member.`}
+        onConfirm={async () => {
+          const target = roleChangeTarget;
+          setRoleChangeTarget(null);
+          if (target?.uid && target?.role) {
+            await decide(target.uid, "approve", null, target.role);
+          }
+        }}
+        onCancel={() => setRoleChangeTarget(null)}
+      />
       <ConfirmDialog
         open={!!deleteTarget}
         title="Protocol: Permanent Purge"
         message="CRITICAL: You are about to permanently erase this faculty member from the global ledger. This action is irreversible."
         onConfirm={async () => {
-          const uid = deleteTarget;
+          const { uid, reqDocId } = deleteTarget;
           setDeleteTarget(null);
           setBusy(true);
           try {
             await purgeUser(uid, user.uid, `Manual Purge: Deleted faculty entity ${uid}`);
+            if (reqDocId) {
+              try {
+                await updateDoc(doc(getDb(), "deletionRequests", reqDocId), { status: "processed_manual" });
+                await purgeNotifications(`del_${reqDocId}`);
+              } catch {
+                // already removed or not found
+              }
+            }
             addToast("Faculty member purged from ledger.", "success");
             setFaculty(prev => prev.filter(f => f.id !== uid));
             await syncAdminNotifications(user.uid);
@@ -116,7 +163,7 @@ export default function AdminFacultyDashboard() {
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Faculty Ledger</h1>
             <p className="text-base text-slate-400 mt-2 font-medium">Registry of verified instructional staff and departmental leads.</p>
           </div>
-          <Button onClick={() => downloadStudentsCsv(faculty, "faculty-directory.csv", { maskSensitive: false })}
+          <Button onClick={() => downloadAdminFacultyRecordsCsv(faculty, "faculty-directory.csv")}
             className="lg:w-auto w-full group shadow-xl shadow-brand-500/10">
             <svg className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -174,6 +221,9 @@ export default function AdminFacultyDashboard() {
                   <div className="flex flex-col items-end">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Clearance</span>
                     <Badge variant="brand" className="mt-1">{f.role?.toUpperCase() || "STAFF"}</Badge>
+                    {f.pendingDeletion && (
+                      <Badge variant="danger" className="mt-2">Purge Request</Badge>
+                    )}
                   </div>
                 </div>
                 <div className="flex-1 space-y-4">
@@ -188,16 +238,39 @@ export default function AdminFacultyDashboard() {
                   {f.id !== user?.uid && (
                     <div className="bg-indigo-50/30 rounded-2xl p-3 border border-indigo-100/50 space-y-3">
                       <span className="text-[8px] font-black uppercase text-indigo-400 tracking-widest block text-center">Protocol Oversight</span>
-                      <div className="flex flex-wrap items-center justify-center gap-1.5">
-                        <RoleButton label="S" role="student" currentRole={f.role} onClick={() => decide(f.id, "approve", "student")} />
-                        <RoleButton label="F" role="faculty" currentRole={f.role} onClick={() => decide(f.id, "approve", "faculty")} />
-                        <RoleButton label="A" role="admin" currentRole={f.role} onClick={() => decide(f.id, "approve", "admin")} />
-                        <button onClick={() => decide(f.id, "delete")}
-                          className="ml-1 p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm">
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        {f.pendingDeletion ? (
+                          <>
+                            <Button
+                              onClick={() => decide(f.id, "delete", f.delDocId)}
+                              variant="secondary"
+                              className="!py-2 !px-5 text-[9px] font-black uppercase border border-rose-100 hover:bg-rose-500 hover:text-white transition-all"
+                            >
+                              Accept Purge
+                            </Button>
+                            <Button
+                              onClick={() => decide(f.id, "reject_deletion", f.delDocId)}
+                              variant="ghost"
+                              className="!py-2 !px-5 text-[9px] font-black uppercase text-rose-500 border border-rose-100 hover:bg-rose-50 transition-all"
+                            >
+                              Dismiss Request
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <RoleButton label="S" role="student" currentRole={f.role} onClick={() => askRoleChange(f.id, "student")} />
+                            <RoleButton label="F" role="faculty" currentRole={f.role} onClick={() => askRoleChange(f.id, "faculty")} />
+                            <RoleButton label="A" role="admin" currentRole={f.role} onClick={() => askRoleChange(f.id, "admin")} />
+                            <button onClick={() => decide(f.id, "delete")}
+                              className="ml-1 p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm"
+                              title="Purge Legacy Data">
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              <span className="sr-only">Purge Legacy Data</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
@@ -205,11 +278,6 @@ export default function AdminFacultyDashboard() {
                 <div className="mt-6 flex gap-3 pt-4">
                   <Button onClick={() => setSelectedFacultyUid(f.id)} variant="secondary" className="flex-1 text-[10px] font-black uppercase">
                     Inspect Dossier
-                  </Button>
-                  <Button onClick={() => downloadStudentsCsv([f], `faculty-${f.name}.csv`)} variant="ghost" className="px-4 border border-slate-100">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
                   </Button>
                 </div>
               </div>

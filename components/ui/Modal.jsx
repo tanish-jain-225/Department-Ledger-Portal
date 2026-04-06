@@ -59,22 +59,24 @@ export default function Modal({
       >
         {/* Sticky Header with Glass Effect */}
         <div className={clsx(
-          "sticky top-0 z-20 flex items-center justify-between border-b border-white/30 bg-white/30 backdrop-blur-xl transition-all",
+          "sticky top-0 z-20 flex flex-col gap-3 border-b border-white/30 bg-white/30 backdrop-blur-xl transition-all",
           fullScreen ? "px-10 py-8" : "px-8 py-6"
         )}>
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{title}</h2>
+          <div className="flex w-full items-center justify-between gap-3 min-w-0">
+            <h2 className="min-w-0 text-2xl font-black text-slate-900 tracking-tighter uppercase truncate">
+              {title}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 rounded-2xl p-3 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95"
+              aria-label="Close dialog"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="h-6 w-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="group rounded-2xl p-3 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95"
-            aria-label="Close dialog"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="h-6 w-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
         {/* Scrollable Content Body */}

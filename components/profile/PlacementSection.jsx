@@ -1,15 +1,18 @@
 import { useState } from "react";
+import { useToast } from "@/lib/toast-context";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
+import DocumentPreview from "./DocumentPreview";
 import SmartAssistant from "./SmartAssistant";
 
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300";
 
 export default function PlacementSection({ uid, rows, onRefresh }) {
+  const { addToast } = useToast();
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("placements", uid, onRefresh);
 
@@ -17,20 +20,21 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
   const [role, setRole]       = useState("");
   const [status, setStatus]   = useState("intern");
   const [pkg, setPkg]         = useState("");
-  const [link, setLink]       = useState("");
+  const [document, setDocument] = useState(null);
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
     await add(
-      { company, role, status, package: pkg, link, year: new Date().getFullYear() },
+      { company, role, status, package: pkg, document, year: new Date().getFullYear() },
       `Added placement: ${company} (${role})`
     );
-    setCompany(""); setRole(""); setPkg(""); setLink("");
+    setCompany(""); setRole(""); setStatus("intern"); setPkg(""); setDocument(null);
   }
 
   const handleUpdate = () => save(
     { company: editingRecord?.company, role: editingRecord?.role,
-      status: editingRecord?.status, package: editingRecord?.package, link: editingRecord?.link },
+      status: editingRecord?.status, package: editingRecord?.package,
+      document: editingRecord?.document || document },
     `Updated: ${editingRecord?.company}`
   );
 
@@ -46,18 +50,19 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="placement" existingData={rows}
+        <SmartAssistant mode="placement" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.company) setCompany(d.company);
             if (d.role) setRole(d.role);
             if (d.package) setPkg(d.package.toString());
             if (d.status) setStatus(d.status);
           }}
+          onDocumentSaved={setDocument}
           label="AI Career Assistant" description="Describe your placement/internship for AI suggestions"
         />
       </div>
 
-      <form onSubmit={add} className="flex flex-col gap-3">
+      <form onSubmit={handleAdd} className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3">
           <Input placeholder="Organization / Company" required value={company} onChange={e => setCompany(e.target.value)} />
           <Input placeholder="Job Role / Title" value={role} onChange={e => setRole(e.target.value)} />
@@ -70,7 +75,6 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
           </select>
           <Input placeholder="Package (LPA) / Stipend" value={pkg} onChange={e => setPkg(e.target.value)} />
         </div>
-        <Input placeholder="Offer Letter / LinkedIn Link (Optional)" value={link} onChange={e => setLink(e.target.value)} />
         <Button type="submit" className="w-full py-4">Log Placement Info</Button>
       </form>
 
@@ -105,6 +109,9 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                       View Details
                     </a>
+                  )}
+                  {r.document && (
+                    <DocumentPreview document={r.document} triggerLabel="View uploaded file" />
                   )}
                 </div>
                 <div className="flex items-center gap-2 self-end">
@@ -148,8 +155,11 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Post Link</label>
-            <Input value={editingRecord?.link || ""} onChange={e => setEditingRecord({...editingRecord, link: e.target.value})} />
+            {editingRecord?.document ? (
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-[11px] text-slate-600">
+                Uploaded document: {editingRecord.document.fileName} (Firestore)
+              </div>
+            ) : null}
           </div>
           <div className="flex justify-end gap-3 mt-2">
             <Button variant="ghost" onClick={() => setEditingRecord(null)}>Cancel</Button>
@@ -164,12 +174,7 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
           if (!deleteTarget) return;
-          try {
-            await removeRecord("placements", deleteTarget.id, { actorUid: uid, targetUid: uid, description: `Deleted: ${deleteTarget.company}` });
-            addToast(`Deleted: ${deleteTarget.company}`, "success");
-            setDeleteTarget(null);
-            onRefresh();
-          } catch { addToast("Failed to delete", "error"); }
+          await confirmDelete(`Deleted: ${deleteTarget.company}`);
         }}
       />
     </section>

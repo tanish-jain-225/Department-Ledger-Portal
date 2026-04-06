@@ -6,7 +6,8 @@ import { Layout, ACCESS } from "@/components";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { isStaff } from "@/lib/roles";
-import { listByStudent } from "@/lib/data";
+import { listByStudent, listStudentDocuments } from "@/lib/data";
+import DocumentPreview from "@/components/profile/DocumentPreview";
 import { Badge, Skeleton, EmptyState, SectionCard } from "@/components/ui";
 
 function InfoItem({ label, value, wide }) {
@@ -25,13 +26,14 @@ export default function StudentDetailPage() {
   const { user, profile } = useAuth();
   const [data, setData] = useState(null);
   const [lists, setLists] = useState({
-    academic: [], activities: [], achievements: [], placements: [],
+    academic: [], activities: [], achievements: [], placements: [], uploadedDocuments: [],
   });
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
 
   const role = profile?.role;
   const allowed = user && role && isStaff(role);
+
 
   useEffect(() => {
     if (!uid || typeof uid !== "string" || !allowed) return;
@@ -44,13 +46,14 @@ export default function StudentDetailPage() {
         const userData = { id: snap.id, ...snap.data() };
         if (userData.role !== "student") { setErr("This user is not a student"); return; }
         setData(userData);
-        const [academic, activities, achievements, placements] = await Promise.all([
+        const [academic, activities, achievements, placements, uploadedDocuments] = await Promise.all([
           listByStudent("academicRecords", uid),
           listByStudent("activities", uid),
           listByStudent("achievements", uid),
           listByStudent("placements", uid),
+          listStudentDocuments(uid),
         ]);
-        setLists({ academic, activities, achievements, placements });
+        setLists({ academic, activities, achievements, placements, uploadedDocuments });
       } catch (e) {
         setErr(e?.message || "Load failed");
       } finally {
@@ -100,7 +103,7 @@ export default function StudentDetailPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-white text-2xl font-extrabold shadow-lg shadow-brand-500/20">
+                <div className="shrink-0 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-white text-2xl font-extrabold shadow-lg shadow-brand-500/20">
                   {data.name?.[0]?.toUpperCase() || "S"}
                 </div>
                 <div>
@@ -173,6 +176,9 @@ export default function StudentDetailPage() {
                           Result ↗
                         </a>
                       )}
+                      {r.document && (
+                        <DocumentPreview document={r.document} triggerLabel="View uploaded file" />
+                      )}
                     </div>
                   </li>
                 ))}
@@ -196,10 +202,11 @@ export default function StudentDetailPage() {
                 {lists.activities.map((r) => (
                   <li key={r.id} className="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
                     <span className="flex-shrink-0 rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-slate-500">{r.type}</span>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-900">{r.title}</p>
                       <p className="text-xs text-slate-500">{r.date}{r.description ? ` - ${r.description}` : ""}</p>
                     </div>
+                    {r.document && <DocumentPreview document={r.document} triggerLabel="View uploaded file" />}
                   </li>
                 ))}
               </ul>
@@ -227,6 +234,7 @@ export default function StudentDetailPage() {
                       <p className="text-sm font-bold text-slate-900 truncate">{r.title}</p>
                       <p className="text-xs text-slate-500">{r.date}</p>
                     </div>
+                    {r.document && <DocumentPreview document={r.document} triggerLabel="View uploaded file" />}
                   </li>
                 ))}
               </ul>
@@ -252,15 +260,17 @@ export default function StudentDetailPage() {
                       <p className="text-sm font-bold text-slate-900">{r.company}</p>
                       <p className="text-xs text-slate-500">{r.role} · <span className="capitalize">{r.status}</span> {r.package ? `· ${r.package}` : ""}</p>
                     </div>
-                    {r.link && (
-                      <a href={r.link} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-brand-600 hover:underline">View ↗</a>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {r.link && (
+                        <a href={r.link} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-brand-600 hover:underline">View ↗</a>
+                      )}
+                      {r.document && <DocumentPreview document={r.document} triggerLabel="View uploaded file" />}
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </SectionCard>
-
 
         </div>
       )}

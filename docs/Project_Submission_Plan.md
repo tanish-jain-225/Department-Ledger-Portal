@@ -30,7 +30,7 @@ Department Ledger Portal is an AI-powered academic records platform for colleges
 
 The solution solves the problem of data stagnation and slow record handling by letting users upload supporting documents and automatically extract structured data with Gemini AI. Faculty can search and review student records quickly, while admins maintain full governance with role assignment, request approval, audit logging and secure deletion workflows.
 
-Tech stack: Next.js 15 (React), Tailwind CSS, Firebase Authentication + Firestore, Google Generative AI SDK (Gemini 2.5 Flash) and deployed on Vercel.
+Tech stack: Next.js 16.2.2 (React 19.2.4), Tailwind CSS 4.2.2, Firebase Authentication + Firestore, Google Generative AI SDK (Gemini 2.5 Flash), and deployed on Vercel.
 
 Google tools use-case: Gemini is used for Smart Analysis document-to-data extraction and Career Pulse readiness scoring. Firebase is used for secure user authentication, role-based access workflows and real-time academic ledger storage.
 
@@ -83,7 +83,7 @@ Department Ledger Portal is built for a three-role academic workflow:
 
 ## Project Architecture
 
-- Frontend: Next.js 15 with the Pages Router and React 18.
+- Frontend: Next.js 16.2.2 with the Pages Router and React 19.2.4.
 - Styling: Tailwind CSS with custom premium UI components.
 - Database: Firebase Firestore.
 - Authentication: Firebase Authentication with server-side token verification using firebase-admin.

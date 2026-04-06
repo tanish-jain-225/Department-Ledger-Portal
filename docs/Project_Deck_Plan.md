@@ -54,7 +54,7 @@ The **Department Ledger Portal** is an AI-first "Master Ledger" system. It lever
 ---
 
 ## Slide 8: Architecture Diagram
-- **Frontend**: Next.js 15 (Pages Router), React, Tailwind CSS.
+- **Frontend**: Next.js 16 (Pages Router), React 19, Tailwind CSS.
 - **Intelligence**: Google Gemini API (`gemini-2.5-flash`) for multimodality.
 - **Backend/Ops**: Next.js APIRoutes + Firestore Security Rules.
 - **Data**: Firebase Authentication & Firestore (NoSQL Scalable Database).

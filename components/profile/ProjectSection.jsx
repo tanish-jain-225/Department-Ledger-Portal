@@ -1,15 +1,18 @@
 import { useState } from "react";
+import { useToast } from "@/lib/toast-context";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
+import DocumentPreview from "./DocumentPreview";
 import SmartAssistant from "./SmartAssistant";
 
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300";
 
 export default function ProjectSection({ uid, rows, onRefresh }) {
+  const { addToast } = useToast();
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("projects", uid, onRefresh);
 
@@ -18,16 +21,18 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
   const [link, setLink]             = useState("");
   const [github, setGithub]         = useState("");
   const [description, setDescription] = useState("");
+  const [document, setDocument]     = useState(null);
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
-    await add({ title, techStack, link, github, description }, `Added project: ${title}`);
-    setTitle(""); setTechStack(""); setLink(""); setGithub(""); setDescription("");
+    await add({ title, techStack, link, github, description, document }, `Added project: ${title}`);
+    setTitle(""); setTechStack(""); setLink(""); setGithub(""); setDescription(""); setDocument(null);
   }
 
   const handleUpdate = () => save(
     { title: editingRecord?.title, techStack: editingRecord?.techStack,
-      link: editingRecord?.link, github: editingRecord?.github, description: editingRecord?.description },
+      link: editingRecord?.link, github: editingRecord?.github, description: editingRecord?.description,
+      document: editingRecord?.document || document },
     `Updated: ${editingRecord?.title}`
   );
 
@@ -43,17 +48,18 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="project" existingData={rows}
+        <SmartAssistant mode="project" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.title) setTitle(d.title);
             if (d.techStack) setTechStack(d.techStack);
             if (d.description) setDescription(d.description);
           }}
+          onDocumentSaved={setDocument}
           label="AI Project Assistant" description="Get AI suggestions for your project"
         />
       </div>
 
-      <form onSubmit={add} className="flex flex-col gap-3">
+      <form onSubmit={handleAdd} className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3">
           <Input placeholder="Project Title" required value={title} onChange={e => setTitle(e.target.value)} />
           <Input placeholder="Tech Stack (e.g. Next.js, Firebase)" value={techStack} onChange={e => setTechStack(e.target.value)} />
@@ -89,10 +95,11 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
               </div>
               <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{r.title}</h3>
               {r.description && <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">{r.description}</p>}
-              {(r.link || r.github) && (
+              {(r.link || r.github || r.document) && (
                 <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-100">
                   {r.link && <a href={r.link} target="_blank" rel="noreferrer" className="text-[10px] font-black text-brand-600 uppercase tracking-widest hover:underline transition-all">Live Demo →</a>}
                   {r.github && <a href={r.github} target="_blank" rel="noreferrer" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:underline transition-all">Source Code →</a>}
+                  {r.document && <DocumentPreview document={r.document} triggerLabel="View uploaded file" />}
                 </div>
               )}
             </div>
@@ -116,8 +123,8 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
       <ConfirmDialog
         open={!!deleteTarget} onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
-          await removeRecord("projects", deleteTarget.id, { actorUid: uid, description: `Removed: ${deleteTarget.title}` });
-          onRefresh(); setDeleteTarget(null);
+          if (!deleteTarget) return;
+          await confirmDelete(`Removed: ${deleteTarget.title}`);
           addToast("Project entry erased", "success");
         }}
         title="Erase Project Record"

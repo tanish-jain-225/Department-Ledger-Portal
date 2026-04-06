@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
+import DocumentPreview from "./DocumentPreview";
 import SmartAssistant from "./SmartAssistant";
 
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300";
@@ -21,7 +22,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
   const [gpa, setGpa]             = useState("");
   const [subjects, setSubjects]   = useState("");
   const [branch, setBranch]       = useState("");
-  const [link, setLink]           = useState("");
+  const [document, setDocument]   = useState(null);
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
@@ -31,10 +32,10 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
       return;
     }
     await add(
-      { year, semester, gpa, subjects, rollNumber, branch, resultLink: link },
+      { year, semester, gpa, subjects, rollNumber, branch, document },
       `Added academic record for Year ${year} Sem ${semester}`
     );
-    setYear(""); setSemester(""); setGpa(""); setSubjects(""); setRollNumber(""); setBranch(""); setLink("");
+    setYear(""); setSemester(""); setGpa(""); setSubjects(""); setRollNumber(""); setBranch(""); setDocument(null);
   }
 
   async function handleUpdate() {
@@ -46,7 +47,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
     await save(
       { year: editingRecord.year, semester: editingRecord.semester, gpa: editingRecord.gpa,
         subjects: editingRecord.subjects, rollNumber: editingRecord.rollNumber,
-        branch: editingRecord.branch, resultLink: editingRecord.resultLink },
+        branch: editingRecord.branch, document: editingRecord.document || document },
       `Updated Year ${editingRecord.year} Sem ${editingRecord.semester}`
     );
   }
@@ -67,7 +68,9 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
           </div>
           <SmartAssistant
-            mode="academic" existingData={rows}
+            mode="academic"
+            studentUid={uid}
+            existingData={rows}
             onExtract={(d) => {
               if (d.year) setYear(d.year.toString());
               if (d.semester) setSemester(d.semester.toString());
@@ -76,6 +79,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
               if (d.branch) setBranch(d.branch);
               if (d.rollNumber) setRollNumber(d.rollNumber.toString());
             }}
+            onDocumentSaved={setDocument}
             label="AI Academic Assistant"
             description="Describe your academic record to get AI suggestions"
           />
@@ -93,7 +97,6 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input required placeholder="GPA / SGPA (e.g. 9.5)" value={gpa} onChange={e => setGpa(e.target.value)} />
-            <Input placeholder="Result URL (Optional)" value={link} onChange={e => setLink(e.target.value)} />
           </div>
           <textarea placeholder="Subjects or key learnings..." value={subjects} onChange={e => setSubjects(e.target.value)} rows={2} className={field} />
           <Button type="submit" className="w-full py-4">Add Record to Ledger</Button>
@@ -127,6 +130,9 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 10-5.656-5.656l-1.102 1.101" /></svg>
                         View Results
                       </a>
+                    )}
+                    {r.document && (
+                      <DocumentPreview document={r.document} triggerLabel="View uploaded file" />
                     )}
                   </div>
                   {/* Actions */}
@@ -165,6 +171,11 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Subjects</label>
             <textarea value={editingRecord?.subjects || ""} onChange={e => setEditingRecord({...editingRecord, subjects: e.target.value})} rows={3} className={field} />
           </div>
+          {editingRecord?.document && (
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-[11px] text-slate-600">
+              Uploaded document: {editingRecord.document.fileName} (Firestore)
+            </div>
+          )}
           <div className="flex justify-end gap-3 mt-2">
             <Button variant="ghost" onClick={() => setEditingRecord(null)}>Cancel</Button>
             <Button onClick={handleUpdate} disabled={saving}>Save Changes</Button>

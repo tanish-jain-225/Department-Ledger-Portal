@@ -49,19 +49,32 @@ export default function AdminAuditPage() {
 
   const downloadCSV = () => {
     if (rows.length === 0) return;
-    
-    const headers = ["ID", "Action", "Description", "Actor", "Target", "Timestamp", "Details"];
-    const csvRows = rows.map(r => [
-      r.id,
-      r.action,
-      `"${(r.description || "").replace(/"/g, '""')}"`,
-      r.actorUid || "",
-      r.targetUid || "",
-      r.timestamp?.toDate?.()?.toISOString() || "",
-      `"${JSON.stringify(r.details || {}).replace(/"/g, '""')}"`
-    ]);
 
-    const csvContent = [headers, ...csvRows].map(e => e.join(",")).join("\n");
+    const escapeCell = (value) => {
+      const text = String(value ?? "");
+      if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+      return text;
+    };
+
+    const headers = ["ID", "Timestamp", "Action", "Action Label", "Sector", "Description", "Actor UID", "Target UID", "Details"];
+    const csvRows = rows.map((r) => {
+      const timestamp = r.timestamp?.toDate?.()?.toISOString() || "";
+      const actionLabel = r.actionLabel || r.action || "";
+      const sector = r.sector || (r.action?.split("_")[0]?.toUpperCase() || "SYSTEM");
+      return [
+        escapeCell(r.id),
+        escapeCell(timestamp),
+        escapeCell(r.action || ""),
+        escapeCell(actionLabel),
+        escapeCell(sector),
+        escapeCell(r.description || ""),
+        escapeCell(r.actorUid || ""),
+        escapeCell(r.targetUid || ""),
+        escapeCell(JSON.stringify(r.details || {})),
+      ];
+    });
+
+    const csvContent = [headers, ...csvRows].map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -141,6 +154,9 @@ export default function AdminAuditPage() {
             {rows.map((r) => {
               const style = getActionStyle(r.action);
               const date = r.timestamp?.toDate?.() || null;
+              const actionLabel = r.actionLabel || style.label || (r.action || "Unknown");
+              const sector = r.sector || (r.action?.split("_")[0]?.toUpperCase() || "SYSTEM");
+              const details = r.details && typeof r.details === "object" ? r.details : {};
 
               return (
                 <div key={r.id} className={`group premium-card p-6 border transition-all hover:bg-slate-50/80 ${style.bg}`}>
@@ -152,34 +168,55 @@ export default function AdminAuditPage() {
                         </svg>
                       </div>
                       <div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                           <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200/50 ${style.badge}`}>
-                            {style.label}
+                            {actionLabel}
                           </span>
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{timeAgo(date)}</span>
                         </div>
-                        <p className="mt-2 text-sm font-black text-slate-900 tracking-tight leading-snug">{r.description}</p>
-                        <div className="mt-3 flex items-center gap-6">
-                           <div className="flex flex-col">
-                              <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Actor ID</span>
-                              <span className="text-[10px] font-bold text-slate-500 font-mono">{r.actorUid?.slice(-8) || "SYSTEM"}</span>
-                           </div>
-                           <div className="flex flex-col">
-                              <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Sector</span>
-                              <span className="text-[10px] font-bold text-slate-500 font-mono italic">{r.action?.split('_')[0] || "core"}</span>
-                           </div>
+                        <p className="mt-2 text-sm font-black text-slate-900 tracking-tight leading-snug">{r.description || "No description provided."}</p>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <div className="flex flex-col">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Actor UID</span>
+                            <span className="text-[10px] font-bold text-slate-500 font-mono">{r.actorUid || "SYSTEM"}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Target UID</span>
+                            <span className="text-[10px] font-bold text-slate-500 font-mono">{r.targetUid || "N/A"}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Sector</span>
+                            <span className="text-[10px] font-bold text-slate-500 font-mono italic">{sector}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Timestamp</span>
+                            <span className="text-[10px] font-bold text-slate-500 font-mono">{date ? date.toLocaleString() : "Unknown"}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                       <Button variant="ghost" className="h-10 w-10 !p-0 border border-slate-100 rounded-xl" title="Inspect Hash">
+                       <Button variant="ghost" className="h-10 w-10 !p-0 border border-slate-100 rounded-xl" title="Inspect Audit">
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                           </svg>
                        </Button>
                     </div>
                   </div>
+                  {Object.keys(details).length > 0 && (
+                    <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-700">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 mb-3">Details</p>
+                      <div className="grid gap-2">
+                        {Object.entries(details).map(([key, value]) => (
+                          <div key={key} className="flex items-start gap-2">
+                            <span className="font-black text-slate-500 uppercase tracking-[0.15em]">{key}</span>
+                            <span className="break-all text-slate-700">{typeof value === "object" ? JSON.stringify(value) : String(value)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

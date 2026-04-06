@@ -5,6 +5,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
+import DocumentPreview from "./DocumentPreview";
 import SmartAssistant from "./SmartAssistant";
 
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300";
@@ -18,20 +19,21 @@ export default function AchievementSection({ uid, rows, onRefresh }) {
   const [level, setLevel]           = useState("college");
   const [date, setDate]             = useState("");
   const [description, setDescription] = useState("");
-  const [link, setLink]             = useState("");
+  const [document, setDocument]     = useState(null);
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
     await add(
-      { type: "achievement", title, issuer, level, date, description, certificateLink: link },
+      { type: "achievement", title, issuer, level, date, description, document },
       `Added achievement: ${title}`
     );
-    setTitle(""); setIssuer(""); setLevel("college"); setDate(""); setDescription(""); setLink("");
+    setTitle(""); setIssuer(""); setLevel("college"); setDate(""); setDescription(""); setDocument(null);
   }
 
   const handleUpdate = () => save(
     { title: editingRecord?.title, issuer: editingRecord?.issuer, level: editingRecord?.level,
-      date: editingRecord?.date, description: editingRecord?.description, certificateLink: editingRecord?.certificateLink },
+      date: editingRecord?.date, description: editingRecord?.description, certificateLink: editingRecord?.certificateLink,
+      document: editingRecord?.document || document },
     `Updated: ${editingRecord?.title}`
   );
 
@@ -47,13 +49,14 @@ export default function AchievementSection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="achievement" existingData={rows}
+        <SmartAssistant mode="achievement" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.title) setTitle(d.title);
             if (d.issuer) setIssuer(d.issuer);
             if (d.level) setLevel(d.level);
             if (d.date) setDate(d.date);
           }}
+          onDocumentSaved={setDocument}
           label="AI Achievement Assistant" description="Describe your achievement for AI suggestions"
         />
       </div>
@@ -73,7 +76,6 @@ export default function AchievementSection({ uid, rows, onRefresh }) {
           </select>
           <Input type="date" required value={date} onChange={e => setDate(e.target.value)} />
         </div>
-        <Input placeholder="Credential Link (Optional)" value={link} onChange={e => setLink(e.target.value)} />
         <textarea placeholder="Briefly describe the significance of this award..." value={description} onChange={e => setDescription(e.target.value)} rows={2} className={field} />
         <Button type="submit" className="w-full py-4">Add Achievement</Button>
       </form>
@@ -105,6 +107,9 @@ export default function AchievementSection({ uid, rows, onRefresh }) {
                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" /></svg>
                       View Credential
                     </a>
+                  )}
+                  {r.document && (
+                    <DocumentPreview document={r.document} triggerLabel="View uploaded file" />
                   )}
                 </div>
                 <div className="flex items-center gap-2 self-end">
@@ -148,11 +153,12 @@ export default function AchievementSection({ uid, rows, onRefresh }) {
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Date</label>
               <Input type="date" value={editingRecord?.date || ""} onChange={e => setEditingRecord({...editingRecord, date: e.target.value})} />
             </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Credential URL</label>
-              <Input value={editingRecord?.certificateLink || ""} onChange={e => setEditingRecord({...editingRecord, certificateLink: e.target.value})} />
-            </div>
           </div>
+          {editingRecord?.document && (
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-[11px] text-slate-600">
+              Uploaded document: {editingRecord.document.fileName} (Firestore)
+            </div>
+          )}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Description</label>
             <textarea value={editingRecord?.description || ""} onChange={e => setEditingRecord({...editingRecord, description: e.target.value})} rows={3} className={field} />

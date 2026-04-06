@@ -14,6 +14,7 @@ export default function IdentityCardPopup({
   activities = [], 
   achievements = [], 
   placements = [],
+  showPdf = true,
 }) {
   const cardRef = useRef(null);
 
@@ -43,15 +44,17 @@ export default function IdentityCardPopup({
           <div className="flex flex-col">
             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Verification Protocol</span>
           </div>
-          <DownloadPdfButton
-            elementRef={cardRef}
-            filename={filename}
-            label="Generate PDF"
-            allowedRoles={allowedRoles}
-            orientation="portrait"
-            windowWidth={794}
-            className="rounded-xl px-6 py-3 text-sm font-black shadow-xl shadow-emerald-500/20 active:scale-95"
-          />
+          {showPdf && (
+            <DownloadPdfButton
+              elementRef={cardRef}
+              filename={filename}
+              label="Generate PDF"
+              allowedRoles={allowedRoles}
+              orientation="portrait"
+              windowWidth={794}
+              className="rounded-xl px-6 py-3 text-sm font-black shadow-xl shadow-emerald-500/20 active:scale-95"
+            />
+          )}
         </div>
 
         {/* Scalable Card Preview */}

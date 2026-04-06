@@ -4,7 +4,7 @@ import { getDb } from "@/lib/firebase";
 import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
 import Modal from "@/components/ui/Modal";
-import { markAllAsRead } from "@/lib/notifications";
+import { markAllAsRead, clearAllNotifications } from "@/lib/notifications";
 
 export default function NotificationCenter() {
   const { user } = useAuth();
@@ -75,6 +75,17 @@ export default function NotificationCenter() {
                <span className="text-xs font-bold text-slate-900 mt-0.5">{unreadCount} Actionable Protocols</span>
             </div>
             <div className="flex items-center gap-3">
+              {notifications.length > 0 && (
+                <button
+                  onClick={async () => {
+                    await clearAllNotifications(user?.uid);
+                    setNotifications([]);
+                  }}
+                  className="text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-800 transition-colors border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50"
+                >
+                  Clear all
+                </button>
+              )}
               {unreadCount > 0 && (
                 <button
                   onClick={() => markAllAsRead(user?.uid)}

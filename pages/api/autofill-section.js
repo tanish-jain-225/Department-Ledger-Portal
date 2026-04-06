@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { RATE_LIMIT } from "@/lib/constants";
 import { isRateLimited } from "@/lib/rate-limit";
 import { verifyAuthToken } from "@/lib/api-auth";
+import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
 
 const VALID_SECTIONS = ["academic", "achievement", "activity", "placement", "project", "skill"];
 
@@ -74,7 +75,10 @@ export default async function handler(req, res) {
   const modelName = process.env.GEMINI_MODEL;
 
   if (!apiKey) {
-    return res.status(500).json({ error: "Gemini API key not configured" });
+    return res.status(500).json({ error: "GEMINI_API_KEY is not configured." });
+  }
+  if (!modelName) {
+    return res.status(500).json({ error: "GEMINI_MODEL is not configured." });
   }
 
   try {
@@ -115,21 +119,13 @@ No markdown, no explanation, no preamble. Just the JSON object.`;
     ]);
 
     const text = result.response.text();
+    const data = parseAiJson(text);
 
-    let jsonStr = text;
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[0];
-    } else {
-      jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    }
-
-    try {
-      const data = JSON.parse(jsonStr);
-      return res.status(200).json(data);
-    } catch {
+    if (!isValidAiJsonResponse(data, fields)) {
       return res.status(500).json({ error: "AI returned invalid JSON format" });
     }
+
+    return res.status(200).json(data);
   } catch (error) {
     const msg = error?.message || "Failed to generate suggestions";
     if (error?.status === 429) {

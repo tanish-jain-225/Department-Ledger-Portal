@@ -40,17 +40,19 @@ export function SidebarLink({ href, icon, children, active, collapsed, mobile })
   );
 }
 
+function GroupTitle({ children, mobile, collapsed }) {
+  return (
+    <div className={`pt-4 pb-2 ${mobile ? "px-5" : (collapsed ? "px-0 text-center" : "px-4")}`}>
+      <p className={`font-black uppercase tracking-[0.2em] text-slate-400 transition-all ${collapsed ? "text-[8px]" : "text-[10px]"}`}>{children}</p>
+    </div>
+  );
+}
+
 export default function NavContent({ role, activePath, collapsed, mobile, router }) {
   const { user } = useAuth();
   const isAdmin = canManageUsers(role);
   const isFaculty = isStaff(role) && !isAdmin;
   const isStudent = role === ROLES.STUDENT;
-
-  const GroupTitle = ({ children }) => (
-    <div className={`pt-4 pb-2 ${mobile ? "px-5" : (collapsed ? "px-0 text-center" : "px-4")}`}>
-      <p className={`font-black uppercase tracking-[0.2em] text-slate-400 transition-all ${collapsed ? "text-[8px]" : "text-[10px]"}`}>{children}</p>
-    </div>
-  );
 
   if (isAdmin) {
     return (

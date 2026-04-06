@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
 import { listStudentsForDashboard } from "@/lib/data";
-import { downloadStudentsCsv } from "@/lib/csv-download";
+import { downloadFacultyStudentsCsv } from "@/lib/csv-download";
 import StudentInfoPopup from "@/components/StudentInfoPopup";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
@@ -87,7 +87,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <Button
-          onClick={() => downloadStudentsCsv(rows, "ledger-export.csv", { maskSensitive: true })}
+          onClick={() => downloadFacultyStudentsCsv(rows, "ledger-export.csv")}
           className="lg:w-auto w-full group"
         >
           <svg className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,7 +110,7 @@ export default function DashboardPage() {
             placeholder="Filter records by name, email, or identity..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-[2rem] border-2 border-slate-100 bg-white pl-14 pr-6 py-5 text-sm font-black text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300 shadow-xl shadow-slate-200/20"
+            className="w-full rounded-4xl border-2 border-slate-100 bg-white pl-14 pr-6 py-5 text-sm font-black text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300 shadow-xl shadow-slate-200/20"
           />
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
                 Access Profile
               </Button>
               <button
-                onClick={() => downloadStudentsCsv([s], `record-${s.name || s.id}.csv`, { maskSensitive: true })}
+                onClick={() => downloadFacultyStudentsCsv([s], `record-${s.name || s.id}.csv`)}
                 className="w-full h-10 flex items-center justify-center gap-2 rounded-2xl bg-slate-50 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 hover:bg-slate-900 hover:text-white transition-all active:scale-95"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
