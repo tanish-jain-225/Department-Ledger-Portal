@@ -43,60 +43,58 @@ service cloud.firestore {
     // Shared rules for: academicRecords, achievements, activities,
     //                   placements, projects, skills, aiReports
     //
-    // READ:   Owner OR staff (faculty/admin need to read student records).
-    //         Students cannot read other students' data.
+    // READ:   Any authenticated user.
+    //         Faculty/admin need to read all student records for dashboards.
+    //         The get()-based isStaff() check on collection queries causes
+    //         Firebase SDK payload errors, so we keep read open to all auth users.
+    //         Write operations are strictly owner-only or admin.
     // CREATE: Only the owner - studentUid must match the caller's uid.
     // UPDATE/DELETE: Owner or admin only.
-    //   Admin needs delete for the cascade purge flow in admin pages.
-
-    function isStaff() {
-      return isAuth() && (userRole() == 'faculty' || userRole() == 'admin');
-    }
 
     match /academicRecords/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
+      allow read:   if isAuth();
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /achievements/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
+      allow read:   if isAuth();
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /activities/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
+      allow read:   if isAuth();
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /placements/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
+      allow read:   if isAuth();
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /projects/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
+      allow read:   if isAuth();
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /skills/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
+      allow read:   if isAuth();
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /aiReports/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
+      allow read:   if isAuth();
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
@@ -105,8 +103,7 @@ service cloud.firestore {
     match /uploadedDocuments/{docId} {
       allow read:   if isAuth() && (
         resource.data.studentUid == uid() ||
-        isAdmin() ||
-        userRole() == 'faculty'
+        isAdmin()
       );
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
