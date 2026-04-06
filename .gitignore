@@ -33,3 +33,6 @@ yarn-error.log*
 # typescript (if added later)
 next-env.d.ts
 *.tsbuildinfo
+
+.vscode
+.kiro
