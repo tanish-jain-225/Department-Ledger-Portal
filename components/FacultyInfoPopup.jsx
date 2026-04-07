@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { doc, getDoc } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
-import { downloadAdminFacultyRecordsCsv, downloadFacultyFacultyRecordsCsv } from "@/lib/csv-download";
+import { downloadAdminFacultyRecordsCsv, downloadFacultyFacultyRecordsCsv, buildFacultyExportRow, FACULTY_RECORD_FIELDS } from "@/lib/csv-download";
 import Modal from "@/components/ui/Modal";
 import Badge from "@/components/ui/Badge";
 import Alert from "@/components/ui/Alert";
@@ -60,7 +60,8 @@ export default function FacultyInfoPopup({ uid, onClose }) {
               <Button
                 onClick={() => {
                   const download = profile?.role === "admin" ? downloadAdminFacultyRecordsCsv : downloadFacultyFacultyRecordsCsv;
-                  download([data], `faculty-${data.name || uid}.csv`);
+                  const mapped = buildFacultyExportRow(data);
+                  download([mapped], `faculty-extensive-${data.name || uid}.csv`, { fields: FACULTY_RECORD_FIELDS });
                 }}
                 variant="success"
                 className="font-black"

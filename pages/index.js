@@ -135,7 +135,7 @@ export default function Home() {
         </div>
 
         <div className="mt-16 px-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
-          <div className="premium-card p-10 bg-slate-900 border-slate-800">
+          <div className="premium-card p-10">
             <div className="grid gap-8 md:grid-cols-3 text-center">
               {[
                 { label: "AI Features", value: "2" },
@@ -144,7 +144,7 @@ export default function Home() {
               ].map((stat) => (
                 <div key={stat.label}>
                   <p className="text-4xl font-bold  mb-1">{stat.value}</p>
-                  <p className="text-sm text-slate-300 uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-sm uppercase tracking-wider">{stat.label}</p>
                 </div>
               ))}
             </div>

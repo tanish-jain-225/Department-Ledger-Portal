@@ -85,23 +85,33 @@ export default function DashboardPage() {
       const q = query(collection(db, "users"), where("role", "==", "student"));
       const snap = await getDocs(q);
       const allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const total = allStudents.length;
 
-      const enrichedRows = [];
-      for (const user of allStudents) {
-        const [academic, activities, achievements, placements, uploadedDocuments] = await Promise.all([
-          listByStudent("academicRecords", user.id),
-          listByStudent("activities", user.id),
-          listByStudent("achievements", user.id),
-          listByStudent("placements", user.id),
-          listStudentDocuments(user.id, 200),
-        ]);
+      const rawDataBatch = [];
+      const batchSize = 10;
 
-        const lists = { academic, activities, achievements, placements, uploadedDocuments };
-        const report = computeReport(user, lists);
-        enrichedRows.push(buildStudentExportRow(user, lists, report));
+      for (let i = 0; i < total; i += batchSize) {
+        const chunk = allStudents.slice(i, i + batchSize);
+        const resolved = await Promise.all(chunk.map(async (u) => {
+          const lists = await fetchExhaustiveStudentData(u.id);
+          const report = computeReport(u, lists);
+          return { user: u, lists, report };
+        }));
+        rawDataBatch.push(...resolved);
       }
 
-      downloadFacultyStudentRecordsCsv(enrichedRows, `full-department-ledger-${new Date().toISOString().split('T')[0]}.csv`);
+      // 1. Calculate dynamic slots
+      const slots = calculateDynamicSlots(rawDataBatch);
+      
+      // 2. Generate fields
+      const fields = getDynamicStudentFields(slots);
+      
+      // 3. Map into final rows
+      const rows = rawDataBatch.map(({ user, lists, report }) => 
+        buildStudentExportRow(user, lists, report, slots)
+      );
+
+      downloadFacultyStudentRecordsCsv(rows, `department-ledger-staff-${new Date().toISOString().split('T')[0]}.csv`, { fields });
     } catch (err) {
       console.error("Export failed:", err);
       alert("Failed to prepare export. Please try again.");

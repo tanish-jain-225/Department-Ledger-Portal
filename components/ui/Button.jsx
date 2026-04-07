@@ -1,25 +1,25 @@
 import clsx from "clsx";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-200 " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 " +
-  "disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98]";
+  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-300 " +
+  "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/20 focus-visible:ring-offset-0 " +
+  "disabled:opacity-40 disabled:pointer-events-none hover:scale-[1.02] active:scale-[0.97] active:duration-75";
 
 const variants = {
   primary:
-    "bg-brand-700 text-white hover:bg-brand-800 shadow-sm",
+    "bg-brand-700 text-white hover:bg-brand-800 hover:shadow-xl hover:shadow-brand-500/20 active:bg-brand-900 border border-brand-700",
   secondary:
-    "bg-slate-700 text-white hover:bg-slate-800 shadow-sm",
+    "bg-slate-700 text-white hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-500/20 active:bg-slate-900 border border-slate-700",
   soft:
-    "bg-brand-600 text-white hover:bg-brand-700 shadow-sm",
+    "bg-brand-50 text-brand-700 hover:bg-brand-100 hover:shadow-md active:bg-brand-200 border border-brand-100",
   brand:
-    "bg-brand-700 text-white hover:bg-brand-800 shadow-sm",
+    "bg-brand-700 text-white hover:bg-brand-800 hover:shadow-xl hover:shadow-brand-500/20 active:bg-brand-900 border border-brand-700",
   success:
-    "bg-emerald-700 text-white hover:bg-emerald-800 shadow-sm",
+    "bg-emerald-700 text-white hover:bg-emerald-800 hover:shadow-xl hover:shadow-emerald-500/20 active:bg-emerald-900 border border-emerald-700",
   danger:
-    "bg-red-700 text-white hover:bg-red-800 shadow-sm",
+    "bg-red-700 text-white hover:bg-red-800 hover:shadow-xl hover:shadow-red-500/20 active:bg-red-900 border border-red-700",
   ghost:
-    "bg-slate-600 text-white hover:bg-slate-700 shadow-sm",
+    "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200",
 };
 
 const sizes = {

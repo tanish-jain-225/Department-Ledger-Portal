@@ -344,8 +344,8 @@ export default function AdminRequestsPage() {
               return (
                 <div
                   key={r.id}
-                  style={isUnassigned ? { boxShadow: '0 10px 30px -18px rgba(244, 63, 94, 0.35)' } : undefined}
-                  className={`group premium-card p-8 border transition-all ${isUnassigned ? 'border-rose-200 bg-rose-50/40 hover:bg-rose-50/60' : r.pendingRoleReq || r.pendingDeletion ? 'border-brand-200 bg-brand-50/5' : 'border-slate-100 hover:bg-slate-50/20'}`}
+                  style={isUnassigned ? { boxShadow: '0 10px 40px -18px rgba(245, 158, 11, 0.45)' } : undefined}
+                  className={`group premium-card p-8 border transition-all ${isUnassigned ? 'border-amber-400 bg-amber-50/50 hover:bg-amber-50/80' : r.pendingRoleReq || r.pendingDeletion ? 'border-brand-200 bg-brand-50/5' : 'border-slate-100 hover:bg-slate-50/20'}`}
                 >
 
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">

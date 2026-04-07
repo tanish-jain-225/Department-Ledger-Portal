@@ -5,13 +5,14 @@ import { StudentInfoPopup } from "@/components";
 import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { getDb } from "@/lib/firebase";
-import { downloadAdminStudentsCsv, STUDENT_RECORD_FIELDS, buildStudentExportRow } from "@/lib/csv-download";
+import { downloadAdminStudentsCsv, buildStudentExportRow, calculateDynamicSlots, getDynamicStudentFields } from "@/lib/csv-download";
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
 import { purgeUser, listByStudent, listStudentDocuments } from "@/lib/data";
 import { computeReport } from "@/lib/student-analytics";
 import { PAGE_SIZE } from "@/lib/constants";
+import { fetchExhaustiveStudentData } from "@/lib/student-data";
 
 export default function AdminStudentsDashboard() {
   const { user, loading } = useAuth();
@@ -23,6 +24,7 @@ export default function AdminStudentsDashboard() {
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [roleChangeTarget, setRoleChangeTarget] = useState(null);
+  const [exportProgress, setExportProgress] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -67,33 +69,46 @@ export default function AdminStudentsDashboard() {
     const db = getDb();
     if (!db) return;
     setBusy(true);
+    setExportProgress(0);
 
     try {
       const q = query(collection(db, "users"), where("role", "==", "student"));
       const snap = await getDocs(q);
       const usersAll = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const total = usersAll.length;
 
-      const rows = [];
-      for (const user of usersAll) {
-        const [academic, activities, achievements, placements, uploadedDocuments] = await Promise.all([
-          listByStudent("academicRecords", user.id),
-          listByStudent("activities", user.id),
-          listByStudent("achievements", user.id),
-          listByStudent("placements", user.id),
-          listStudentDocuments(user.id, 200),
-        ]);
-
-        const lists = { academic, activities, achievements, placements, uploadedDocuments };
-        const report = computeReport(user, lists);
-        rows.push(buildStudentExportRow(user, lists, report));
+      const rawDataBatch = [];
+      const batchSize = 10;
+      
+      for (let i = 0; i < total; i += batchSize) {
+        const chunk = usersAll.slice(i, i + batchSize);
+        const resolved = await Promise.all(chunk.map(async (u) => {
+          const lists = await fetchExhaustiveStudentData(u.id);
+          const report = computeReport(u, lists);
+          return { user: u, lists, report };
+        }));
+        rawDataBatch.push(...resolved);
+        setExportProgress(Math.round(((i + chunk.length) / total) * 100));
       }
 
-      downloadAdminStudentsCsv(rows, "global-student-registry.csv", { fields: STUDENT_RECORD_FIELDS });
-      addToast("Global student registry export downloaded.", "success");
+      // 1. Calculate dynamic slots for the entire registry
+      const slots = calculateDynamicSlots(rawDataBatch);
+      
+      // 2. Generate fields based on these slots
+      const fields = getDynamicStudentFields(slots);
+      
+      // 3. Map into final export rows
+      const rows = rawDataBatch.map(({ user, lists, report }) => 
+        buildStudentExportRow(user, lists, report, slots)
+      );
+
+      downloadAdminStudentsCsv(rows, "global-registry-dynamic.csv", { fields });
+      addToast("Exhaustive registry exported with dynamic scaling.", "success");
     } catch (error) {
-      addToast(error?.message || "Failed to export global registry", "error");
+      addToast(error?.message || "Failed to export", "error");
     } finally {
       setBusy(false);
+      setExportProgress(null);
     }
   }
 
@@ -217,15 +232,30 @@ export default function AdminStudentsDashboard() {
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Student Registry</h1>
             <p className="text-base text-slate-500 mt-2 font-medium">Comprehensive registry of all scholars currently in the ledger.</p>
           </div>
-          <Button
-            onClick={exportGlobalRegistry}
-            className="lg:w-auto w-full group shadow-xl shadow-brand-500/10"
-          >
-            <svg className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Export Global Registry (CSV)
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            {exportProgress !== null && (
+              <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                <div 
+                  className="h-full bg-brand-600 transition-all duration-300" 
+                  style={{ width: `${exportProgress}%` }}
+                />
+              </div>
+            )}
+            <Button
+              onClick={exportGlobalRegistry}
+              disabled={busy}
+              className="lg:w-auto w-full group shadow-xl shadow-brand-500/10"
+            >
+              <svg className={`h-4 w-4 mr-2 ${busy ? 'animate-spin' : 'group-hover:-translate-y-1 transition-transform'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                {busy ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                )}
+              </svg>
+              {exportProgress !== null ? `Exporting ${exportProgress}%` : "Export Global Registry (CSV)"}
+            </Button>
+          </div>
         </div>
 
         {/* Filter Island */}

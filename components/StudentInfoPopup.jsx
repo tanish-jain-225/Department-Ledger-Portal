@@ -8,12 +8,14 @@ import Button from "@/components/ui/Button";
 import DocumentPreview from "@/components/profile/DocumentPreview";
 import Badge from "@/components/ui/Badge";
 import {
-  downloadAdminStudentRecordsCsv,
-  downloadFacultyStudentRecordsCsv,
-  STUDENT_RECORD_FIELDS,
+  downloadAdminStudentsCsv,
+  downloadFacultyStudentsCsv,
+  calculateDynamicSlots,
+  getDynamicStudentFields,
   buildStudentExportRow,
 } from "@/lib/csv-download";
 import { computeReport } from "@/lib/student-analytics";
+import { fetchExhaustiveStudentData } from "@/lib/student-data";
 
 // ── Report popup ─────────────────────────────────────────────────────────────
 
@@ -198,20 +200,14 @@ export default function StudentInfoPopup({ uid, onClose }) {
     if (!uid) return;
     async function load() {
       setLoading(true);
-      const db = getDb();
-      if (!db) return;
       try {
+        const db = getDb();
         const snap = await getDoc(doc(db, "users", uid));
         if (!snap.exists()) { setErr("Student not found"); return; }
         setData({ id: snap.id, ...snap.data() });
-        const [academic, activities, achievements, placements, uploadedDocuments] = await Promise.all([
-          listByStudent("academicRecords", uid),
-          listByStudent("activities", uid),
-          listByStudent("achievements", uid),
-          listByStudent("placements", uid),
-          listStudentDocuments(uid),
-        ]);
-        setLists({ academic, activities, achievements, placements, uploadedDocuments });
+        
+        const exhaustive = await fetchExhaustiveStudentData(uid);
+        setLists(exhaustive);
       } catch (e) {
         setErr(e?.message || "Load failed");
       } finally {
@@ -224,14 +220,22 @@ export default function StudentInfoPopup({ uid, onClose }) {
   function handleCsvDownload() {
     if (!data) return;
     const report = computeReport(data, lists);
-    const exportRow = buildStudentExportRow(data, lists, report);
+    
+    // 1. Calculate dynamic slots for this single student
+    const slots = calculateDynamicSlots([{ lists, report }]);
+    
+    // 2. Generate fields based on these slots
+    const fields = getDynamicStudentFields(slots);
+    
+    // 3. Build the row with dynamic slots
+    const exportRow = buildStudentExportRow(data, lists, report, slots);
 
     const download = currentUser?.role === "admin"
-      ? downloadAdminStudentRecordsCsv
-      : downloadFacultyStudentRecordsCsv;
+      ? downloadAdminStudentsCsv
+      : downloadFacultyStudentsCsv;
 
-    download([exportRow], `record-${data.name || uid}.csv`, {
-      fields: STUDENT_RECORD_FIELDS,
+    download([exportRow], `record-extensive-${data.name || uid}.csv`, {
+      fields,
     });
   }
 

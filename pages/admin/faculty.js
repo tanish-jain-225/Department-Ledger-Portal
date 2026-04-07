@@ -5,7 +5,7 @@ import { FacultyInfoPopup } from "@/components";
 import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { getDb } from "@/lib/firebase";
-import { downloadAdminFacultyRecordsCsv } from "@/lib/csv-download";
+import { downloadAdminFacultyRecordsCsv, buildFacultyExportRow } from "@/lib/csv-download";
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
@@ -167,7 +167,11 @@ export default function AdminFacultyDashboard() {
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Faculty Ledger</h1>
             <p className="text-base text-slate-500 mt-2 font-medium">Registry of verified instructional staff and departmental leads.</p>
           </div>
-          <Button onClick={() => downloadAdminFacultyRecordsCsv(faculty, "faculty-directory.csv")}
+          <Button onClick={() => {
+            const mapped = faculty.map(f => buildFacultyExportRow(f));
+            downloadAdminFacultyRecordsCsv(mapped, "faculty-ledger-extensive.csv");
+            addToast("Staff ledger downloaded (Full Fidelity).", "success");
+          }}
             className="lg:w-auto w-full group shadow-xl shadow-brand-500/10">
             <svg className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
