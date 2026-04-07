@@ -90,8 +90,10 @@ export default function StudentCardPage() {
                 <DownloadPdfButton
                   elementRef={cardRef}
                   filename={buildFilename("Student_Card", data.rollNumber || data.name)}
-                  label="Download Professional Identity (PDF)"
+                  label="Download PDF"
                   allowedRoles={["student", "faculty", "admin"]}
+                  orientation="portrait"
+                  windowWidth={794}
                 />
               )}
             </div>

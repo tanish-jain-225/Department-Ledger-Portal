@@ -38,7 +38,7 @@ export default function SmartAssistant({
     };
   }, [previewUrl]);
 
-  const runAnalysis = async (file) => {
+  const runAnalysis = async (file, attempt = 1) => {
     setIsLoading(true);
     try {
       const base64 = await readFileAsBase64(file);
@@ -66,30 +66,41 @@ export default function SmartAssistant({
         addToast("File too large. Please use a file under 10MB.", "error");
         return;
       }
+
       if (!res.ok) {
         const errorBody = await res.json().catch(() => null);
         const apiMessage = errorBody?.error || `Server error ${res.status}`;
-        throw new Error(apiMessage);
+
+        // Handle Gemini High Demand (503) or Server Error with high-demand message with retry
+        const isHighDemand = res.status === 503 ||
+          (res.status === 500 && apiMessage.toLowerCase().includes("high demand"));
+
+        if (isHighDemand && attempt < 5) {
+          const delay = attempt * 2000;
+          console.warn(`Gemini high demand detected. Retrying in ${delay}ms... (Attempt ${attempt}/5)`);
+          await new Promise(r => setTimeout(r, delay));
+          return runAnalysis(file, attempt + 1);
+        }
+
+        // Final failure after retries or non-retryable error
+        console.error("SmartAssistant extraction failed:", apiMessage);
+        let userMessage = "Smart Analysis failed. Please try again.";
+        if (isHighDemand) {
+          userMessage = "AI is currently experiencing peak demand. Please wait a moment and try again.";
+        }
+        addToast(userMessage, "error");
+        return;
       }
 
       const data = await res.json();
-
-      // Auto-fill immediately - no confirmation
       if (onExtract) onExtract(data);
       addToast("Form filled from your document!", "success");
 
-      // Reset after success
       setFileName("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
-      console.error("SmartAssistant upload failed:", error);
-      let message = "Smart Analysis failed. Please try again.";
-      if (error?.code === "FIRESTORE_SIZE_LIMIT") {
-        message = `File too large. Please upload a file smaller than ${Math.round(FIRESTORE_MAX_UPLOAD_BYTES / 1024)}KB.`;
-      } else if (error?.code === "FIRESTORE_UNAVAILABLE") {
-        message = "Firestore upload is unavailable in this browser session.";
-      }
-      addToast(message, "error");
+      console.error("SmartAssistant critical failure:", error);
+      addToast("A communication error occurred. Please refresh and try again.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -141,8 +152,8 @@ export default function SmartAssistant({
           htmlFor={`smart-upload-${mode}`}
           className={`flex items-center gap-2 cursor-pointer rounded-2xl border px-4 py-2.5 text-sm font-semibold transition-all select-none
             ${isLoading
-              ? "border-brand-200 bg-brand-50 text-brand-400 cursor-not-allowed pointer-events-none"
-              : "border-dashed border-slate-300 bg-slate-50 text-slate-600 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
+              ? "border-brand-200 bg-slate-50 text-brand-400 cursor-not-allowed pointer-events-none"
+              : "border-brand-700 bg-brand-700 text-white hover:bg-brand-800 shadow-lg shadow-brand-900/10"
             }`}
         >
           {isLoading ? (
@@ -173,7 +184,7 @@ export default function SmartAssistant({
       </div>
 
       {previewUrl && (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5">
           <div className="flex items-center justify-between gap-3 mb-3">
             <span className="text-xs font-semibold text-slate-700">Preview</span>
             <span className="text-[10px] text-slate-500 uppercase tracking-[0.25em]">{previewType || "file"}</span>

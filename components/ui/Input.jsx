@@ -1,20 +1,29 @@
 import clsx from "clsx";
 import { forwardRef } from "react";
 
-const Input = forwardRef(function Input({ className, ...props }, ref) {
+const Input = forwardRef(function Input({ className, error, ...props }, ref) {
   return (
-    <input
-      ref={ref}
-      className={clsx(
-        "block w-full rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-medium text-slate-900",
-        "placeholder:text-slate-400 placeholder:font-normal",
-        "focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none",
-        "transition-all duration-300",
-        "disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed",
-        className
+    <>
+      <input
+        ref={ref}
+        className={clsx(
+          "block w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm",
+          "placeholder:text-slate-400",
+          "focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 focus:outline-none",
+          "transition-all duration-200",
+          "disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed",
+          error
+            ? "border-red-400 focus:border-red-500 focus:ring-red-400/20"
+            : "border-slate-300",
+          className
+        )}
+        aria-invalid={error ? "true" : undefined}
+        {...props}
+      />
+      {error && (
+        <p className="mt-1 text-xs text-red-600">{error}</p>
       )}
-      {...props}
-    />
+    </>
   );
 });
 

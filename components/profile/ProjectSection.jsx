@@ -40,13 +40,13 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="flex flex-col gap-1">
         <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Technical Portfolio</h2>
-        <p className="text-sm text-slate-400 italic">&ldquo;Engineering initiatives and research projects.&rdquo;</p>
+        <p className="text-sm text-slate-500 italic">&ldquo;Engineering initiatives and research projects.&rdquo;</p>
       </div>
 
       <div className="flex flex-col gap-3 bg-slate-50/50 p-4 sm:p-5 rounded-2xl border border-slate-100">
         <div>
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
         <SmartAssistant mode="project" studentUid={uid} existingData={rows}
           onExtract={(d) => {
@@ -76,7 +76,7 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
       <div className="flex flex-col gap-4">
         {rows.length === 0 ? (
           <div className="flex items-center justify-center py-16 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-100">
-            <p className="text-sm text-slate-400 italic">&ldquo;No project entries found in the institutional ledger.&rdquo;</p>
+            <p className="text-sm text-slate-500 italic">&ldquo;No project entries found in the institutional ledger.&rdquo;</p>
           </div>
         ) : (
           rows.map((r) => (

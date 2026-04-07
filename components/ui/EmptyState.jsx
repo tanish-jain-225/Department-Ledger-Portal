@@ -1,23 +1,24 @@
 import React from 'react';
 
-export default function EmptyState({ icon, title, message, action }) {
+export default function EmptyState({ icon, title, message, text, action }) {
+  // Support both `message` and legacy `text` prop
+  const body = message || text;
+
   return (
-    <div className="text-center py-24 premium-card border-dashed border-2 bg-slate-50/50 animate-slide-up">
-      <div className="h-20 w-20 rounded-[2rem] bg-white border border-slate-100 flex items-center justify-center mx-auto mb-6 shadow-xl text-slate-300 transition-transform hover:scale-110 duration-500 animate-float">
+    <div className="text-center py-12 rounded-xl border border-slate-200 bg-slate-50 animate-slide-up">
+      <div className="h-12 w-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 text-slate-400">
         {icon || (
-          <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
         )}
       </div>
-      <p className="text-slate-900 font-black text-2xl tracking-tighter">{title || "No data discovered"}</p>
-      <p className="text-sm text-slate-400 mt-2 max-w-xs mx-auto font-medium leading-relaxed italic">
-        {message || "The ledger is currently empty for this sector. Initialize a new record to begin synchronization."}
-      </p>
+      <p className="text-sm font-semibold text-slate-700">{title || "No data found"}</p>
+      {body && (
+        <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">{body}</p>
+      )}
       {action && (
-        <div className="mt-8">
-          {action}
-        </div>
+        <div className="mt-6">{action}</div>
       )}
     </div>
   );

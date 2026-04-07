@@ -48,7 +48,7 @@ export default function FacultyInfoPopup({ uid, onClose }) {
           {err}
         </Alert>
       )}
-          
+
       {!loading && data && (
         <div className="space-y-8">
           <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
@@ -57,13 +57,13 @@ export default function FacultyInfoPopup({ uid, onClose }) {
               <p className="text-sm font-medium text-slate-400 break-all mt-1">{data.email}</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <Button
+              <Button
                 onClick={() => {
                   const download = profile?.role === "admin" ? downloadAdminFacultyRecordsCsv : downloadFacultyFacultyRecordsCsv;
                   download([data], `faculty-${data.name || uid}.csv`);
                 }}
-                variant="ghost"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-black uppercase border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all active:scale-95 w-full sm:w-auto"
+                variant="success"
+                className="font-black"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

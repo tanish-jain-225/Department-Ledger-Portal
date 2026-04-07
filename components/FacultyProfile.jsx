@@ -38,9 +38,9 @@ export default function FacultyProfile({ profile, onRefresh }) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 animate-fade-in no-print pb-24">
-      <IdentityCardPopup 
-        show={showCardModal} 
-        onClose={() => setShowCardModal(false)} 
+      <IdentityCardPopup
+        show={showCardModal}
+        onClose={() => setShowCardModal(false)}
         role="faculty"
         data={profile}
         showPdf={true}
@@ -56,11 +56,8 @@ export default function FacultyProfile({ profile, onRefresh }) {
             {!isEditing && (
               <button
                 onClick={() => setShowCardModal(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-xs font-black text-white hover:bg-brand-600 transition-all active:scale-95 shadow-xl shadow-slate-900/10 uppercase tracking-widest whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-xs font-black bg-brand-700 text-white hover:bg-brand-800 transition-all active:scale-95 shadow-xl shadow-brand-900/10 uppercase tracking-widest whitespace-nowrap"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-                </svg>
                 View Identity Card
               </button>
             )}
@@ -70,9 +67,6 @@ export default function FacultyProfile({ profile, onRefresh }) {
                 onClick={() => setIsEditing(true)}
                 className="group py-3.5"
               >
-                <svg className="h-4 w-4 text-brand-500 transition-transform group-hover:rotate-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
                 Edit Credentials
               </Button>
             )}
@@ -230,22 +224,22 @@ export default function FacultyProfile({ profile, onRefresh }) {
         {!isEditing && (
           <div className="mt-16 pt-8 border-t border-red-50/50">
             <div className="flex items-center gap-2 mb-4">
-               <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-               <h3 className="text-sm font-black text-red-600 uppercase tracking-widest">Protocol: Data Deletion</h3>
+              <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+              <h3 className="text-sm font-black text-red-600 uppercase tracking-widest">Protocol: Data Deletion</h3>
             </div>
             <p className="text-xs text-slate-400 mb-6 leading-relaxed max-w-xl">Requesting data deletion will trigger an administrative workflow to permanently purge your professional records. This operation is non-reversible.</p>
-            
+
             {loadingDeletion ? (
               <div className="h-12 w-48 bg-slate-100 animate-pulse rounded-2xl" />
             ) : pendingDeletion ? (
               <div className="flex flex-col gap-4 items-start">
-                 <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800 animate-fade-in shadow-sm">
-                    <svg className="h-5 w-5 text-amber-500 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-xs font-black uppercase tracking-widest">Awaiting Administrative Review</span>
-                 </div>
-                 <p className="text-[10px] font-bold text-slate-400 italic pl-2">Protocol: Your purge request is active. System access will be revoked upon clearance.</p>
+                <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800 animate-fade-in shadow-sm">
+                  <svg className="h-5 w-5 text-amber-500 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xs font-black uppercase tracking-widest">Awaiting Administrative Review</span>
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 italic pl-2">Protocol: Your purge request is active. System access will be revoked upon clearance.</p>
               </div>
             ) : (
               <>

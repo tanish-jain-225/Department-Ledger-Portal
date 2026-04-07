@@ -34,7 +34,7 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
     loadHistory();
   }, [loadHistory]);
 
-  async function analyze() {
+  async function analyze(attempt = 1) {
     setLoading(true);
     try {
       const token = await getIdToken();
@@ -46,8 +46,33 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
         },
         body: JSON.stringify({ profile, academic, activities, achievements, placements, projects, skills }),
       });
+
+      // Handle Gemini High Demand (503) or Server Error with high-demand message with retry
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        const msg = errorData.error || "AI Analysis failed";
+        const status = resp.status;
+
+        const isHighDemand = status === 503 || (status === 500 && msg.toLowerCase().includes("high demand"));
+
+        if (isHighDemand && attempt < 5) {
+          const delay = attempt * 2000;
+          console.warn(`Career Intelligence high demand detected. Retrying in ${delay}ms... (Attempt ${attempt}/5)`);
+          await new Promise(r => setTimeout(r, delay));
+          return analyze(attempt + 1);
+        }
+
+        // Final failure after retries
+        console.error("Career Intelligence extraction failed:", msg);
+        let userMessage = "AI Analysis failed. Please try again.";
+        if (isHighDemand) {
+          userMessage = "AI is currently experiencing peak demand. Please wait a moment and try again.";
+        }
+        addToast(userMessage, "error");
+        return;
+      }
+
       const result = await resp.json();
-      if (result.error) throw new Error(result.error);
       await createRecord("aiReports", {
         studentUid: profile.id,
         ...result,
@@ -62,14 +87,15 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
         link: "/profile?tab=intelligence",
       });
     } catch (err) {
-      addToast(err.message || "AI Analysis failed", "error");
+      console.error("Analysis Critical Failure:", err);
+      addToast("A communication error occurred. Please refresh and try again.", "error");
     } finally {
-      setLoading(false);
+      if (attempt === 1) setLoading(false);
     }
   }
 
   const scoreColor = (s) => s > 75 ? "text-emerald-500" : s >= 50 ? "text-amber-500" : "text-red-500";
-  const scoreBg = (s) => s > 75 ? "bg-emerald-50 border-emerald-100" : s >= 50 ? "bg-amber-50 border-amber-100" : "bg-red-50 border-red-100";
+  const scoreBg = (s) => s > 75 ? "bg-emerald-700 border-emerald-700 text-white" : s >= 50 ? "bg-amber-700 border-amber-700 text-white" : "bg-red-700 border-red-700 text-white";
   const labelColor = (s) => s > 75 ? "#10b981" : s >= 50 ? "#f59e0b" : "#ef4444";
 
   return (
@@ -106,8 +132,6 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
                 filename={buildFilename("Career_Report", profile?.name || "Student")}
                 label="Download PDF"
                 orientation="portrait"
-                windowWidth={794}
-                className="text-xs px-3 py-1.5"
               />
             </div>
             <ReportContent
@@ -140,48 +164,60 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
       <section>
         <div className="mb-6">
           <h3 className="text-xl font-black text-slate-900 tracking-tight">Intelligence Vault</h3>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">{history.length} Reports</p>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">{history.length} Reports</p>
         </div>
 
         {history.length === 0 ? (
           <EmptyState title="Intelligence Vault Empty" message="Generate your first report to start your professional vault." />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {history.map((h) => (
-              <div key={h.id} className={`premium-card p-6 border transition-all duration-300 hover:shadow-lg ${scoreBg(h.score)}`}>
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="h-14 w-14 rounded-2xl bg-slate-900 text-white flex flex-col items-center justify-center shadow-lg flex-shrink-0">
-                    <span className={`text-xl font-black leading-tight ${scoreColor(h.score)}`}>{h.score}</span>
-                    <span className="text-[7px] uppercase font-black text-slate-400 tracking-widest">/ 100</span>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {history.map((h) => {
+              const accentColor = h.score > 75 ? "border-emerald-500" : h.score >= 50 ? "border-amber-500" : "border-rose-500";
+              const accentBg = h.score > 75 ? "bg-emerald-50" : h.score >= 50 ? "bg-amber-50" : "bg-rose-50";
+
+              return (
+                <div key={h.id} className={`premium-card p-6 border-l-[6px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${accentColor}`}>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className={`h-14 w-14 rounded-2xl flex flex-col items-center justify-center shadow-sm border border-slate-100 bg-white flex-shrink-0`}>
+                      <span className={`text-xl font-black leading-tight ${scoreColor(h.score)}`}>{h.score}</span>
+                      <span className="text-[7px] uppercase font-black text-slate-400 tracking-widest">Score</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-slate-900 truncate">{h.createdAtString || "Report"}</p>
+                      <p className={`text-[10px] font-black uppercase tracking-[0.2em] mt-0.5 ${scoreColor(h.score)}`}>
+                        {h.label}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-black text-slate-900">{h.createdAtString || "Report"}</p>
-                    <p className={`text-xs font-black uppercase tracking-widest mt-0.5 ${scoreColor(h.score)}`}>{h.label}</p>
+
+                  <div className={`p-4 rounded-xl border border-slate-100 mb-5 ${accentBg}/30`}>
+                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-2 italic font-medium">&ldquo;{h.summary}&rdquo;</p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedReport(h)}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand-700 text-white hover:bg-brand-800 shadow-lg shadow-brand-900/10 transition-all active:scale-95"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      View Report
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(h.id)}
+                      className="h-11 w-11 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all active:scale-90"
+                      title="Purge Report"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-4 italic">&ldquo;{h.summary}&rdquo;</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelectedReport(h)}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-widest hover:bg-brand-600 transition-all active:scale-95"
-                  >
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    View Report
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget(h.id)}
-                    className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all active:scale-90"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
@@ -201,7 +237,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
   const scoreCol = labelColor(report.score);
 
   return (
-    <div ref={ref} className="flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden">
+    <div ref={ref} className="flex flex-col bg-white rounded-2xl border border-slate-100">
 
       {/* Header - score badge stacks below on mobile, beside on sm+ */}
       <div className="flex flex-col gap-4 border-b-4 border-sky-500 p-4 sm:p-6">
@@ -230,30 +266,30 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
       <div className="flex flex-col gap-4 p-4 sm:p-6">
 
         {/* Summary */}
-        <div className="flex flex-col gap-2 bg-sky-50 border-l-4 border-sky-500 rounded-lg p-4">
-          <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest">Executive Summary</p>
-          <p className="text-sm text-slate-700 leading-relaxed">{report.summary}</p>
+        <div className="flex flex-col gap-2 bg-slate-900 border-l-4 border-brand-500 rounded-lg p-5 text-white shadow-xl">
+          <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest">Executive Summary</p>
+          <p className="text-sm font-medium leading-relaxed opacity-90">{report.summary}</p>
         </div>
 
         {/* Strengths + Gaps - stack on mobile, side by side on sm+ */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex flex-col gap-2 flex-1 bg-green-50 rounded-lg p-4">
-            <p className="text-[9px] font-black text-green-700 uppercase tracking-widest">Core Strengths</p>
-            <ul className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-3 flex-1 bg-emerald-700 rounded-xl p-5 text-white shadow-lg shadow-emerald-900/10">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Core Strengths</p>
+            <ul className="flex flex-col gap-2">
               {report.strengths?.map((s, i) => (
-                <li key={i} className="flex gap-2 text-xs text-green-800 leading-relaxed">
-                  <span className="font-black text-green-600 flex-shrink-0 mt-px">✓</span>
+                <li key={i} className="flex gap-2 text-xs leading-relaxed font-medium">
+                  <span className="font-black text-emerald-300 flex-shrink-0 mt-px">✓</span>
                   <span>{s}</span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="flex flex-col gap-2 flex-1 bg-orange-50 rounded-lg p-4">
-            <p className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Critical Gaps</p>
-            <ul className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-3 flex-1 bg-red-700 rounded-xl p-5 text-white shadow-lg shadow-red-900/10">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Critical Gaps</p>
+            <ul className="flex flex-col gap-2">
               {report.weaknesses?.map((w, i) => (
-                <li key={i} className="flex gap-2 text-xs text-orange-900 leading-relaxed">
-                  <span className="font-black text-orange-500 flex-shrink-0 mt-px">!</span>
+                <li key={i} className="flex gap-2 text-xs leading-relaxed font-medium">
+                  <span className="font-black text-rose-300 flex-shrink-0 mt-px">!</span>
                   <span>{w}</span>
                 </li>
               ))}
@@ -262,12 +298,12 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
         </div>
 
         {/* Recommendations */}
-        <div className="flex flex-col gap-2 bg-blue-50 rounded-lg p-4">
-          <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Action Roadmap</p>
-          <ol className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3 bg-brand-700 rounded-xl p-6 text-white shadow-xl shadow-brand-900/10">
+          <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Action Roadmap</p>
+          <ol className="flex flex-col gap-3">
             {report.recommendations?.map((r, i) => (
-              <li key={i} className="flex gap-3 text-xs text-blue-900 leading-relaxed">
-                <span className="flex-shrink-0 flex items-center justify-center bg-blue-600 text-white rounded font-black text-[9px] h-5 w-5 mt-px">{i + 1}</span>
+              <li key={i} className="flex gap-4 text-xs font-medium leading-relaxed">
+                <span className="flex-shrink-0 flex items-center justify-center bg-white text-brand-700 rounded font-black text-[10px] h-5 w-5 mt-px shadow-sm">{i + 1}</span>
                 <span>{r}</span>
               </li>
             ))}
@@ -275,15 +311,15 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
         </div>
 
         {/* Career Trajectory */}
-        <div className="flex flex-col gap-2 bg-slate-900 rounded-lg p-4">
+        <div className="flex flex-col gap-2 rounded-lg p-4">
           <p className="text-[9px] font-black text-sky-400 uppercase tracking-widest">Career Trajectory</p>
           <p className="text-xs text-slate-300 leading-relaxed italic">&ldquo;{report.careerRoadmap}&rdquo;</p>
         </div>
 
         {/* Footer */}
         <div className="flex flex-col sm:flex-row sm:justify-between gap-1 pt-2 border-t border-slate-100">
-          <p className="text-[9px] text-slate-400">Department Ledger Portal · Powered by Gemini AI</p>
-          <p className="text-[9px] text-slate-400">{report.createdAtString}</p>
+          <p className="text-xs text-slate-500">Department Ledger Portal · Powered by Gemini AI</p>
+          <p className="text-xs text-slate-500">{report.createdAtString}</p>
         </div>
       </div>
     </div>

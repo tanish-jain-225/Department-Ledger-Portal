@@ -11,25 +11,25 @@ import SmartAssistant from "./SmartAssistant";
 const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300";
 
 const PROFICIENCY_LEVELS = [
-  { value: "beginner",     label: "Beginner / Exploring" },
+  { value: "beginner", label: "Beginner / Exploring" },
   { value: "intermediate", label: "Intermediate / Capable" },
-  { value: "advanced",     label: "Advanced / Proficient" },
-  { value: "expert",       label: "Expert / Specialized" },
+  { value: "advanced", label: "Advanced / Proficient" },
+  { value: "expert", label: "Expert / Specialized" },
 ];
 
 const CATEGORIES = [
-  { value: "languages",  label: "Programming Languages" },
+  { value: "languages", label: "Programming Languages" },
   { value: "frameworks", label: "Frameworks & Libraries" },
-  { value: "tools",      label: "Tools & Infrastructure" },
-  { value: "soft",       label: "Soft Skills & Leadership" },
-  { value: "other",      label: "Other" },
+  { value: "tools", label: "Tools & Infrastructure" },
+  { value: "soft", label: "Soft Skills & Leadership" },
+  { value: "other", label: "Other" },
 ];
 
 const PROFICIENCY_DOT = {
-  beginner:     "bg-slate-400",
-  intermediate: "bg-brand-500",
-  advanced:     "bg-indigo-500",
-  expert:       "bg-emerald-500",
+  beginner: "bg-slate-400",
+  intermediate: "bg-brand-700",
+  advanced: "bg-indigo-700",
+  expert: "bg-emerald-700",
 };
 
 export default function SkillSection({ uid, rows, onRefresh }) {
@@ -37,10 +37,10 @@ export default function SkillSection({ uid, rows, onRefresh }) {
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("skills", uid, onRefresh);
 
-  const [name, setName]             = useState("");
-  const [category, setCategory]     = useState("languages");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("languages");
   const [proficiency, setProficiency] = useState("intermediate");
-  const [document, setDocument]     = useState(null);
+  const [document, setDocument] = useState(null);
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
@@ -63,13 +63,13 @@ export default function SkillSection({ uid, rows, onRefresh }) {
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="flex flex-col gap-1">
         <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Technical Mastery</h2>
-        <p className="text-sm text-slate-400 italic">&ldquo;Professional competencies and specialized toolkits.&rdquo;</p>
+        <p className="text-sm text-slate-500 italic">&ldquo;Professional competencies and specialized toolkits.&rdquo;</p>
       </div>
 
       <div className="flex flex-col gap-3 bg-slate-50/50 p-4 sm:p-5 rounded-2xl border border-slate-100">
         <div>
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
         <SmartAssistant mode="skill" studentUid={uid} existingData={rows}
           onExtract={(d) => {
@@ -99,7 +99,7 @@ export default function SkillSection({ uid, rows, onRefresh }) {
       <div className="flex flex-col gap-3">
         {rows.length === 0 ? (
           <div className="flex items-center justify-center py-16 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-100">
-            <p className="text-sm text-slate-400 italic">&ldquo;No professional competencies recorded in the ledger.&rdquo;</p>
+            <p className="text-sm text-slate-500 italic">&ldquo;No professional competencies recorded in the ledger.&rdquo;</p>
           </div>
         ) : (
           rows.map((r) => (
@@ -112,7 +112,7 @@ export default function SkillSection({ uid, rows, onRefresh }) {
                     {r.proficiency}
                   </span>
                   <div className="flex gap-2">
-                    <button onClick={() => setEditingRecord({...r})} className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all">
+                    <button onClick={() => setEditingRecord({ ...r })} className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all">
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     </button>
                     <button onClick={() => setDeleteTarget(r)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
@@ -133,11 +133,11 @@ export default function SkillSection({ uid, rows, onRefresh }) {
 
       <Modal open={!!editingRecord} onClose={() => setEditingRecord(null)} title="Update Skill">
         <div className="flex flex-col gap-4">
-          <Input placeholder="Skill Name" value={editingRecord?.name || ""} onChange={e => setEditingRecord({...editingRecord, name: e.target.value})} />
-          <select value={editingRecord?.category || "languages"} onChange={e => setEditingRecord({...editingRecord, category: e.target.value})} className={field}>
+          <Input placeholder="Skill Name" value={editingRecord?.name || ""} onChange={e => setEditingRecord({ ...editingRecord, name: e.target.value })} />
+          <select value={editingRecord?.category || "languages"} onChange={e => setEditingRecord({ ...editingRecord, category: e.target.value })} className={field}>
             {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
-          <select value={editingRecord?.proficiency || "intermediate"} onChange={e => setEditingRecord({...editingRecord, proficiency: e.target.value})} className={field}>
+          <select value={editingRecord?.proficiency || "intermediate"} onChange={e => setEditingRecord({ ...editingRecord, proficiency: e.target.value })} className={field}>
             {PROFICIENCY_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
           </select>
           <Button onClick={handleUpdate} className="w-full py-4">Save Ledger Entry</Button>

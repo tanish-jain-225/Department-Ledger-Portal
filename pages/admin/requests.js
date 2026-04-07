@@ -259,7 +259,7 @@ export default function AdminRequestsPage() {
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Requests</h1>
-            <p className="text-base text-slate-400 mt-2 font-medium">Coordinate clearance, policy overrides and data lifecycle protocols.</p>
+            <p className="text-base text-slate-500 mt-2 font-medium">Coordinate clearance, policy overrides and data lifecycle protocols.</p>
           </div>
           <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-sm p-1 px-4 rounded-2xl">
             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Global Activity</span>
@@ -283,7 +283,7 @@ export default function AdminRequestsPage() {
                 placeholder="Identify entities in the global registry..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-8 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-300 transition-all"
+                className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-8 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-500 transition-all"
               />
             </div>
 
@@ -306,8 +306,8 @@ export default function AdminRequestsPage() {
                 <option value="faculty">Faculty Ledger</option>
                 <option value="admin">Administrator Pool</option>
               </select>
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300 group-hover:text-brand-500 transition-all duration-500">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -316,7 +316,7 @@ export default function AdminRequestsPage() {
             {/* Status Indicator */}
             <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-[140px]">
               <div className="flex flex-col items-end">
-                <span className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em]">Stream</span>
+                <span className="text-xs text-slate-500 tracking-[0.2em]">Stream</span>
                 <span className="text-[10px] font-black text-brand-600 transition-all">
                   {filtered.length} / {rows.length}
                 </span>
@@ -342,7 +342,11 @@ export default function AdminRequestsPage() {
             {filtered.map((r) => {
               const isUnassigned = !r.role;
               return (
-                <div key={r.id} className={`group premium-card p-8 border transition-all ${isUnassigned ? 'border-rose-200 bg-rose-50/40 hover:bg-rose-50/60 shadow-[0_10px_30px_-18px_rgba(244,63,94,0.35)]' : r.pendingRoleReq || r.pendingDeletion ? 'border-brand-200 bg-brand-50/5' : 'border-slate-100 hover:bg-slate-50/20'}`}>
+                <div
+                  key={r.id}
+                  style={isUnassigned ? { boxShadow: '0 10px 30px -18px rgba(244, 63, 94, 0.35)' } : undefined}
+                  className={`group premium-card p-8 border transition-all ${isUnassigned ? 'border-rose-200 bg-rose-50/40 hover:bg-rose-50/60' : r.pendingRoleReq || r.pendingDeletion ? 'border-brand-200 bg-brand-50/5' : 'border-slate-100 hover:bg-slate-50/20'}`}
+                >
 
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
                     <div className="flex items-start gap-6">
@@ -356,15 +360,15 @@ export default function AdminRequestsPage() {
                             {r.role ? r.role.toUpperCase() : "UNASSIGNED"}
                           </Badge>
                         </div>
-                        <p className="text-sm font-medium text-slate-400">{r.email}</p>
+                        <p className="text-sm text-slate-600">{r.email}</p>
                         <div className="flex gap-4 pt-3">
                           <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Identity UID</span>
-                            <span className="text-[10px] font-bold text-slate-500 font-mono italic">{r.id.slice(-12)}</span>
+                            <span className="text-xs font-medium text-slate-500">UID</span>
+                            <span className="text-xs text-slate-700 font-mono">{r.id.slice(-12)}</span>
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Auth Method</span>
-                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Verified</span>
+                            <span className="text-xs font-medium text-slate-500">Status</span>
+                            <span className="text-xs font-semibold text-emerald-700">Verified</span>
                           </div>
                         </div>
                       </div>
@@ -375,63 +379,38 @@ export default function AdminRequestsPage() {
                       {/* Unified Protocol Selector */}
                       {r.id !== user?.uid ? (
                         <div className="flex flex-col gap-4 p-5 rounded-[2rem] bg-slate-50 border border-slate-100 group-hover:bg-white group-hover:shadow-2xl group-hover:border-white transition-all duration-500">
-                          <div className="flex items-center justify-between px-2">
-                            <span className={`text-[9px] font-black uppercase tracking-widest ${r.pendingDeletion ? 'text-rose-600' : r.pendingRoleReq ? 'text-brand-600' : 'text-slate-400'}`}>
-                              {r.pendingDeletion ? `${r.role === 'faculty' ? 'Faculty' : 'Student'} Purge Request` : r.pendingRoleReq ? `${r.role === 'faculty' ? 'Faculty' : 'Student'} Role Request` : 'Protocol: Manual Oversight'}
-                            </span>
-                            {r.pendingRoleReq && (
-                              <button
-                                onClick={() => decide(r.id, 'reject', r.roleReqDocId)}
-                                className="text-[9px] font-black text-rose-500 hover:text-rose-700 uppercase tracking-widest transition-colors"
-                              >
-                                Ignore
-                              </button>
-                            )}
-                          </div>
-
                           <div className="flex flex-wrap gap-2 items-center">
                             {r.pendingDeletion ? (
                               <>
                                 <Button
                                   onClick={() => decide(r.id, "delete", r.delDocId)}
-                                  variant="secondary"
-                                  className="!py-2 !px-5 text-[9px] font-black uppercase border border-rose-100 hover:bg-rose-500 hover:text-white transition-all"
+                                  variant="danger"
+                                  size="sm"
                                 >
                                   Accept Purge
                                 </Button>
                                 <Button
                                   onClick={() => setDismissTarget({ uid: r.id, reqDocId: r.delDocId })}
-                                  variant="ghost"
-                                  className="!py-2 !px-5 text-[9px] font-black uppercase text-rose-500 border border-rose-100 hover:bg-rose-50 transition-all"
+                                  variant="secondary"
+                                  size="sm"
                                 >
-                                  Dismiss Request
+                                  Dismiss
                                 </Button>
                               </>
                             ) : (
                               <>
-                                {r.pendingRoleReq && (
-                                  <Button
-                                    onClick={() => askRoleChange(r.id, r.pendingRoleReq, r.roleReqDocId)}
-                                    variant="brand"
-                                    className="!py-2 !px-5 text-[9px] font-black uppercase tracking-widest"
-                                  >
-                                    Accept Request
-                                  </Button>
-                                )}
-                                <RoleButton label="Student" role="student" currentRole={r.role} onClick={() => askRoleChange(r.id, "student")} />
-                                <RoleButton label="Faculty" role="faculty" currentRole={r.role} onClick={() => askRoleChange(r.id, "faculty")} />
-                                <RoleButton label="Admin" role="admin" currentRole={r.role} onClick={() => askRoleChange(r.id, "admin")} />
+                                <RoleButton label="Student" role="student" currentRole={r.role} onClick={() => askRoleChange(r.id, "student", r.roleReqDocId)} />
+                                <RoleButton label="Faculty" role="faculty" currentRole={r.role} onClick={() => askRoleChange(r.id, "faculty", r.roleReqDocId)} />
+                                <RoleButton label="Admin" role="admin" currentRole={r.role} onClick={() => askRoleChange(r.id, "admin", r.roleReqDocId)} />
 
-                                <div className="w-px h-8 bg-slate-200/60 mx-1 hidden sm:block" />
+                                <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
 
-                                <Button
+                                <button
                                   onClick={() => decide(r.id, "delete", r.delDocId)}
-                                  variant="secondary"
-                                  className={`!py-2 !px-5 text-[9px] font-black uppercase border border-rose-100 hover:bg-rose-500 hover:text-white transition-all
-                                      ${r.pendingDeletion ? '!bg-rose-600 !text-white !border-rose-600 animate-pulse' : '!text-rose-500'}`}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors"
                                 >
-                                  {r.pendingDeletion ? 'Accept Purge' : 'Manual Purge'}
-                                </Button>
+                                  Delete
+                                </button>
                               </>
                             )}
                           </div>

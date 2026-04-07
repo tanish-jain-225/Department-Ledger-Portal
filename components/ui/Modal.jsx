@@ -44,35 +44,35 @@ export default function Modal({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-900/40 animate-fade-in"
+        className="absolute inset-0 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal Container */}
       <div
         className={clsx(
-          "relative overflow-hidden bg-white flex flex-col border border-slate-200 animate-scale-up transition-all duration-500",
-          fullScreen ? "w-screen h-screen rounded-none border-0" : [maxWidth, "w-full rounded-2xl shadow-xl"],
+          "relative overflow-hidden bg-white/95 backdrop-blur-xl flex flex-col border border-white/20 animate-scale-in transition-all duration-500",
+          fullScreen ? "w-screen h-screen rounded-none border-0" : [maxWidth, "w-full rounded-3xl shadow-2xl"],
           className
         )}
         style={{ maxHeight: fullScreen ? "100vh" : "calc(100vh - 4rem)" }}
       >
         {/* Sticky Header */}
         <div className={clsx(
-          "sticky top-0 z-20 flex flex-col gap-3 border-b border-slate-200 bg-white transition-all",
-          fullScreen ? "px-10 py-8" : "px-8 py-6"
+          "sticky top-0 z-20 flex flex-col gap-3 border-b border-slate-200 bg-white",
+          fullScreen ? "px-8 py-6" : "px-6 py-4"
         )}>
           <div className="flex w-full items-center justify-between gap-3 min-w-0">
-            <h2 className="min-w-0 text-2xl font-black text-slate-900 tracking-tighter uppercase truncate">
+            <h2 className="min-w-0 text-lg font-bold text-slate-900 tracking-tight truncate">
               {title}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 rounded-2xl p-3 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95"
+              className="shrink-0 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-all active:scale-95"
               aria-label="Close dialog"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="h-6 w-6">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -80,7 +80,7 @@ export default function Modal({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 overflow-y-auto p-8 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
           {children}
         </div>
       </div>

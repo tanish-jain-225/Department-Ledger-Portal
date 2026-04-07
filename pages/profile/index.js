@@ -105,37 +105,51 @@ export default function ProfilePage() {
         <FacultyProfile profile={profile} onRefresh={refreshProfile} />
       ) : (
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Content Area */}
-            <main className="flex-1 min-w-0">
-              {tab === "profile" && (
-                <ProfileInfoSection 
-                  user={user} 
-                  profile={profile} 
-                  refreshProfile={refreshProfile} 
-                  onViewCard={() => setShowCard(true)}
-                />
-              )}
-              {tab === "records" && (
-                <StudentLedger 
-                  uid={user?.uid} 
-                  data={{ academic, activities, achievements, placements, projects, skills }} 
-                  onRefresh={loadLists} 
-                />
-              )}
-              {tab === "intelligence" && (
-                <ReadinessInsight
-                  profile={profile}
-                  academic={academic}
-                  activities={activities}
-                  achievements={achievements}
-                  placements={placements}
-                  projects={projects}
-                  skills={skills}
-                />
-              )}
-            </main>
-          </div>
+          {/* Tab Navigation */}
+          <nav className="flex items-center gap-0 border-b border-slate-200 bg-white">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t.id
+                    ? "border-brand-600 text-brand-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                  }`}
+              >
+                {t.icon}
+                <span className="hidden sm:inline">{t.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <main className="flex-1 min-w-0">
+            {tab === "profile" && (
+              <ProfileInfoSection
+                user={user}
+                profile={profile}
+                refreshProfile={refreshProfile}
+                onViewCard={() => setShowCard(true)}
+              />
+            )}
+            {tab === "records" && (
+              <StudentLedger
+                uid={user?.uid}
+                data={{ academic, activities, achievements, placements, projects, skills }}
+                onRefresh={loadLists}
+              />
+            )}
+            {tab === "intelligence" && (
+              <ReadinessInsight
+                profile={profile}
+                academic={academic}
+                activities={activities}
+                achievements={achievements}
+                placements={placements}
+                projects={projects}
+                skills={skills}
+              />
+            )}
+          </main>
 
           <IdentityCardPopup
             show={showCard}

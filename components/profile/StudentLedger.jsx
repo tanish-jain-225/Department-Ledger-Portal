@@ -81,7 +81,7 @@ export default function StudentLedger({ uid, data, onRefresh }) {
         <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-3">
           <div>
             <h2 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Master Ledger</h2>
-            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Institutional Index</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-0.5">Institutional Index</p>
           </div>
           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest hidden sm:block">
             {SUB_TABS.find(t => t.id === activeSubTab)?.label}

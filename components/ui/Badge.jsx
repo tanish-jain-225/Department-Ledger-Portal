@@ -1,19 +1,19 @@
 import clsx from "clsx";
 
 const variants = {
-  neutral: "bg-slate-100 text-slate-600 border-slate-200/50",
-  gray:    "bg-slate-100 text-slate-600 border-slate-200/50",
-  brand:   "bg-brand-50 text-brand-700 border-brand-200/50",
-  success: "bg-emerald-50 text-emerald-700 border-emerald-200/50",
-  warning: "bg-amber-50 text-amber-800 border-amber-200/50",
-  danger:  "bg-red-50 text-red-700 border-red-200/50",
+  neutral: "bg-slate-700 text-white border-transparent",
+  gray: "bg-slate-700 text-white border-transparent",
+  brand: "bg-brand-700 text-white border-transparent",
+  success: "bg-emerald-700 text-white border-transparent",
+  warning: "bg-amber-700 text-white border-transparent",
+  danger: "bg-red-700 text-white border-transparent",
 };
 
 export default function Badge({ variant = "neutral", className, ...props }) {
   return (
     <span
       className={clsx(
-        "inline-flex items-center rounded-xl border px-3 py-1 text-[10px] font-black uppercase tracking-[0.1em]",
+        "inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs font-semibold",
         variants[variant],
         className
       )}

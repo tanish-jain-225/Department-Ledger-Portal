@@ -9,7 +9,7 @@ export default function Document() {
       <Head>
         {/* Primary meta */}
         <meta charSet="utf-8" />
-        <mets name="name" content={APP_NAME} />
+        <meta name="name" content={APP_NAME} />
         <meta name="description" content={APP_DESC} />
         <meta name="keywords" content="academic records, student management, placement tracking, AI readiness report, department ledger, faculty dashboard, GPA tracking" />
         <meta name="author" content="Department Ledger Portal" />

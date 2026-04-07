@@ -1,27 +1,31 @@
 import clsx from "clsx";
 
 const base =
-  "btn-premium inline-flex items-center justify-center gap-2 rounded-2xl font-black text-sm transition-all duration-300 " +
-  "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/15 " +
-  "disabled:opacity-40 disabled:pointer-events-none active:scale-95 group";
+  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-200 " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 " +
+  "disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98]";
 
 const variants = {
   primary:
-    "bg-slate-900 text-white shadow-xl shadow-slate-900/10 hover:bg-slate-800 hover:shadow-slate-900/20",
+    "bg-brand-700 text-white hover:bg-brand-800 shadow-sm",
   secondary:
-    "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900",
-  soft: "bg-brand-50 text-brand-700 border border-brand-100/50 hover:bg-brand-100 hover:text-brand-800",
+    "bg-slate-700 text-white hover:bg-slate-800 shadow-sm",
+  soft:
+    "bg-brand-600 text-white hover:bg-brand-700 shadow-sm",
   brand:
-    "bg-brand-600 text-white shadow-xl shadow-brand-500/20 hover:bg-brand-700 hover:shadow-brand-500/30",
+    "bg-brand-700 text-white hover:bg-brand-800 shadow-sm",
+  success:
+    "bg-emerald-700 text-white hover:bg-emerald-800 shadow-sm",
   danger:
-    "bg-red-600 text-white shadow-xl shadow-red-500/10 hover:bg-red-700 hover:shadow-red-500/20",
-  ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+    "bg-red-700 text-white hover:bg-red-800 shadow-sm",
+  ghost:
+    "bg-slate-600 text-white hover:bg-slate-700 shadow-sm",
 };
 
 const sizes = {
-  sm: "px-4 py-2 text-xs",
-  md: "px-6 py-3 text-sm",
-  lg: "px-8 py-4 text-base",
+  sm: "px-3 py-1.5 text-xs",
+  md: "px-4 py-2.5 text-sm",
+  lg: "px-6 py-3 text-base",
 };
 
 export default function Button({
@@ -30,14 +34,24 @@ export default function Button({
   size = "md",
   className,
   children,
+  loading = false,
   ...props
 }) {
   return (
     <Comp
       className={clsx(base, variants[variant], sizes[size], className)}
+      disabled={loading || props.disabled}
       {...props}
     >
-      {children}
+      {loading ? (
+        <>
+          <svg className="animate-spin h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+          <span>Loading...</span>
+        </>
+      ) : children}
     </Comp>
   );
 }

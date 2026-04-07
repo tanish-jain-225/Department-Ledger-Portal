@@ -5,13 +5,47 @@ import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { getDb } from "@/lib/firebase";
 
 const ACTION_STYLES = {
-  user_deleted: { bg: "bg-red-50/50 border-red-100", badge: "bg-red-100 text-red-700", label: "Deleted" },
-  user_role_assigned: { bg: "bg-brand-50/50 border-brand-100", badge: "bg-brand-100 text-brand-700", label: "Role Assigned" },
-  profile_updated: { bg: "bg-indigo-50/50 border-indigo-100", badge: "bg-indigo-100 text-indigo-700", label: "Profile Update" },
+  // Destructive (Red 700)
+  delete: { color: "bg-red-700", label: "Purge Protocol" },
+  deleted: { color: "bg-red-700", label: "Purge Protocol" },
+  removed: { color: "bg-red-700", label: "Removed" },
+  rejected: { color: "bg-red-700", label: "Rejected" },
+
+  // Constructive (Emerald 700)
+  created: { color: "bg-emerald-700", label: "Creation" },
+  added: { color: "bg-emerald-700", label: "Addition" },
+  approved: { color: "bg-emerald-700", label: "Approved" },
+  assigned: { color: "bg-emerald-700", label: "Assigned" },
+
+  // Informative (Brand 700)
+  updated: { color: "bg-brand-700", label: "Update" },
+  modified: { color: "bg-brand-700", label: "Modification" },
+  changed: { color: "bg-brand-700", label: "Change" },
+  processed: { color: "bg-brand-700", label: "Processed" },
+
+  // System (Slate 900)
+  login: { color: "bg-slate-900", label: "Session" },
+  logout: { color: "bg-slate-900", label: "Session" },
+  system: { color: "bg-slate-900", label: "System" },
 };
 
-function getActionStyle(action) {
-  return ACTION_STYLES[action] || { bg: "bg-white border-slate-100", badge: "bg-slate-100 text-slate-600", label: action || "Action" };
+function getActionStyle(action = "") {
+  const lowAction = action.toLowerCase();
+
+  // Try exact match first
+  if (ACTION_STYLES[lowAction]) return ACTION_STYLES[lowAction];
+
+  // Try suffix/keyword match
+  if (lowAction.includes("delete") || lowAction.includes("remove") || lowAction.includes("purge"))
+    return ACTION_STYLES.delete;
+  if (lowAction.includes("create") || lowAction.includes("add") || lowAction.includes("approve"))
+    return ACTION_STYLES.created;
+  if (lowAction.includes("update") || lowAction.includes("modify") || lowAction.includes("change"))
+    return ACTION_STYLES.updated;
+  if (lowAction.includes("login") || lowAction.includes("logout") || lowAction.includes("session"))
+    return ACTION_STYLES.login;
+
+  return { color: "bg-slate-900", label: action.replace(/_/g, " ").toUpperCase() };
 }
 
 function timeAgo(date) {
@@ -92,12 +126,12 @@ export default function AdminAuditPage() {
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Audit</h1>
-            <p className="text-base text-slate-400 mt-2 font-medium">Real-time oversight of administrative and professional operations.</p>
+            <p className="text-base text-slate-500 mt-2 font-medium">Real-time oversight of administrative and professional operations.</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-100">
-               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{rows.length} Active Logs</span>
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-700 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{rows.length} Active Logs</span>
             </div>
             <Button
               onClick={downloadCSV}
@@ -113,39 +147,41 @@ export default function AdminAuditPage() {
         </div>
 
         {err ? (
-          <div className="premium-card p-10 bg-red-50/30 border-red-100 flex items-start gap-4">
-            <svg className="h-6 w-6 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+          <div className="premium-card p-8 bg-red-700 border-red-800 flex items-start gap-5 text-white shadow-xl">
+            <div className="h-10 w-10 shrink-0 bg-white/20 rounded-full flex items-center justify-center">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
             <div>
-              <p className="text-sm font-black text-red-900 uppercase tracking-widest">Protocol Error Detected</p>
-              <p className="text-sm text-red-600 font-medium mt-1 leading-relaxed">{err}</p>
+              <p className="text-sm font-black uppercase tracking-widest text-red-100">Protocol Incident Detected</p>
+              <p className="text-sm font-medium mt-1 leading-relaxed opacity-90">{err}</p>
             </div>
           </div>
         ) : loading ? (
           <div className="space-y-4">
-             {[1,2,3,4,5].map(i => (
-               <div key={i} className="premium-card p-6 border border-slate-100 flex items-center justify-between gap-6 animate-pulse">
-                 <div className="flex items-start gap-5 flex-1">
-                    <Skeleton className="h-10 w-10 rounded-2xl" />
-                    <div className="flex-1 space-y-2">
-                       <div className="flex gap-3 items-center">
-                          <Skeleton className="h-4 w-20 rounded-full" />
-                          <Skeleton className="h-3 w-16" />
-                       </div>
-                       <Skeleton className="h-5 w-3/4" />
-                       <div className="flex gap-6 mt-2">
-                          <Skeleton className="h-3 w-24" />
-                          <Skeleton className="h-3 w-16" />
-                       </div>
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="premium-card p-6 border border-slate-100 flex items-center justify-between gap-6 animate-pulse">
+                <div className="flex items-start gap-5 flex-1">
+                  <Skeleton className="h-10 w-10 rounded-2xl" />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex gap-3 items-center">
+                      <Skeleton className="h-4 w-20 rounded-full" />
+                      <Skeleton className="h-3 w-16" />
                     </div>
-                 </div>
-                 <Skeleton className="h-10 w-10 rounded-xl" />
-               </div>
-             ))}
+                    <Skeleton className="h-5 w-3/4" />
+                    <div className="flex gap-6 mt-2">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                </div>
+                <Skeleton className="h-10 w-10 rounded-xl" />
+              </div>
+            ))}
           </div>
         ) : rows.length === 0 ? (
-          <EmptyState 
+          <EmptyState
             title="Audit Vault Empty"
             message="No system-wide operations have been committed to the governance ledger yet."
           />
@@ -159,59 +195,47 @@ export default function AdminAuditPage() {
               const details = r.details && typeof r.details === "object" ? r.details : {};
 
               return (
-                <div key={r.id} className={`group premium-card p-6 border transition-all hover:bg-slate-50/80 ${style.bg}`}>
+                <div key={r.id} className="group premium-card p-6 border border-slate-200 bg-white transition-all shadow-sm hover:shadow-md hover:border-brand-200">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-5">
-                      <div className={`mt-1 h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 border shadow-sm group-hover:scale-110 transition-transform ${style.bg}`}>
-                        <svg className="h-5 w-5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-5.19 4.595-9.362 9.716-10.198" />
+                      <div className={`mt-1 h-10 w-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-slate-900/5 ${style.color} text-white`}>
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                       </div>
                       <div>
                         <div className="flex flex-wrap items-center gap-3">
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200/50 ${style.badge}`}>
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] text-white ${style.color}`}>
                             {actionLabel}
                           </span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{timeAgo(date)}</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{timeAgo(date)}</span>
                         </div>
-                        <p className="mt-2 text-sm font-black text-slate-900 tracking-tight leading-snug">{r.description || "No description provided."}</p>
-                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                          <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Actor UID</span>
-                            <span className="text-[10px] font-bold text-slate-500 font-mono">{r.actorUid || "SYSTEM"}</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Target UID</span>
-                            <span className="text-[10px] font-bold text-slate-500 font-mono">{r.targetUid || "N/A"}</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Sector</span>
-                            <span className="text-[10px] font-bold text-slate-500 font-mono italic">{sector}</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">Timestamp</span>
-                            <span className="text-[10px] font-bold text-slate-500 font-mono">{date ? date.toLocaleString() : "Unknown"}</span>
-                          </div>
+                        <p className="mt-4 text-sm font-black text-slate-900 tracking-tight leading-snug">{r.description || "No description provided."}</p>
+
+                        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                          <DataPoint label="Actor" value={r.actorUid || "SYSTEM"} />
+                          <DataPoint label="Target" value={r.targetUid || "N/A"} />
+                          <DataPoint label="Sector" value={sector} />
+                          <DataPoint label="Timestamp" value={date ? date.toLocaleString() : "Unknown"} />
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                       <Button variant="ghost" className="h-10 w-10 !p-0 border border-slate-100 rounded-xl" title="Inspect Audit">
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                          </svg>
-                       </Button>
+
+                    <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-all duration-300">
+                      <Button variant="secondary" size="sm" className="font-black" title="Inspect Audit">
+                        Details
+                      </Button>
                     </div>
                   </div>
+
                   {Object.keys(details).length > 0 && (
-                    <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-700">
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 mb-3">Details</p>
-                      <div className="grid gap-2">
+                    <div className="mt-8 pt-6 border-t border-slate-100">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-4 font-black">Audit Telemetry Payload</p>
+                      <div className="grid gap-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
                         {Object.entries(details).map(([key, value]) => (
-                          <div key={key} className="flex items-start gap-2">
-                            <span className="font-black text-slate-500 uppercase tracking-[0.15em]">{key}</span>
-                            <span className="break-all text-slate-700">{typeof value === "object" ? JSON.stringify(value) : String(value)}</span>
+                          <div key={key} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-24">{key}</span>
+                            <span className="break-all text-xs font-bold text-slate-700">{typeof value === "object" ? JSON.stringify(value) : String(value)}</span>
                           </div>
                         ))}
                       </div>
@@ -224,5 +248,14 @@ export default function AdminAuditPage() {
         )}
       </div>
     </Layout>
+  );
+}
+
+function DataPoint({ label, value }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+      <span className="text-xs text-slate-900 font-bold truncate max-w-[150px]" title={value}>{value}</span>
+    </div>
   );
 }

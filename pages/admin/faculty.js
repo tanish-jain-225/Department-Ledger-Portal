@@ -86,10 +86,14 @@ export default function AdminFacultyDashboard() {
           role: roleToAssign,
           facultyVerification: roleToAssign === "faculty" ? "approved" : "none",
         });
-        await logAudit({ action: "user_role_assigned", actorUid: user.uid, targetUid: uid,
-          description: `Directory Oversight: Set role to ${roleToAssign}` });
-        await createNotification(uid, { title: "Access Updated",
-          message: `Your clearance level has been updated to ${roleToAssign.toUpperCase()}`, type: "info" });
+        await logAudit({
+          action: "user_role_assigned", actorUid: user.uid, targetUid: uid,
+          description: `Directory Oversight: Set role to ${roleToAssign}`
+        });
+        await createNotification(uid, {
+          title: "Access Updated",
+          message: `Your clearance level has been updated to ${roleToAssign.toUpperCase()}`, type: "info"
+        });
         addToast(`Clearance set to ${roleToAssign}`, "success");
         if (roleToAssign !== "faculty") setFaculty(prev => prev.filter(f => f.id !== uid));
         else setFaculty(prev => prev.map(f => f.id === uid ? { ...f, role: roleToAssign } : f));
@@ -161,7 +165,7 @@ export default function AdminFacultyDashboard() {
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Faculty Ledger</h1>
-            <p className="text-base text-slate-400 mt-2 font-medium">Registry of verified instructional staff and departmental leads.</p>
+            <p className="text-base text-slate-500 mt-2 font-medium">Registry of verified instructional staff and departmental leads.</p>
           </div>
           <Button onClick={() => downloadAdminFacultyRecordsCsv(faculty, "faculty-directory.csv")}
             className="lg:w-auto w-full group shadow-xl shadow-brand-500/10">
@@ -175,18 +179,18 @@ export default function AdminFacultyDashboard() {
         <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
             <div className="relative flex-1 group">
-              <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input type="search" placeholder="Identify instructional staff in the ledger..."
                 value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-8 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-300 transition-all" />
+                className="w-full rounded-[2.5rem] border-none bg-slate-50/50 pl-16 pr-8 py-5 text-sm font-bold text-slate-950 focus:ring-0 outline-none placeholder:text-slate-400 transition-all hover:bg-slate-100/50" />
             </div>
             <div className="hidden lg:block w-px h-10 bg-slate-100" />
             <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-end gap-3 min-w-[140px]">
               <div className="flex flex-col items-end">
-                <span className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em]">Council</span>
-                <span className="text-[10px] font-black text-indigo-600">{faculty.length} STAFF</span>
+                <span className="text-xs text-slate-500 tracking-[0.2em]">Council</span>
+                <span className="text-[10px] font-black text-brand-600">{faculty.length} STAFF</span>
               </div>
             </div>
           </div>
@@ -194,7 +198,7 @@ export default function AdminFacultyDashboard() {
 
         {loading || busy ? (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {[1,2,3,4,5,6].map(i => (
+            {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="premium-card p-8 animate-pulse">
                 <div className="flex justify-between items-center mb-6">
                   <Skeleton className="h-14 w-14 rounded-3xl" /><Skeleton className="h-6 w-20 rounded-xl" />
@@ -228,45 +232,45 @@ export default function AdminFacultyDashboard() {
                 <div className="flex-1 space-y-4">
                   <div>
                     <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none truncate">{f.name || "Anonymous Member"}</h3>
-                    <p className="text-xs font-medium text-slate-400 mt-1 truncate">{f.email}</p>
+                    <p className="text-xs font-medium text-slate-600 mt-1 truncate">{f.email}</p>
                   </div>
-                  <div className="py-4 border-y border-slate-50 flex flex-col gap-1">
-                    <span className="text-[8px] font-black uppercase text-slate-300">Designation</span>
-                    <span className="text-xs font-bold text-slate-900 truncate">{f.designation || "Department Staff"}</span>
+                  <div className="py-3 border-y border-slate-100 flex flex-col gap-1">
+                    <span className="text-xs font-medium text-slate-500">Designation</span>
+                    <span className="text-sm font-semibold text-slate-900 truncate">{f.designation || "Department Staff"}</span>
                   </div>
                   {f.id !== user?.uid && (
-                    <div className="bg-indigo-50/30 rounded-2xl p-3 border border-indigo-100/50 space-y-3">
-                      <span className="text-[8px] font-black uppercase text-indigo-400 tracking-widest block text-center">Protocol Oversight</span>
+                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2">
+                      <span className="text-xs font-semibold text-slate-600 block text-center">Assign Role</span>
                       <div className="flex flex-wrap items-center justify-center gap-2">
                         {f.pendingDeletion ? (
                           <>
                             <Button
                               onClick={() => decide(f.id, "delete", f.delDocId)}
-                              variant="secondary"
-                              className="!py-2 !px-5 text-[9px] font-black uppercase border border-rose-100 hover:bg-rose-500 hover:text-white transition-all"
+                              variant="danger"
+                              size="sm"
                             >
                               Accept Purge
                             </Button>
                             <Button
                               onClick={() => decide(f.id, "reject_deletion", f.delDocId)}
-                              variant="ghost"
-                              className="!py-2 !px-5 text-[9px] font-black uppercase text-rose-500 border border-rose-100 hover:bg-rose-50 transition-all"
+                              variant="secondary"
+                              size="sm"
                             >
-                              Dismiss Request
+                              Dismiss
                             </Button>
                           </>
                         ) : (
                           <>
-                            <RoleButton label="S" role="student" currentRole={f.role} onClick={() => askRoleChange(f.id, "student")} />
-                            <RoleButton label="F" role="faculty" currentRole={f.role} onClick={() => askRoleChange(f.id, "faculty")} />
-                            <RoleButton label="A" role="admin" currentRole={f.role} onClick={() => askRoleChange(f.id, "admin")} />
+                            <RoleButton label="Student" role="student" currentRole={f.role} onClick={() => askRoleChange(f.id, "student")} />
+                            <RoleButton label="Faculty" role="faculty" currentRole={f.role} onClick={() => askRoleChange(f.id, "faculty")} />
+                            <RoleButton label="Admin" role="admin" currentRole={f.role} onClick={() => askRoleChange(f.id, "admin")} />
                             <button onClick={() => decide(f.id, "delete")}
-                              className="ml-1 p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm"
-                              title="Purge Legacy Data">
-                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              className="p-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors border border-red-600"
+                              title="Delete user">
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
-                              <span className="sr-only">Purge Legacy Data</span>
+                              <span className="sr-only">Delete user</span>
                             </button>
                           </>
                         )}
@@ -275,8 +279,8 @@ export default function AdminFacultyDashboard() {
                   )}
                 </div>
                 <div className="mt-6 flex gap-3 pt-4">
-                  <Button onClick={() => setSelectedFacultyUid(f.id)} variant="secondary" className="flex-1 text-[10px] font-black uppercase">
-                    Inspect Dossier
+                  <Button onClick={() => setSelectedFacultyUid(f.id)} variant="secondary" size="sm" className="flex-1">
+                    View Profile
                   </Button>
                 </div>
               </div>

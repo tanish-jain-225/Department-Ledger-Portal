@@ -1,11 +1,11 @@
 import React from "react";
 import CommonFooter from "@/components/ui/CommonFooter";
 
-export default function StudentCard({ 
-  data, 
-  academic = [], 
-  activities = [], 
-  achievements = [], 
+export default function StudentCard({
+  data,
+  academic = [],
+  activities = [],
+  achievements = [],
   placements = [],
 }) {
   if (!data) return null;
@@ -41,7 +41,7 @@ export default function StudentCard({
         </div>
         {/* Official QR box removed as requested */}
       </header>
-      
+
       {/* Core Profile Data */}
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-10 print:break-inside-avoid">
 
@@ -57,7 +57,7 @@ export default function StudentCard({
             </div>
           ))}
         </dl>
-        
+
         <div className="space-y-4">
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm grow h-full">
             <h4 className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-2">Residential Address</h4>
@@ -65,7 +65,7 @@ export default function StudentCard({
               {data.address || "No address provided -"}
             </p>
             <div className="mt-4 pt-3 border-t border-slate-200">
-               <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${data.alumni ? "bg-emerald-100 text-emerald-700" : "bg-brand-100 text-brand-700"}`}>
+              <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${data.alumni ? "bg-emerald-100 text-emerald-700" : "bg-brand-100 text-brand-700"}`}>
                 {data.alumni ? "Alumni Status Verified" : "Regular Academic Status"}
               </span>
             </div>
@@ -179,9 +179,8 @@ export default function StudentCard({
                   <div className="text-xs font-bold text-brand-600 mt-1 uppercase tracking-tighter">{r.role}</div>
                   {r.package && <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Package: {r.package}</div>}
                 </div>
-                <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-tighter ${
-                  r.status === 'placed' ? 'bg-emerald-50 text-emerald-600' : 'bg-brand-50 text-brand-600'
-                }`}>
+                <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-tighter ${r.status === 'placed' ? 'bg-emerald-700 text-white' : 'bg-brand-700 text-white'
+                  }`}>
                   {r.status}
                 </div>
               </div>

@@ -128,9 +128,16 @@ No markdown, no explanation, no preamble. Just the JSON object.`;
     return res.status(200).json(data);
   } catch (error) {
     const msg = error?.message || "Failed to generate suggestions";
-    if (error?.status === 429) {
+    const status = error?.status || 500;
+
+    // Propagate retryable status codes (429 Quota, 503 High Demand)
+    if (status === 429 || msg.includes("429")) {
       return res.status(429).json({ error: "AI quota exceeded. Please try again later." });
     }
-    return res.status(500).json({ error: msg });
+    if (status === 503 || msg.includes("503") || msg.includes("high demand")) {
+      return res.status(503).json({ error: "AI is currently experiencing high demand. Please try again." });
+    }
+
+    return res.status(status).json({ error: msg });
   }
 }

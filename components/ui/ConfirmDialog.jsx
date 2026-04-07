@@ -52,7 +52,7 @@ export default function ConfirmDialog({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-900/40 animate-fade-in"
+        className="absolute inset-0 animate-fade-in"
         onClick={onCancel}
       />
 
@@ -75,7 +75,7 @@ export default function ConfirmDialog({
 
           <h3 className="text-xl font-black">{title}</h3>
           {message && (
-            <p className="mt-3 text-sm text-slate-500 leading-relaxed font-medium">{message}</p>
+            <p className="mt-3 text-sm text-slate-600 leading-relaxed">{message}</p>
           )}
         </div>
 
@@ -83,7 +83,7 @@ export default function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 transition-all active:scale-95 uppercase tracking-widest"
+            className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors active:scale-95"
           >
             {cancelLabel}
           </button>
@@ -91,7 +91,7 @@ export default function ConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
-            className={`flex-1 rounded-xl px-4 py-2.5 text-xs font-black text-white shadow-lg transition-all active:scale-95 uppercase tracking-widest ${colors.btn}`}
+            className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold  transition-colors active:scale-95 ${colors.btn}`}
           >
             {confirmLabel}
           </button>

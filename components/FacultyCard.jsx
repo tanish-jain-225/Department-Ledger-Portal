@@ -5,11 +5,11 @@ export default function FacultyCard({ data }) {
   if (!data) return null;
 
   return (
-    <article className="mx-auto w-full max-w-full sm:max-w-4xl rounded-xl border border-violet-200 bg-white p-4 sm:p-10 shadow-md print:border-0 print:shadow-none print:p-0">
+    <article className="mx-auto w-full max-w-full sm:max-w-4xl rounded-xl border bg-white p-4 sm:p-10 print:border-0 print:shadow-none print:p-0" style={{ borderColor: '#e2e8f0' }}>
       {/* Header */}
-      <header className="border-b-2 border-violet-100 pb-4 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <header className="pb-4 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ borderBottom: '2px solid #e2e8f0' }}>
         <div>
-          <p className="text-[10px] font-black text-violet-700 uppercase tracking-widest mb-1">
+          <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#475569' }}>
             Department Ledger Portal · Faculty
           </p>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -21,8 +21,12 @@ export default function FacultyCard({ data }) {
           </div>
         </div>
         <div className="flex flex-col items-end">
-           <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${data.facultyVerification === 'approved' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-            {data.facultyVerification === 'approved' ? "Verified Faculty" : "Verification Pending"}
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+            data.facultyVerification === 'approved'
+              ? 'bg-emerald-100 text-emerald-800'
+              : 'bg-amber-100 text-amber-800'
+          }`}>
+            {data.facultyVerification === 'approved' ? 'Verified Faculty' : 'Verification Pending'}
           </span>
         </div>
       </header>
@@ -60,10 +64,10 @@ export default function FacultyCard({ data }) {
                 {data.address || "No address provided -"}
               </p>
             </div>
-            <div className="bg-violet-50/30 p-4 rounded-xl border border-violet-100 shadow-sm">
-              <h4 className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-2">Professional Biography</h4>
-              <p className="text-sm text-slate-600 leading-relaxed italic">
-                {data.bio || "No biography provided -"}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Professional Biography</h4>
+              <p className="text-sm text-slate-700 leading-relaxed">
+                {data.bio || "No biography provided."}
               </p>
             </div>
           </div>

@@ -18,69 +18,72 @@ export default function Home() {
         <meta property="og:description" content="The modern academic ledger for departments. Track student GPA, placements, achievements and generate AI-powered placement readiness reports using Gemini." />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "Department Ledger Portal",
-            "description": "AI-powered academic records platform for departments. Track student performance, placements, achievements and generate AI readiness reports.",
-            "applicationCategory": "EducationApplication",
-            "operatingSystem": "Web",
-            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-            "featureList": [
-              "AI-powered document auto-fill",
-              "Placement readiness reports",
-              "Academic record tracking",
-              "Faculty dashboard",
-              "Admin governance panel",
-              "Audit trail"
-            ]
-          })}}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "Department Ledger Portal",
+              "description": "AI-powered academic records platform for departments. Track student performance, placements, achievements and generate AI readiness reports.",
+              "applicationCategory": "EducationApplication",
+              "operatingSystem": "Web",
+              "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+              "featureList": [
+                "AI-powered document auto-fill",
+                "Placement readiness reports",
+                "Academic record tracking",
+                "Faculty dashboard",
+                "Admin governance panel",
+                "Audit trail"
+              ]
+            })
+          }}
         />
       </Head>
-      <div className="mx-auto max-w-7xl pt-12 pb-24">
-        {/* Hero Section */}
-        <div className="text-center py-20 px-6">
+      <div className="mx-auto max-w-7xl pt-12 pb-24 relative">
+        {/* Decorative background elements */}
+        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-brand-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
 
-          <div className="inline-flex items-center gap-2 rounded-2xl bg-white border border-slate-200 px-5 py-2 text-[10px] font-black text-brand-700 uppercase tracking-[0.2em] mb-12 shadow-sm animate-slide-up">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-            </span>
+        {/* Hero Section */}
+        <div className="relative z-10 text-center py-24 px-6">
+
+          <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-xs font-black text-brand-700 uppercase tracking-wider mb-10 shadow-sm animate-slide-up">
+            <span className="h-2.5 w-2.5 rounded-full bg-brand-700 animate-pulse flex-shrink-0"></span>
             Next-Gen Academic Infrastructure
           </div>
 
           <h1 className="text-5xl sm:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9] animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            The Modern Ledger <br/>
-            <span className="text-brand-600">for Departments.</span>
+            The Modern Ledger <br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-indigo-600">for Departments.</span>
           </h1>
-          
-          <p className="mt-8 text-xl sm:text-2xl text-slate-500 max-w-3xl mx-auto leading-relaxed font-medium animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            A high-intelligence platform for academic records, student performance tracking and departmental oversight. Precision engineered for elite institutions.
+
+          <p className="mt-8 text-xl sm:text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            A unified platform for academic records, student performance tracking and departmental oversight.
           </p>
 
-          <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "0.3s" }}>
             {loading ? (
-              <div className="h-14 w-48 flex items-center justify-center bg-slate-100 rounded-3xl">
-                <div className="h-5 w-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+              <div className="h-10 w-40 flex items-center justify-center bg-slate-100 rounded-xl">
+                <div className="h-4 w-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : user && hasApprovedRole(role) ? (
               <>
                 <Link href="/profile" className="w-full sm:w-auto">
-                  <Button className="w-full sm:w-auto px-10 py-5 text-base">Dashboard Home</Button>
+                  <Button className="w-full sm:w-auto px-8">Dashboard</Button>
                 </Link>
                 {canManageUsers(role) && (
                   <Link href="/admin" className="w-full sm:w-auto">
-                    <Button variant="secondary" className="w-full sm:w-auto px-10 py-5 text-base">Governance Panel</Button>
+                    <Button variant="secondary" className="w-full sm:w-auto px-8">Admin Panel</Button>
                   </Link>
                 )}
               </>
             ) : (
               <>
                 <Link href="/register" className="w-full sm:w-auto">
-                  <Button className="w-full sm:w-auto px-12 py-5 text-base shadow-2xl shadow-brand-500/20">Initialize Account</Button>
+                  <Button className="w-full sm:w-auto px-8">Create Account</Button>
                 </Link>
                 <Link href="/login" className="w-full sm:w-auto">
-                  <Button variant="secondary" className="w-full sm:w-auto px-12 py-5 text-base">Sign in</Button>
+                  <Button variant="secondary" className="w-full sm:w-auto px-8">Sign In</Button>
                 </Link>
               </>
             )}
@@ -92,66 +95,56 @@ export default function Home() {
           {[
             {
               title: "AI Pulse Readiness",
-              desc: "Personalized placement readiness scores and actionable roadmap generated via Gemini AI Pro.",
+              desc: "Personalized placement readiness scores and career roadmap generated via Gemini AI.",
               icon: (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.989-2.386l-.548-.547z" />
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.989-2.386l-.548-.547z" />
                 </svg>
               ),
-              iconClass: "bg-brand-50 text-brand-600 border-brand-100 shadow-brand-500/10",
+              iconClass: "bg-brand-700 text-white border-brand-700 shadow-lg shadow-brand-500/10",
             },
             {
               title: "Comprehensive Tracking",
-              desc: "Track academic performance, activities, achievements and placements in one unified platform.",
+              desc: "Track academic performance, activities, achievements and placements in one platform.",
               icon: (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               ),
-              iconClass: "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-500/10",
+              iconClass: "bg-emerald-700 text-white border-emerald-700 shadow-lg shadow-emerald-500/10",
             },
             {
               title: "Audited Ledger",
-              desc: "Every record is tracked and verified. Complete administrative oversight with secure audit trails.",
+              desc: "Every record is tracked and verified with complete administrative oversight and audit trails.",
               icon: (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               ),
-              iconClass: "bg-indigo-50 text-indigo-600 border-indigo-100 shadow-indigo-500/10",
+              iconClass: "bg-indigo-700 text-white border-indigo-700 shadow-lg shadow-indigo-500/10",
             },
-          ].map((feature, i) => (
-            <div key={feature.title} className="premium-card p-10 group hover:translate-y-[-8px] transition-all duration-500">
-               <div className={`mb-8 inline-flex h-14 w-14 items-center justify-center rounded-[1.25rem] group-hover:rotate-12 group-hover:scale-110 transition-all shadow-xl border ${feature.iconClass}`}>
-                 {feature.icon}
-               </div>
-               <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">{feature.title}</h3>
-               <p className="text-slate-500 text-base leading-relaxed font-medium">{feature.desc}</p>
+          ].map((feature) => (
+            <div key={feature.title} className="premium-card p-8">
+              <div className={`mb-5 inline-flex h-10 w-10 items-center justify-center rounded-lg border ${feature.iconClass}`}>
+                {feature.icon}
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-2">{feature.title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{feature.desc}</p>
             </div>
           ))}
         </div>
 
-        {/* Dynamic Social Proof / Stats */}
-        <div className="mt-32 px-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
-          <div className="premium-card p-12 bg-slate-900 overflow-hidden relative border border-slate-800">
-            <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
-              <svg className="h-64 w-64 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
-            </div>
-            
-            <div className="relative z-10 grid gap-12 md:grid-cols-3 text-center">
+        <div className="mt-16 px-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
+          <div className="premium-card p-10 bg-slate-900 border-slate-800">
+            <div className="grid gap-8 md:grid-cols-3 text-center">
               {[
-                { label: "AI Features", value: "2", suffix: "" },
-                { label: "Role Systems", value: "3", suffix: "" },
-                { label: "Firestore Collections", value: "12", suffix: "" },
+                { label: "AI Features", value: "2" },
+                { label: "Role Systems", value: "3" },
+                { label: "Firestore Collections", value: "12" },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <p className="text-4xl sm:text-6xl font-black text-white tracking-tighter mb-2">
-                    {stat.value}<span className="text-brand-500">{stat.suffix}</span>
-                  </p>
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500">{stat.label}</p>
+                  <p className="text-4xl font-bold  mb-1">{stat.value}</p>
+                  <p className="text-sm text-slate-300 uppercase tracking-wider">{stat.label}</p>
                 </div>
               ))}
             </div>

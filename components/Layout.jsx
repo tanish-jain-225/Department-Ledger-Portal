@@ -14,7 +14,7 @@ import NavContent from "@/components/NavContent";
 class NotificationBoundary extends Component {
   constructor(props) { super(props); this.state = { failed: false }; }
   static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch() { /* suppress notification errors */ }
+  componentDidCatch() { }
   render() { return this.state.failed ? null : this.props.children; }
 }
 
@@ -23,109 +23,71 @@ export { ACCESS };
 function canRender(access, role) {
   switch (access) {
     case ACCESS.PUBLIC: return true;
-    case ACCESS.GUEST:  return !role;
-    case ACCESS.AUTH:   return !!role && hasApprovedRole(role);
+    case ACCESS.GUEST: return !role;
+    case ACCESS.AUTH: return !!role && hasApprovedRole(role);
     case ACCESS.STUDENT: return role === ROLES.STUDENT;
-    case ACCESS.STAFF:  return isStaff(role);
-    case ACCESS.ADMIN:  return canManageUsers(role);
-    default:            return false;
+    case ACCESS.STAFF: return isStaff(role);
+    case ACCESS.ADMIN: return canManageUsers(role);
+    default: return false;
   }
 }
 
 function homeFor(role) {
   if (canManageUsers(role)) return "/admin";
-  if (isStaff(role))         return "/faculty";
+  if (isStaff(role)) return "/faculty";
   if (role === ROLES.STUDENT) return "/student";
   return "/";
-}
-
-function GuestLinks({ mobile }) {
-  return (
-    <div className={mobile ? "flex flex-col gap-2 p-4" : "flex items-center gap-1"}>
-      <Link href="/login" className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-all">Sign In</Link>
-      <Link href="/register" className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 active:scale-95">Get Started</Link>
-    </div>
-  );
 }
 
 export default function Layout({ children, title = "", access = ACCESS.PUBLIC }) {
   const { user, profile, loading, logout, isLoggingOut } = useAuth();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Read localStorage synchronously on first render to avoid flicker.
+  // The lazy initializer only runs once and is safe — typeof window check
+  // guards against SSR where localStorage doesn't exist.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
   const [scrolled, setScrolled] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
 
   const role = profile?.role ?? null;
   const isLogged = !!user;
-  const isApproved = hasApprovedRole(role);
-  const isAdmin = isApproved && canManageUsers(role);
-  const isFaculty = isApproved && isStaff(role) && !isAdmin;
+  const isAdmin = isLogged && hasApprovedRole(role) && canManageUsers(role);
+  const isFaculty = isLogged && hasApprovedRole(role) && isStaff(role) && !isAdmin;
   const isStudent = role === ROLES.STUDENT;
 
   const activePath = router.asPath.split("?")[0];
   const isDashboardPath = ["/admin", "/student", "/faculty", "/profile", "/dashboard"].some(p => activePath.startsWith(p));
-  
   const showSidebar = isLogged && isDashboardPath;
 
-  useEffect(() => { 
-    setMobileMenuOpen(false); 
-  }, [router.asPath]);
-  
+  const logoHref = isAdmin ? "/admin" : isFaculty ? "/faculty" : isStudent ? "/student" : "/";
+
+  useEffect(() => { setMobileMenuOpen(false); }, [router.asPath]);
+
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    
-    const handleStart = () => setIsNavigating(true);
-    const handleStop = () => {
-      setTimeout(() => setIsNavigating(false), 300); // Small delay to ensure render
-    };
-
-    router.events.on("routeChangeStart", handleStart);
-    router.events.on("routeChangeComplete", handleStop);
-    router.events.on("routeChangeError", handleStop);
-
-    const saved = localStorage.getItem("sidebar_collapsed");
-    if (saved !== null) {
-      setSidebarCollapsed(saved === "true");
-    }
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      router.events.off("routeChangeStart", handleStart);
-      router.events.off("routeChangeComplete", handleStop);
-      router.events.off("routeChangeError", handleStop);
-    };
-  }, [router]);
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleSidebarCollapse = (val) => {
     setSidebarCollapsed(val);
-    localStorage.setItem("sidebar_collapsed", val);
+    localStorage.setItem("sidebar_collapsed", String(val));
   };
 
+  // Auth redirect
   useEffect(() => {
     if (!router.isReady || loading || isLoggingOut) return;
     if (access === ACCESS.GUEST && user && hasApprovedRole(role)) {
-      router.replace(homeFor(role));
-      return;
+      router.replace(homeFor(role)); return;
     }
     if (access !== ACCESS.PUBLIC && access !== ACCESS.GUEST) {
-      if (!user || !hasApprovedRole(role)) {
-        router.replace("/");
-        return;
-      }
-      if (access === ACCESS.STUDENT && role !== ROLES.STUDENT) {
-        router.replace(homeFor(role));
-        return;
-      }
-      if (access === ACCESS.STAFF && !isStaff(role)) {
-        router.replace(homeFor(role));
-        return;
-      }
-      if (access === ACCESS.ADMIN && !canManageUsers(role)) {
-        router.replace(homeFor(role));
-        return;
-      }
+      if (!user || !hasApprovedRole(role)) { router.replace("/"); return; }
+      if (access === ACCESS.STUDENT && role !== ROLES.STUDENT) { router.replace(homeFor(role)); return; }
+      if (access === ACCESS.STAFF && !isStaff(role)) { router.replace(homeFor(role)); return; }
+      if (access === ACCESS.ADMIN && !canManageUsers(role)) { router.replace(homeFor(role)); return; }
     }
     if (access === ACCESS.PUBLIC && router.asPath === "/" && user && hasApprovedRole(role)) {
       router.replace(homeFor(role));
@@ -133,167 +95,181 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
   }, [router.isReady, loading, isLoggingOut, user, role, access, router]);
 
   const allowed = loading || !router.isReady ? false : canRender(access, role);
-  const logoHref = isAdmin ? "/admin" : isFaculty ? "/faculty" : isStudent ? "/student" : "/";
+
+  // Sidebar offset
+  const sidebarWidth = showSidebar ? (sidebarCollapsed ? "md:pl-16" : "md:pl-64") : "";
 
   return (
     <>
       <Head>
-        <title>{title ? `${title} - Department Ledger` : "Department Ledger Portal"}</title>
-        <meta name="description" content="A high-intelligence platform for academic records, student performance tracking and departmental oversight." />
+        <title>{title ? `${title} — Department Ledger Portal` : "Department Ledger Portal"}</title>
+        <meta name="description" content="Academic records management platform for departments." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#4f46e5" />
+        <meta name="theme-color" content="#2563eb" />
       </Head>
 
+      {/* Logout overlay */}
       {isLoggingOut && (
-        <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center animate-fade-in no-print">
-          <div className="relative">
-             <div className="h-24 w-24 rounded-full border-4 border-slate-100 border-t-brand-600 animate-spin" />
-             <div className="absolute inset-0 flex items-center justify-center">
-                <Image src="/logo.png" alt="Logo" width={32} height={32} className="h-8 w-auto opacity-20" />
-             </div>
-          </div>
-          <div className="mt-8 text-center px-6">
-             <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">Securely Terminating Session</h2>
-             <p className="text-sm font-medium text-slate-400 mt-2">Flushing encrypted vaults and synchronizing global state...</p>
-          </div>
-          <div className="fixed bottom-12 text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">
-             System Integrity Verified
-          </div>
+        <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center no-print">
+          <div className="h-10 w-10 border-2 border-brand-600 border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-sm font-medium text-slate-600">Signing out...</p>
         </div>
       )}
 
-      <div className="flex min-h-screen bg-slate-50/50">
-        {!showSidebar && (
-          <header className={`no-print fixed top-6 left-1/2 -translate-x-1/2 z-[100] transition-all duration-700 w-[calc(100%-3rem)] max-w-7xl
-            ${scrolled ? "bg-white border border-slate-200 shadow-sm py-3 px-8 rounded-2xl" : "bg-transparent py-4 px-6"}`}>
-            <div className="flex items-center justify-between gap-4">
-              <Link href={logoHref} className="flex items-center gap-3 transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                <div className="bg-white p-2 rounded-2xl shadow-xl border border-slate-100">
-                  <Image src="/logo.png" alt="Logo" width={32} height={32} className="h-8 w-auto" priority />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-black text-slate-900 leading-none tracking-tight uppercase">Ledger</span>
-                  <span className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mt-0.5">Records</span>
-                </div>
-              </Link>
+      <div className="flex min-h-screen bg-slate-50">
 
-              <nav className="hidden md:flex items-center gap-3">
-                 {!isLogged && !loading && <GuestLinks mobile={false} />}
-                 {isLogged && (
-                   <div className="flex items-center gap-3">
-                      <Link href={logoHref} className="px-5 py-2 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand-700 transition-all shadow-lg shadow-brand-500/20">Dashboard</Link>
-                      <button onClick={logout} className="px-5 py-2 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Exit</button>
-                   </div>
-                 )}
-              </nav>
+        {/* Desktop Sidebar */}
+        {showSidebar && (
+          <div className="hidden md:block no-print">
+            <Sidebar collapsed={sidebarCollapsed} onCollapse={handleSidebarCollapse} />
+          </div>
+        )}
 
-              <div className="flex items-center gap-3 md:hidden">
+        {/* Main content column */}
+        <div className={`flex flex-col flex-1 min-w-0 ${sidebarWidth}`}>
+
+          {/* Public navbar (no sidebar) */}
+          {!showSidebar && (
+            <header className={`no-print sticky top-0 z-50 transition-colors duration-200 ${scrolled ? "bg-white border-b border-slate-200 shadow-sm" : "bg-transparent"
+              }`}>
+              <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
+                {/* Logo */}
+                <Link href={logoHref} className="flex items-center gap-2.5">
+                  <div className="bg-brand-700 rounded-lg p-1.5 flex-shrink-0">
+                    <Image src="/logo.png" alt="Logo" width={20} height={20} className="h-5 w-5" style={{ height: 'auto' }} priority />
+                  </div>
+                  <span className="text-sm font-bold text-slate-900">Department Ledger Portal</span>
+                </Link>
+
+                {/* Desktop nav */}
+                <nav className="hidden md:flex items-center gap-2">
+                  {!isLogged && !loading && (
+                    <>
+                      <Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                        Sign In
+                      </Link>
+                      <Link href="/register" className="px-4 py-2 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">
+                        Get Started
+                      </Link>
+                    </>
+                  )}
+                  {isLogged && (
+                    <>
+                      <Link href={logoHref} className="px-4 py-2 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">
+                        Dashboard
+                      </Link>
+                      <button onClick={logout} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                        Sign Out
+                      </button>
+                    </>
+                  )}
+                </nav>
+
+                {/* Mobile hamburger */}
                 <button
                   type="button"
-                  className="rounded-2xl p-2.5 bg-white border border-slate-200 text-slate-600 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
-                  onClick={() => setMobileMenuOpen((o) => !o)}
+                  className="md:hidden p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  onClick={() => setMobileMenuOpen(o => !o)}
+                  aria-label="Toggle menu"
                 >
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"} />
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
                   </svg>
                 </button>
               </div>
-            </div>
 
-            {mobileMenuOpen && (
-              <div className="md:hidden mt-4 border-t border-slate-100/50 pt-4 animate-menu-down">
-                {!isLogged && <GuestLinks mobile={true} />}
-                {isLogged && (
-                  <div className="flex flex-col gap-2 p-4">
-                    <Link href={logoHref} className="w-full text-center py-3 rounded-2xl bg-brand-600 text-white font-black text-xs uppercase tracking-widest">Dashboard</Link>
-                    <button onClick={logout} className="w-full text-center py-3 rounded-2xl bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-widest">Exit</button>
-                  </div>
-                )}
-              </div>
-            )}
-          </header>
-        )}
-
-        {/* Desktop Sidebar */}
-        <div className="hidden md:block no-print">
-          {showSidebar && <Sidebar collapsed={sidebarCollapsed} onCollapse={handleSidebarCollapse} />}
-        </div>
-
-        {/* Mobile Navbar for Dashboard */}
-        {showSidebar && (
-          <header className={`md:hidden no-print fixed top-4 left-4 right-4 z-[100] transition-all duration-500 bg-white border border-slate-200 shadow-sm py-4 px-6 rounded-2xl`}>
-             <div className="flex items-center justify-between">
-                <Link href={logoHref} className="flex items-center gap-3">
-                  <div className="bg-white p-2 rounded-xl shadow-lg border border-slate-100">
-                    <Image src="/logo.png" alt="Logo" width={24} height={24} className="h-6 w-auto" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-slate-900 leading-none">DASHBOARD</span>
-                    <span className="text-[8px] font-bold text-brand-500 opacity-70 uppercase tracking-tighter">Ledger Portal</span>
-                  </div>
-                </Link>
-                
-                <div className="flex items-center gap-3">
-                  <NotificationBoundary><NotificationCenter /></NotificationBoundary>
-                  <button
-                    type="button"
-                    onClick={() => setMobileMenuOpen((o) => !o)}
-                    className="p-2.5 rounded-2xl bg-slate-900 text-white shadow-xl active:scale-95 transition-all"
-                  >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"} />
-                    </svg>
-                  </button>
+              {/* Mobile dropdown */}
+              {mobileMenuOpen && (
+                <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-2 animate-menu-down shadow-sm">
+                  {!isLogged && (
+                    <>
+                      <Link href="/login" className="block w-full text-center py-2.5 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Sign In</Link>
+                      <Link href="/register" className="block w-full text-center py-2.5 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">Get Started</Link>
+                    </>
+                  )}
+                  {isLogged && (
+                    <>
+                      <Link href={logoHref} className="block w-full text-center py-2.5 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">Dashboard</Link>
+                      <button onClick={logout} className="block w-full text-center py-2.5 text-sm font-black text-white bg-slate-600 hover:bg-slate-700 rounded-lg transition-colors scale-95 active:scale-90">Sign Out</button>
+                    </>
+                  )}
                 </div>
-             </div>
+              )}
+            </header>
+          )}
 
-             {mobileMenuOpen && (
-               <div className="mt-4 border-t border-slate-100 pt-4 animate-menu-down max-h-[70vh] overflow-y-auto no-scrollbar">
-                  <div className="flex flex-col gap-1 pb-4">
-                    <NavContent mobile role={role} activePath={activePath} router={router} />
-                    <div className="mt-4 pt-4 border-t border-slate-50 flex flex-col gap-2">
-                      <div className="px-5 py-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-xl bg-brand-600 flex items-center justify-center text-white font-black text-xs">
-                          {profile?.name?.charAt(0) || "U"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-black text-slate-900 uppercase truncate">{profile?.name || "User"}</p>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase">{role}</p>
-                        </div>
+          {/* Mobile top bar (dashboard pages) */}
+          {showSidebar && (
+            <header className="md:hidden no-print sticky top-0 z-50 bg-white border-b border-slate-200 h-14 flex items-center justify-between px-4 shadow-sm">
+              <Link href={logoHref} className="flex items-center gap-2">
+                <div className="bg-brand-700 rounded-lg p-1.5">
+                  <Image src="/logo.png" alt="Logo" width={18} height={18} className="h-[18px] w-[18px]" style={{ height: 'auto' }} />
+                </div>
+                <span className="text-sm font-bold text-slate-900">Ledger</span>
+              </Link>
+
+              <div className="flex items-center gap-2">
+                <NotificationBoundary><NotificationCenter /></NotificationBoundary>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(o => !o)}
+                  className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Mobile nav drawer */}
+              {mobileMenuOpen && (
+                <div className="absolute top-14 left-0 right-0 bg-white border-b border-slate-200 shadow-md z-50 px-4 py-4 animate-menu-down">
+                  <nav className="space-y-0.5 mb-4">
+                    <NavContent role={role} activePath={activePath} router={router} />
+                  </nav>
+                  <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="h-8 w-8 rounded-lg bg-brand-700 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                        {profile?.name?.charAt(0)?.toUpperCase() || "U"}
                       </div>
-                      <button onClick={logout} className="w-full py-4 rounded-2xl bg-rose-50 text-rose-600 font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95">End Session</button>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{profile?.name || "User"}</p>
+                        <p className="text-xs text-slate-500 capitalize">{role}</p>
+                      </div>
                     </div>
+                    <button
+                      onClick={logout}
+                      className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+                    >
+                      Sign Out
+                    </button>
                   </div>
-               </div>
-             )}
-          </header>
-        )}
+                </div>
+              )}
+            </header>
+          )}
 
-        <div className={`flex flex-col flex-1 transition-all duration-700 ${showSidebar ? (sidebarCollapsed ? "md:pl-[160px]" : "md:pl-[400px]") : ""}`}>
-          <div className={`no-print ${showSidebar ? "h-24 md:h-0" : "h-32"}`} /> {/* Responsive Spacer */}
-          
-          <main 
-            key={router.asPath}
-            id="main-content" 
-            className={`mx-auto w-full px-6 py-8 flex-1 max-w-7xl transition-all duration-500 
-              ${isNavigating ? "opacity-0 translate-y-4 scale-[0.98]" : "opacity-100 translate-y-0 scale-100 animate-slide-up"}`}
-          >
+          {/* Page content */}
+          <main id="main-content" className="flex-1 px-6 py-8 mx-auto w-full max-w-7xl">
             {allowed ? children : (
               <div className="flex h-[60vh] items-center justify-center">
-                <div className="text-center animate-slide-up">
-                  <div className="mx-auto h-20 w-20 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-400 mb-6">
-                    <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <div className="text-center max-w-sm">
+                  <div className="mx-auto h-14 w-14 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
+                    <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-3">Access Restricted</h1>
-                  <p className="text-slate-500 font-medium max-w-md mx-auto mb-8">You don&apos;t have permission to view this section or your session has expired.</p>
-                  <Link href="/" className="px-8 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10">Return Home</Link>
+                  <h1 className="text-xl font-bold text-slate-900 mb-2">Access Restricted</h1>
+                  <p className="text-sm text-slate-500 mb-6">You don&apos;t have permission to view this page.</p>
+                  <Link href="/" className="inline-flex items-center px-4 py-2 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">
+                    Return Home
+                  </Link>
                 </div>
               </div>
             )}
           </main>
-          
+
           <CommonFooter />
         </div>
       </div>

@@ -42,13 +42,13 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
     <section className="premium-card p-4 sm:p-6 lg:p-8 animate-slide-up">
       <div className="flex flex-col gap-1 mb-6">
         <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Placements & Careers</h2>
-        <p className="text-sm text-slate-400">Professional milestones and internships.</p>
+        <p className="text-sm text-slate-500">Professional milestones and internships.</p>
       </div>
 
       <div className="flex flex-col gap-3 bg-slate-50/50 p-4 sm:p-5 rounded-2xl border border-slate-100 mb-6">
         <div>
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
         <SmartAssistant mode="placement" studentUid={uid} existingData={rows}
           onExtract={(d) => {
@@ -86,7 +86,7 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
 
         {rows.length === 0 ? (
           <div className="flex items-center justify-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-            <p className="text-sm text-slate-400 italic">No professional records logged yet.</p>
+            <p className="text-sm text-slate-500 italic">No professional records logged yet.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">

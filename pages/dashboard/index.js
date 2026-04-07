@@ -1,14 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
-import { listStudentsForDashboard } from "@/lib/data";
-import { downloadFacultyStudentsCsv } from "@/lib/csv-download";
+import { listStudentsForDashboard, listByStudent, listStudentDocuments } from "@/lib/data";
+import {
+  downloadFacultyStudentRecordsCsv,
+  buildStudentExportRow,
+  STUDENT_RECORD_FIELDS
+} from "@/lib/csv-download";
+import { computeReport } from "@/lib/student-analytics";
+import { getDb } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import StudentInfoPopup from "@/components/StudentInfoPopup";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui";
 import { PAGE_SIZE } from "@/lib/constants";
 
-const PAGE = PAGE_SIZE.DASHBOARD; // 50
+const PAGE = PAGE_SIZE.DASHBOARD;
 
 export default function DashboardPage() {
   const { loading } = useAuth();
@@ -16,23 +24,20 @@ export default function DashboardPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [selectedStudentUid, setSelectedStudentUid] = useState(null);
-  // Firestore cursor for the next page
   const lastDocRef = useRef(null);
 
-  // Debounce - only fire query 350ms after user stops typing
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350);
     return () => clearTimeout(t);
   }, [search]);
 
-  // Fresh fetch whenever search term changes
   useEffect(() => {
     let cancelled = false;
     lastDocRef.current = null;
-
     async function run() {
       setBusy(true);
       try {
@@ -72,132 +77,164 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const db = getDb();
+      if (!db) return;
+      const q = query(collection(db, "users"), where("role", "==", "student"));
+      const snap = await getDocs(q);
+      const allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const enrichedRows = [];
+      for (const user of allStudents) {
+        const [academic, activities, achievements, placements, uploadedDocuments] = await Promise.all([
+          listByStudent("academicRecords", user.id),
+          listByStudent("activities", user.id),
+          listByStudent("achievements", user.id),
+          listByStudent("placements", user.id),
+          listStudentDocuments(user.id, 200),
+        ]);
+
+        const lists = { academic, activities, achievements, placements, uploadedDocuments };
+        const report = computeReport(user, lists);
+        enrichedRows.push(buildStudentExportRow(user, lists, report));
+      }
+
+      downloadFacultyStudentRecordsCsv(enrichedRows, `full-department-ledger-${new Date().toISOString().split('T')[0]}.csv`);
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Failed to prepare export. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
-    <Layout title="Instructional Intelligence" access={ACCESS.STAFF}>
+    <Layout title="Student Records" access={ACCESS.STAFF}>
       {selectedStudentUid && (
         <StudentInfoPopup uid={selectedStudentUid} onClose={() => setSelectedStudentUid(null)} />
       )}
 
       {/* Header */}
-      <div className="mb-12 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between animate-slide-up">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Student Records</h1>
-          <p className="text-base text-slate-400 mt-2 font-medium">
-            Professional directory and academic oversight for the department.
-          </p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Student Records</h1>
+          <p className="text-sm text-slate-500 mt-1">Academic oversight and directory for the department.</p>
         </div>
         <Button
-          onClick={() => downloadFacultyStudentsCsv(rows, "ledger-export.csv")}
-          className="lg:w-auto w-full group"
+          variant="secondary"
+          onClick={handleExport}
+          disabled={exporting}
+          loading={exporting}
+          className="sm:w-auto w-full font-black"
         >
-          <svg className="h-4 w-4 mr-2 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
-          Export Ledger (CSV)
+          Export CSV
         </Button>
       </div>
 
       {/* Search */}
-      <div className="mb-12 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-        <div className="relative max-w-2xl">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+      <div className="mb-8">
+        <div className="relative max-w-xl">
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
           <input
             type="search"
-            placeholder="Filter records by name, email, or identity..."
+            placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-4xl border-2 border-slate-100 bg-white pl-14 pr-6 py-5 text-sm font-black text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300 shadow-xl shadow-slate-200/20"
+            className="w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 py-3 text-sm text-slate-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-all"
           />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              aria-label="Clear search"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
+        {rows.length > 0 && !busy && (
+          <p className="text-xs text-slate-500 mt-2 pl-1">{rows.length} record{rows.length !== 1 ? "s" : ""} found</p>
+        )}
       </div>
 
-      {loading && (
-        <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-300 animate-pulse">
-          Synchronizing Records...
-        </p>
+      {/* Skeleton loaders */}
+      {(busy || loading) && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="premium-card p-6 animate-pulse">
+              <div className="flex items-center gap-3 mb-4">
+                <Skeleton className="h-10 w-10 rounded-xl" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+              <Skeleton className="h-3 w-full mb-2" />
+              <Skeleton className="h-8 w-full rounded-xl mt-4" />
+            </div>
+          ))}
+        </div>
       )}
 
-      {!busy && rows.length === 0 && !loading && (
+      {!busy && !loading && rows.length === 0 && (
         <EmptyState
-          title={search ? `No records found for "${search}"` : "No student records found"}
-          message="Adjust your query to find the desired records in the departmental ledger."
+          title={search ? `No results for "${search}"` : "No student records found"}
+          message="Try a different search term or check back later."
         />
       )}
 
       {/* Grid */}
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-        {rows.map((s) => (
-          <div key={s.id} className="group premium-card p-8 transition-all hover:translate-y-[-8px] hover:shadow-2xl">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="h-12 w-12 rounded-[1.25rem] bg-brand-50 flex items-center justify-center font-black text-brand-600 border border-brand-100 group-hover:scale-110 transition-transform">
-                {s.name?.charAt(0) || "U"}
+      {!busy && !loading && rows.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {rows.map((s) => (
+            <div key={s.id} className="premium-card p-6 hover:border-brand-200 hover:shadow-md transition-all">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-brand-700 flex items-center justify-center font-black text-white shadow-lg shadow-brand-900/10 text-sm flex-shrink-0">
+                    {s.name?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="font-bold text-slate-900 text-sm truncate">{s.name || "Anonymous"}</h2>
+                    <p className="text-xs text-slate-600 truncate">{s.email}</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.role || "Unauthorized"}</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-0.5">Active Status</span>
+
+              <div className="flex items-center gap-4 text-xs text-slate-500 mb-4 pt-3 border-t border-slate-100">
+                <span><span className="text-slate-400">Year:</span> {s.year || "—"}</span>
+                <span><span className="text-slate-400">Branch:</span> {s.branch || "—"}</span>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setSelectedStudentUid(s.id)}
+                  className="flex-1"
+                >
+                  View Profile
+                </Button>
               </div>
             </div>
-
-            <h2 className="font-black text-slate-900 text-xl line-clamp-1 mb-1 tracking-tight">{s.name || "Anonymous Record"}</h2>
-            <p className="text-sm font-medium text-slate-400 truncate mb-6">{s.email}</p>
-
-            <div className="flex flex-wrap gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-10 pt-6 border-t border-slate-50">
-              <div className="flex flex-col gap-1">
-                <span className="text-slate-300">Phone</span>
-                <span>{s.phone || "-"}</span>
-              </div>
-              <div className="flex flex-col gap-1 pl-4 border-l border-slate-100">
-                <span className="text-slate-300">Year</span>
-                <span>{s.year || "-"}</span>
-              </div>
-            </div>
-
-            <div className="grid gap-3">
-              <Button
-                variant="soft"
-                onClick={() => setSelectedStudentUid(s.id)}
-                className="w-full text-[10px] uppercase tracking-[0.2em]"
-              >
-                Access Profile
-              </Button>
-              <button
-                onClick={() => downloadFacultyStudentsCsv([s], `record-${s.name || s.id}.csv`)}
-                className="w-full h-10 flex items-center justify-center gap-2 rounded-2xl bg-slate-50 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 hover:bg-slate-900 hover:text-white transition-all active:scale-95"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                Extract Record
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Load More */}
-      {hasMore && !busy && (
-        <div className="mt-12 flex flex-col items-center gap-3">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400">
-            Showing {rows.length} records
-          </p>
-          <Button
-            variant="secondary"
-            onClick={loadMore}
-            disabled={loadingMore}
-            className="px-10"
-          >
-            {loadingMore ? (
-              <>
-                <div className="h-4 w-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-                Loading...
-              </>
-            ) : (
-              "Load More Records"
-            )}
+      {hasMore && !busy && !loading && (
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <p className="text-xs text-slate-500">Showing {rows.length} records</p>
+          <Button variant="secondary" onClick={loadMore} loading={loadingMore} className="px-8">
+            Load More
           </Button>
         </div>
       )}

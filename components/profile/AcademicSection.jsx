@@ -16,13 +16,13 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("academicRecords", uid, onRefresh);
 
-  const [year, setYear]           = useState("");
-  const [semester, setSemester]   = useState("");
+  const [year, setYear] = useState("");
+  const [semester, setSemester] = useState("");
   const [rollNumber, setRollNumber] = useState("");
-  const [gpa, setGpa]             = useState("");
-  const [subjects, setSubjects]   = useState("");
-  const [branch, setBranch]       = useState("");
-  const [document, setDocument]   = useState(null);
+  const [gpa, setGpa] = useState("");
+  const [subjects, setSubjects] = useState("");
+  const [branch, setBranch] = useState("");
+  const [document, setDocument] = useState(null);
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
@@ -45,9 +45,11 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
       return;
     }
     await save(
-      { year: editingRecord.year, semester: editingRecord.semester, gpa: editingRecord.gpa,
+      {
+        year: editingRecord.year, semester: editingRecord.semester, gpa: editingRecord.gpa,
         subjects: editingRecord.subjects, rollNumber: editingRecord.rollNumber,
-        branch: editingRecord.branch, document: editingRecord.document || document },
+        branch: editingRecord.branch, document: editingRecord.document || document
+      },
       `Updated Year ${editingRecord.year} Sem ${editingRecord.semester}`
     );
   }
@@ -58,14 +60,14 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
         {/* Section header */}
         <div className="flex flex-col gap-1 mb-6">
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Academic Records</h2>
-          <p className="text-sm text-slate-400">Semester-wise progress for AI analysis.</p>
+          <p className="text-sm text-slate-500">Semester-wise progress for AI analysis.</p>
         </div>
 
         {/* AI assistant */}
         <div className="flex flex-col gap-3 bg-slate-50/50 p-4 sm:p-5 rounded-2xl border border-slate-100 mb-6">
           <div>
             <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
           </div>
           <SmartAssistant
             mode="academic"
@@ -111,7 +113,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
 
           {rows.length === 0 ? (
             <div className="flex items-center justify-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-              <p className="text-sm text-slate-400 italic">No academic records yet.</p>
+              <p className="text-sm text-slate-500 italic">No academic records yet.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -120,7 +122,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
                   {/* Top row: title + badge */}
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-base font-black text-slate-900">Year {r.year} · Sem {r.semester}</span>
-                    <Badge variant="success" className="bg-emerald-500 text-white border-none">{r.gpa} GPA</Badge>
+                    <Badge variant="success" className="bg-emerald-700 border-none text-white">{r.gpa} GPA</Badge>
                   </div>
                   {/* Meta row */}
                   <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
@@ -137,7 +139,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
                   </div>
                   {/* Actions */}
                   <div className="flex items-center gap-2 self-end">
-                    <button onClick={() => setEditingRecord({...r})} className="p-2 text-slate-400 hover:text-brand-600 rounded-xl hover:bg-brand-50 transition-all" title="Edit">
+                    <button onClick={() => setEditingRecord({ ...r })} className="p-2 text-slate-400 hover:text-brand-600 rounded-xl hover:bg-brand-50 transition-all" title="Edit">
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M18.364 5.636a2.121 2.121 0 113 3L12 18l-4 1 1-4 9.364-9.364z" /></svg>
                     </button>
                     <button onClick={() => setDeleteTarget({ collection: "academicRecords", id: r.id, label: `Year ${r.year} · Sem ${r.semester}` })} className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all" title="Delete">
@@ -156,20 +158,20 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex flex-col gap-1 flex-1">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Batch Year</label>
-              <Input value={editingRecord?.year || ""} onChange={e => setEditingRecord({...editingRecord, year: e.target.value})} />
+              <Input value={editingRecord?.year || ""} onChange={e => setEditingRecord({ ...editingRecord, year: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1 flex-1">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Semester</label>
-              <Input value={editingRecord?.semester || ""} onChange={e => setEditingRecord({...editingRecord, semester: e.target.value})} />
+              <Input value={editingRecord?.semester || ""} onChange={e => setEditingRecord({ ...editingRecord, semester: e.target.value })} />
             </div>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Score (GPA)</label>
-            <Input value={editingRecord?.gpa || ""} onChange={e => setEditingRecord({...editingRecord, gpa: e.target.value})} />
+            <Input value={editingRecord?.gpa || ""} onChange={e => setEditingRecord({ ...editingRecord, gpa: e.target.value })} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Subjects</label>
-            <textarea value={editingRecord?.subjects || ""} onChange={e => setEditingRecord({...editingRecord, subjects: e.target.value})} rows={3} className={field} />
+            <textarea value={editingRecord?.subjects || ""} onChange={e => setEditingRecord({ ...editingRecord, subjects: e.target.value })} rows={3} className={field} />
           </div>
           {editingRecord?.document && (
             <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-[11px] text-slate-600">

@@ -5,14 +5,14 @@ import FacultyCard from "./FacultyCard";
 import DownloadPdfButton from "./ui/DownloadPdfButton";
 import { buildFilename } from "../lib/pdf-download";
 
-export default function IdentityCardPopup({ 
-  show, 
-  onClose, 
+export default function IdentityCardPopup({
+  show,
+  onClose,
   role = "student",
-  data, 
-  academic = [], 
-  activities = [], 
-  achievements = [], 
+  data,
+  academic = [],
+  activities = [],
+  achievements = [],
   placements = [],
   showPdf = true,
 }) {
@@ -34,41 +34,38 @@ export default function IdentityCardPopup({
     <Modal
       open={show}
       onClose={onClose}
-      title="Identity & Protocol Verification"
+      title={role === "faculty" ? "Faculty Identity Card" : "Student Identity Card"}
       fullScreen={true}
-      className="!bg-transparent"
     >
-      <div className="flex flex-col h-full">
-        {/* Sub-Header / Toolbelt */}
-        <div className="flex items-center justify-between mb-8 px-2 border-b border-white/20 pb-6">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Verification Protocol</span>
-          </div>
+      <div className="flex flex-col h-full gap-4">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between flex-shrink-0">
+          <p className="text-sm text-slate-500">
+            Preview your identity card below. Use the button to download as PDF.
+          </p>
           {showPdf && (
             <DownloadPdfButton
               elementRef={cardRef}
               filename={filename}
-              label="Generate PDF"
+              label="Download PDF"
               allowedRoles={allowedRoles}
               orientation="portrait"
-              windowWidth={794}
-              className="rounded-xl px-6 py-3 text-sm font-black shadow-xl shadow-emerald-500/20 active:scale-95"
             />
           )}
         </div>
 
-        {/* Scalable Card Preview */}
-        <div className="flex-1 flex justify-center bg-transparent py-4 overflow-y-auto overflow-x-hidden">
-          <div ref={cardRef} data-ref-card="true" className="w-full max-w-4xl animate-slide-up h-fit">
+        {/* Card preview */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden flex justify-center py-2">
+          <div ref={cardRef} className="w-full max-w-4xl">
             {role === "faculty" ? (
               <FacultyCard data={data} />
             ) : (
-              <StudentCard 
-                data={data} 
-                academic={academic} 
+              <StudentCard
+                data={data}
+                academic={academic}
                 activities={activities}
                 achievements={achievements}
-                placements={placements} 
+                placements={placements}
               />
             )}
           </div>

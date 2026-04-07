@@ -4,12 +4,14 @@ import { getDb } from "@/lib/firebase";
 import { listByStudent, listStudentDocuments } from "@/lib/data";
 import { useAuth } from "@/lib/auth-context";
 import Modal from "@/components/ui/Modal";
+import Button from "@/components/ui/Button";
 import DocumentPreview from "@/components/profile/DocumentPreview";
 import Badge from "@/components/ui/Badge";
 import {
   downloadAdminStudentRecordsCsv,
   downloadFacultyStudentRecordsCsv,
   STUDENT_RECORD_FIELDS,
+  buildStudentExportRow,
 } from "@/lib/csv-download";
 import { computeReport } from "@/lib/student-analytics";
 
@@ -23,10 +25,10 @@ function ReportPopup({ data, lists, onClose }) {
   const offset = circumference * (1 - r.overall / 100);
 
   const verdictColors = {
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    brand:   "bg-brand-50 text-brand-700 border-brand-200",
-    amber:   "bg-amber-50 text-amber-700 border-amber-200",
-    red:     "bg-red-50 text-red-700 border-red-200",
+    emerald: "bg-emerald-700 text-white border-emerald-700 shadow-sm",
+    brand: "bg-brand-700 text-white border-brand-700 shadow-sm",
+    amber: "bg-amber-700 text-white border-amber-700 shadow-sm",
+    red: "bg-red-700 text-white border-red-700 shadow-sm",
   };
 
   const barColor = (pct) =>
@@ -46,7 +48,7 @@ function ReportPopup({ data, lists, onClose }) {
             </svg>
             <div className="absolute flex flex-col items-center">
               <span className="text-2xl font-black text-slate-900">{r.overall}</span>
-              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">/ 100</span>
+              <span className="text-xs text-slate-500 uppercase tracking-widest">/ 100</span>
             </div>
           </div>
           <div className="flex flex-col gap-2 text-center sm:text-left flex-1 min-w-0">
@@ -65,13 +67,13 @@ function ReportPopup({ data, lists, onClose }) {
         {/* ── Quick stats row ── */}
         <div className="flex flex-wrap gap-3">
           {[
-            { label: "Avg GPA",      value: r.avgGpa || "-",       sub: r.gpaTrend !== "stable" ? r.gpaTrend : null },
-            { label: "Latest GPA",   value: r.latestGpa || "-",    sub: null },
-            { label: "Semesters",    value: r.academicCount,        sub: null },
+            { label: "Avg GPA", value: r.avgGpa || "-", sub: r.gpaTrend !== "stable" ? r.gpaTrend : null },
+            { label: "Latest GPA", value: r.latestGpa || "-", sub: null },
+            { label: "Semesters", value: r.academicCount, sub: null },
             { label: "Achievements", value: lists.achievements.length, sub: r.hasNational ? "Natl/Intl" : null },
-            { label: "Activities",   value: lists.activities.length,   sub: r.actDiversity > 0 ? `${r.actDiversity} types` : null },
-            { label: "Documents",    value: lists.uploadedDocuments.length, sub: r.documentRating && r.documentRating !== "none" ? r.documentRating.replace(/-/g, " ") : null },
-            { label: "Internships",  value: r.internships.length,      sub: r.placed ? "Placed ✓" : null },
+            { label: "Activities", value: lists.activities.length, sub: r.actDiversity > 0 ? `${r.actDiversity} types` : null },
+            { label: "Documents", value: lists.uploadedDocuments.length, sub: r.documentRating && r.documentRating !== "none" ? r.documentRating.replace(/-/g, " ") : null },
+            { label: "Internships", value: r.internships.length, sub: r.placed ? "Placed ✓" : null },
           ].map((s, i) => (
             <div key={i} className="flex flex-col gap-0.5 flex-1 min-w-[90px] p-3 rounded-xl bg-white border border-slate-100 text-center">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{s.label}</p>
@@ -112,7 +114,7 @@ function ReportPopup({ data, lists, onClose }) {
               <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${Math.min((parseFloat(r.avgGpa) / 10) * 100, 100)}%`, background: barColor(parseFloat(r.avgGpa) >= 7 ? 80 : parseFloat(r.avgGpa) >= 6 ? 55 : 30) }} />
               </div>
-              <p className="text-[10px] text-slate-400 capitalize">{r.gpaRating.replace("-", " ")} academic standing</p>
+              <p className="text-xs text-slate-500 capitalize">{r.gpaRating.replace("-", " ")} academic standing</p>
             </div>
           </div>
         )}
@@ -132,7 +134,7 @@ function ReportPopup({ data, lists, onClose }) {
                 <p className="text-xs text-slate-500">{r.internships.map(i => i.company).join(", ")}</p>
               </div>
             ) : (
-              <p className="text-sm text-slate-400 italic">No placement or internship records</p>
+              <p className="text-sm text-slate-500 italic">No placement or internship records</p>
             )}
           </div>
         </div>
@@ -176,7 +178,7 @@ function BarRow({ label, pct, barColor, sub }) {
       <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
       </div>
-      {sub && <p className="text-[10px] text-slate-400">{sub}</p>}
+      {sub && <p className="text-xs text-slate-500">{sub}</p>}
     </div>
   );
 }
@@ -222,82 +224,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
   function handleCsvDownload() {
     if (!data) return;
     const report = computeReport(data, lists);
-    const normalizeSection = (sectionName) => {
-      const section = String(sectionName || "other").toLowerCase();
-      const mapping = {
-        academic: "academic",
-        academics: "academic",
-        academicrecords: "academic",
-        achievement: "achievement",
-        achievements: "achievement",
-        activity: "activity",
-        activities: "activity",
-        placement: "placement",
-        placements: "placement",
-        project: "project",
-        projects: "project",
-        skill: "skill",
-        skills: "skill",
-      };
-      return mapping[section] || "other";
-    };
-
-    const documentLinks = lists.uploadedDocuments.reduce((acc, item) => {
-      const section = normalizeSection(item.section);
-      const link = `${window.location.origin}/document/${encodeURIComponent(item.id)}`;
-      const key = `${section}_document`;
-      acc[key] = acc[key] || [];
-      acc[key].push(link);
-      return acc;
-    }, {});
-
-    const exportRow = {
-      name: data.name || "",
-      email: data.email || "",
-      phone: data.phone || "",
-      role: data.role || "",
-      year: data.year || "",
-      branch: data.branch || "",
-      alumni: data.alumni ? "yes" : "no",
-      gender: data.gender || "",
-      dob: data.dob || "",
-      address: data.address || "",
-      linkedin: data.linkedin || "",
-      github: data.github || "",
-      rollNumber: data.rollNumber || "",
-      facultyVerification: data.facultyVerification || "",
-      academicCount: lists.academic.length,
-      achievementsCount: lists.achievements.length,
-      activitiesCount: lists.activities.length,
-      placementsCount: lists.placements.length,
-      uploadedDocumentsCount: lists.uploadedDocuments.length,
-      overallScore: report.overall,
-      readinessVerdict: report.verdict.label,
-      profileCompletenessPct: report.profilePct,
-      missingProfileFields: report.missingProfile.join(" | "),
-      avgGpa: report.avgGpa || "",
-      latestGpa: report.latestGpa || "",
-      highestGpa: report.highestGpa || "",
-      lowestGpa: report.lowestGpa || "",
-      gpaTrend: report.gpaTrend,
-      gpaRating: report.gpaRating,
-      achievementScore: report.achScore,
-      achievementRating: report.achRating,
-      hasNationalAchievement: report.hasNational ? "yes" : "no",
-      activityDiversity: report.actDiversity,
-      activityRating: report.actRating,
-      documentRating: report.documentRating,
-      placed: report.placed ? "yes" : "no",
-      placedCompany: report.placedAt?.company || "",
-      placedRole: report.placedAt?.role || "",
-      placedPackage: report.maxPackage ?? "",
-      internshipCount: report.internships.length,
-      strengths: report.strengths.join(" | "),
-      recommendations: report.recommendations.join(" | "),
-      ...Object.fromEntries(
-        Object.entries(documentLinks).map(([key, links]) => [key, links.join(" | ")])
-      ),
-    };
+    const exportRow = buildStudentExportRow(data, lists, report);
 
     const download = currentUser?.role === "admin"
       ? downloadAdminStudentRecordsCsv
@@ -324,24 +251,26 @@ export default function StudentInfoPopup({ uid, onClose }) {
 
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
-              <button
+              <Button
                 onClick={() => setShowReport(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-black uppercase tracking-widest transition-all active:scale-95 w-full sm:w-auto"
+                variant="secondary"
+                className="font-black"
               >
                 <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 View Profile Report
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleCsvDownload}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-widest transition-all active:scale-95 w-full sm:w-auto"
+                variant="success"
+                className="font-black"
               >
                 <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 Download CSV
-              </button>
+              </Button>
             </div>
 
             {/* Profile header */}
@@ -351,11 +280,10 @@ export default function StudentInfoPopup({ uid, onClose }) {
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">{data.name}</h2>
                   <p className="text-sm text-slate-500 truncate">{data.email}</p>
                 </div>
-                <span className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                  data.facultyVerification === "approved"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                    : "bg-amber-50 text-amber-700 border-amber-100"
-                }`}>
+                <span className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${data.facultyVerification === "approved"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                  : "bg-amber-50 text-amber-700 border-amber-100"
+                  }`}>
                   {data.facultyVerification === "approved" ? "Verified" : "Pending"}
                 </span>
               </div>
@@ -376,7 +304,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                     <Row key={r.id}>
                       <div className="flex flex-col gap-0.5 min-w-0">
                         <p className="text-sm font-black text-slate-900">Year {r.year} · Sem {r.semester}</p>
-                        {r.branch && <p className="text-xs text-slate-400">{r.branch}</p>}
+                        {r.branch && <p className="text-xs text-slate-500">{r.branch}</p>}
                         {r.subjects && <p className="text-xs text-slate-500 line-clamp-2">{r.subjects}</p>}
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -398,7 +326,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                       </div>
                       <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                         <Chip color="brand">{r.level}</Chip>
-                        {r.date && <span className="text-xs text-slate-400">{r.date}</span>}
+                        {r.date && <span className="text-xs text-slate-500">{r.date}</span>}
                         {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}
                       </div>
                     </Row>
@@ -416,7 +344,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                       </div>
                       <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                         <Chip color="slate">{r.type}</Chip>
-                        {r.date && <span className="text-xs text-slate-400">{r.date}</span>}
+                        {r.date && <span className="text-xs text-slate-500">{r.date}</span>}
                         {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}
                       </div>
                     </Row>
@@ -473,9 +401,9 @@ function Row({ children }) {
 
 function Chip({ color = "slate", children }) {
   const colors = {
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    brand:   "bg-brand-50 text-brand-700 border-brand-100",
-    slate:   "bg-slate-100 text-slate-600 border-slate-200",
+    emerald: "bg-emerald-700 text-white border-emerald-700",
+    brand: "bg-brand-700 text-white border-brand-700",
+    slate: "bg-slate-700 text-white border-slate-700",
   };
   return (
     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border uppercase ${colors[color] || colors.slate}`}>
@@ -485,5 +413,5 @@ function Chip({ color = "slate", children }) {
 }
 
 function Empty({ text }) {
-  return <p className="text-sm text-slate-400 italic py-2">{text}</p>;
+  return <p className="text-sm text-slate-500 italic py-2">{text}</p>;
 }

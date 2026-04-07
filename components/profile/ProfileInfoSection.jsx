@@ -40,17 +40,14 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
       <div className="flex flex-col sm:flex-row items-start justify-between gap-6 mb-8">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Personal Identity</h2>
-          <p className="text-sm text-slate-400 mt-1 font-medium italic">&ldquo;Manage your legal and professional identification.&rdquo;</p>
+          <p className="text-sm text-slate-500 mt-1 font-medium italic">&ldquo;Manage your legal and professional identification.&rdquo;</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {!isEditing && (
             <button
-               onClick={onViewCard}
-               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-xs font-black text-white hover:bg-brand-600 transition-all active:scale-95 shadow-xl shadow-slate-900/10 uppercase tracking-widest whitespace-nowrap"
+              onClick={onViewCard}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-xs font-black bg-brand-700 text-white hover:bg-brand-800 transition-all active:scale-95 shadow-xl shadow-brand-900/10 uppercase tracking-widest whitespace-nowrap"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-              </svg>
               View Identity Card
             </button>
           )}
@@ -78,15 +75,15 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
             { label: "Gender Identity", value: profile?.gender, capitalize: true },
             { label: "Date of Birth", value: profile?.dob },
           ].map((item) => (
-            <div key={item.label} className="space-y-1.5 p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50">
+            <div key={item.label} className="space-y-1.5 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-brand-200 transition-colors">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</p>
               <p className={`text-base font-bold text-slate-900 ${item.capitalize ? "capitalize" : ""}`}>
                 {item.value || "-"}
               </p>
             </div>
           ))}
-          
-          <div className="sm:col-span-2 space-y-1.5 p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50">
+
+          <div className="sm:col-span-2 space-y-1.5 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-brand-200 transition-colors">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Primary Address</p>
             <p className="text-base font-bold text-slate-900">{profile?.address || "-"}</p>
           </div>
@@ -95,7 +92,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
             { label: "LinkedIn", value: profile?.linkedin, icon: "li" },
             { label: "GitHub", value: profile?.github, icon: "gh" },
           ].map((item) => (
-            <div key={item.label} className="space-y-1.5 p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50">
+            <div key={item.label} className="space-y-1.5 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-brand-200 transition-colors">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</p>
               <p className="text-sm font-black text-brand-600 truncate">{item.value || "-"}</p>
             </div>
@@ -130,7 +127,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
               <select
                 value={form.gender}
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300"
+                className="w-full rounded-2xl border bg-white px-5 py-3.5 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300"
               >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
@@ -144,7 +141,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 rows={2}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300"
+                className="w-full rounded-2xl border bg-white px-5 py-3.5 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300"
               />
             </div>
             <div>
@@ -161,7 +158,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
                   type="checkbox"
                   checked={form.alumni}
                   onChange={(e) => setForm({ ...form, alumni: e.target.checked })}
-                  className="rounded-lg border-slate-300 text-brand-600 focus:ring-brand-500 h-5 w-5 transition-all"
+                  className="rounded-lg text-brand-600 focus:ring-brand-500 h-5 w-5 transition-all"
                 />
                 Mark as Alumni
               </label>
@@ -183,8 +180,8 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
               />
             </div>
           </div>
-          
-          <div className="flex gap-4 pt-8 border-t border-slate-100">
+
+          <div className="flex gap-4 pt-8 border-t">
             <Button
               type="submit"
               disabled={saving}
@@ -205,24 +202,27 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
       )}
 
       {!isEditing && (
-        <div className="mt-16 pt-8 border-t border-red-50/50">
-          <div className="flex items-center gap-2 mb-4">
-             <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-             <h3 className="text-sm font-black text-red-600 uppercase tracking-widest">Protocol: Data Deletion</h3>
+        <div className="mt-16 pt-8 border-t-4 border-red-700">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-3 w-3 rounded-full bg-red-600 animate-pulse" />
+            <h3 className="text-base font-black text-red-700 uppercase tracking-widest">Protocol: Global Purge</h3>
           </div>
-          <p className="text-xs text-slate-400 mb-6 leading-relaxed max-w-xl">Requesting data deletion will trigger an administrative workflow to permanently purge your records from the ledger. This operation is non-reversible.</p>
-          
+          <p className="text-xs text-slate-500 mb-6 leading-relaxed max-w-xl">Requesting data deletion will trigger an administrative workflow to permanently purge your records from the ledger. This operation is non-reversible.</p>
+
           {loadingDeletion ? (
             <div className="h-12 w-48 bg-slate-100 animate-pulse rounded-2xl" />
           ) : pendingDeletion ? (
             <div className="flex flex-col gap-4 items-start">
-               <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800 animate-fade-in shadow-sm">
-                  <svg className="h-5 w-5 text-amber-500 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-xs font-black uppercase tracking-widest">Awaiting Administrative Review</span>
-               </div>
-               <p className="text-[10px] font-bold text-slate-400 italic pl-2">Protocol: Your purge request is active. System access will be revoked upon clearance.</p>
+              <div className="flex items-center gap-4 px-8 py-5 rounded-2xl bg-amber-500 text-white shadow-xl shadow-amber-900/10">
+                <svg className="h-6 w-6 text-white animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex flex-col">
+                  <span className="text-xs font-black uppercase tracking-[0.2em] leading-tight">Review Active</span>
+                  <span className="text-[10px] font-bold opacity-80 mt-1 uppercase tracking-widest">Awaiting Administrative Clearance</span>
+                </div>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 italic pl-2">Protocol: Your purge request is active. System access will be revoked upon clearance.</p>
             </div>
           ) : (
             <Button
@@ -237,7 +237,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
             </Button>
           )}
 
-          <ConfirmDialog 
+          <ConfirmDialog
             open={showDeleteConfirm}
             title="Account Purge Protocol"
             message="You are about to submit a request for permanent account and record deletion. This action will initiate an administrative workflow to remove your professional profile from the ledger. Are you sure you wish to proceed?"

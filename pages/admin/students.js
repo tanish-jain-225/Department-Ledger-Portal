@@ -5,7 +5,7 @@ import { StudentInfoPopup } from "@/components";
 import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { getDb } from "@/lib/firebase";
-import { downloadAdminStudentsCsv, STUDENT_RECORD_FIELDS } from "@/lib/csv-download";
+import { downloadAdminStudentsCsv, STUDENT_RECORD_FIELDS, buildStudentExportRow } from "@/lib/csv-download";
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
@@ -57,6 +57,12 @@ export default function AdminStudentsDashboard() {
     load();
   }, [addToast]);
 
+  /**
+   * Builds a complete student registry with computed analytics and sub-collection counts.
+   * Rows are pre-assembled with plain email/phone (admin has full access, no masking needed).
+   * downloadAdminStudentsCsv passes maskSensitive:false, so flattenRowsForExport will
+   * preserve the original email/phone values as-is — this is intentional for admin exports.
+   */
   async function exportGlobalRegistry() {
     const db = getDb();
     if (!db) return;
@@ -77,83 +83,9 @@ export default function AdminStudentsDashboard() {
           listStudentDocuments(user.id, 200),
         ]);
 
-        const report = computeReport(user, { academic, activities, achievements, placements, uploadedDocuments });
-        const normalizeSection = (sectionName) => {
-          const section = String(sectionName || "other").toLowerCase();
-          const mapping = {
-            academic: "academic",
-            academics: "academic",
-            academicrecords: "academic",
-            achievement: "achievement",
-            achievements: "achievement",
-            activity: "activity",
-            activities: "activity",
-            placement: "placement",
-            placements: "placement",
-            project: "project",
-            projects: "project",
-            skill: "skill",
-            skills: "skill",
-          };
-          return mapping[section] || "other";
-        };
-
-        const documentLinks = uploadedDocuments.reduce((acc, item) => {
-          const section = normalizeSection(item.section);
-          const link = `${window.location.origin}/document/${encodeURIComponent(item.id)}`;
-          const key = `${section}_document`;
-          acc[key] = acc[key] || [];
-          acc[key].push(link);
-          return acc;
-        }, {});
-
-        rows.push({
-          name: user.name || "",
-          email: user.email || "",
-          phone: user.phone || "",
-          role: user.role || "",
-          year: user.year || "",
-          branch: user.branch || "",
-          alumni: user.alumni ? "yes" : "no",
-          gender: user.gender || "",
-          dob: user.dob || "",
-          address: user.address || "",
-          linkedin: user.linkedin || "",
-          github: user.github || "",
-          rollNumber: user.rollNumber || "",
-          facultyVerification: user.facultyVerification || "",
-          academicCount: academic.length,
-          achievementsCount: achievements.length,
-          activitiesCount: activities.length,
-          placementsCount: placements.length,
-          uploadedDocumentsCount: uploadedDocuments.length,
-          overallScore: report.overall,
-          readinessVerdict: report.verdict.label,
-          profileCompletenessPct: report.profilePct,
-          missingProfileFields: report.missingProfile.join(" | "),
-          avgGpa: report.avgGpa || "",
-          latestGpa: report.latestGpa || "",
-          highestGpa: report.highestGpa || "",
-          lowestGpa: report.lowestGpa || "",
-          gpaTrend: report.gpaTrend,
-          gpaRating: report.gpaRating,
-          achievementScore: report.achScore,
-          achievementRating: report.achRating,
-          hasNationalAchievement: report.hasNational ? "yes" : "no",
-          activityDiversity: report.actDiversity,
-          activityRating: report.actRating,
-          documentRating: report.documentRating,
-          placed: report.placed ? "yes" : "no",
-          placedCompany: report.placedAt?.company || "",
-          placedRole: report.placedAt?.role || "",
-          placedPackage: report.maxPackage ?? "",
-          internshipCount: report.internships.length,
-          strengths: report.strengths.join(" | "),
-          recommendations: report.recommendations.join(" | "),
-          ...Object.fromEntries(
-            Object.entries(documentLinks).map(([key, links]) => [key, links.join(" | ")])
-          ),
-        });
+        const lists = { academic, activities, achievements, placements, uploadedDocuments };
+        const report = computeReport(user, lists);
+        rows.push(buildStudentExportRow(user, lists, report));
       }
 
       downloadAdminStudentsCsv(rows, "global-student-registry.csv", { fields: STUDENT_RECORD_FIELDS });
@@ -172,20 +104,20 @@ export default function AdminStudentsDashboard() {
   async function decide(uid, action, reqDocId = null, assignedRole = null) {
     const db = getDb();
     if (!db || !uid) return;
-    
+
     try {
       if (action === "delete") {
         setDeleteTarget({ uid, reqDocId });
         return;
       }
-      
+
       if (action === "approve") {
         const roleToAssign = assignedRole || "student";
-        await updateDoc(doc(db, "users", uid), { 
+        await updateDoc(doc(db, "users", uid), {
           role: roleToAssign,
-          facultyVerification: roleToAssign === 'faculty' ? "approved" : "none" 
+          facultyVerification: roleToAssign === 'faculty' ? "approved" : "none"
         });
-        
+
         await logAudit({
           action: "user_role_assigned",
           actorUid: user.uid,
@@ -200,11 +132,11 @@ export default function AdminStudentsDashboard() {
         });
 
         addToast(`Clearance set to ${roleToAssign}`, "success");
-        
+
         if (roleToAssign !== 'student') {
-            setStudents(prev => prev.filter(s => s.id !== uid));
+          setStudents(prev => prev.filter(s => s.id !== uid));
         } else {
-            setStudents(prev => prev.map(s => s.id === uid ? { ...s, role: roleToAssign } : s));
+          setStudents(prev => prev.map(s => s.id === uid ? { ...s, role: roleToAssign } : s));
         }
       } else if (action === "reject_deletion") {
         if (reqDocId) {
@@ -215,12 +147,12 @@ export default function AdminStudentsDashboard() {
       }
 
       await syncAdminNotifications(user.uid);
-      
+
       // Cleanup any pending requests for this user specifically
       const qR = query(collection(db, "roleRequests"), where("uid", "==", uid), where("status", "==", "pending"));
       const qD = query(collection(db, "deletionRequests"), where("uid", "==", uid), where("status", "==", "pending"));
       const [sR, sD] = await Promise.all([getDocs(qR), getDocs(qD)]);
-      
+
       for (const d of sR.docs) {
         await updateDoc(d.ref, { status: "processed_manual" });
         await purgeNotifications(`role_${d.id}`);
@@ -234,8 +166,8 @@ export default function AdminStudentsDashboard() {
     }
   }
 
-  const filtered = students.filter(s => 
-    s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filtered = students.filter(s =>
+    s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -277,13 +209,13 @@ export default function AdminStudentsDashboard() {
         variant="danger"
       />
       {selectedStudentUid && <StudentInfoPopup uid={selectedStudentUid} onClose={() => setSelectedStudentUid(null)} />}
-      
+
       <div className="space-y-10 animate-slide-up">
         {/* Header */}
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Student Registry</h1>
-            <p className="text-base text-slate-400 mt-2 font-medium">Comprehensive registry of all scholars currently in the ledger.</p>
+            <p className="text-base text-slate-500 mt-2 font-medium">Comprehensive registry of all scholars currently in the ledger.</p>
           </div>
           <Button
             onClick={exportGlobalRegistry}
@@ -298,60 +230,60 @@ export default function AdminStudentsDashboard() {
 
         {/* Filter Island */}
         <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
-           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
-              <div className="relative flex-1 group">
-                <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all duration-300 transform group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
+            <div className="relative flex-1 group">
+              <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all duration-300 transform group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Identify scholars in the global registry..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-[2.5rem] border-none bg-slate-50/50 pl-16 pr-8 py-5 text-sm font-bold text-slate-950 focus:ring-0 outline-none placeholder:text-slate-400 transition-all hover:bg-slate-100/50"
+              />
+            </div>
+            <div className="hidden lg:block w-px h-10 bg-slate-100" />
+            <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-[140px]">
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-slate-500 tracking-[0.2em]">Registry</span>
+                <span className="text-[10px] font-black text-brand-600">
+                  {filtered.length} / {students.length} ACTIVE
+                </span>
+              </div>
+              <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
-                <input
-                  type="search"
-                  placeholder="Identify scholars in the global registry..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-8 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-300 transition-all"
-                />
               </div>
-              <div className="hidden lg:block w-px h-10 bg-slate-100" />
-              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-[140px]">
-                 <div className="flex flex-col items-end">
-                    <span className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em]">Registry</span>
-                    <span className="text-[10px] font-black text-brand-600">
-                       {filtered.length} / {students.length} ACTIVE
-                    </span>
-                 </div>
-                 <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                 </div>
-              </div>
-           </div>
+            </div>
+          </div>
         </div>
 
         {/* List */}
         {loading || busy ? (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-             {[1,2,3,4,5,6].map(i => (
-               <div key={i} className="premium-card p-8 animate-pulse">
-                 <div className="flex justify-between items-center mb-6">
-                    <Skeleton className="h-14 w-14 rounded-3xl" />
-                    <Skeleton className="h-6 w-20 rounded-xl" />
-                 </div>
-                 <Skeleton className="h-6 w-3/4 mb-2" />
-                 <Skeleton className="h-4 w-1/2 mb-8" />
-                 <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-50 mb-6">
-                    <div className="space-y-1">
-                      <Skeleton className="h-2 w-10" />
-                      <Skeleton className="h-4 w-16" />
-                    </div>
-                    <div className="space-y-1">
-                      <Skeleton className="h-2 w-10" />
-                      <Skeleton className="h-4 w-16" />
-                    </div>
-                 </div>
-                 <Skeleton className="h-10 w-full rounded-2xl" />
-               </div>
-             ))}
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="premium-card p-8 animate-pulse">
+                <div className="flex justify-between items-center mb-6">
+                  <Skeleton className="h-14 w-14 rounded-3xl" />
+                  <Skeleton className="h-6 w-20 rounded-xl" />
+                </div>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-8" />
+                <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-50 mb-6">
+                  <div className="space-y-1">
+                    <Skeleton className="h-2 w-10" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                  <div className="space-y-1">
+                    <Skeleton className="h-2 w-10" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
+                <Skeleton className="h-10 w-full rounded-2xl" />
+              </div>
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState title="Registry Empty" message="No active student records discovered." />
@@ -360,71 +292,70 @@ export default function AdminStudentsDashboard() {
             {filtered.map(s => (
               <div key={s.id} className="group premium-card p-8 transition-all hover:translate-y-[-8px] hover:shadow-2xl border border-slate-100 flex flex-col h-full">
                 <div className="mb-6 flex items-center justify-between">
-                   <div className="h-14 w-14 rounded-3xl bg-brand-50 flex items-center justify-center font-black text-brand-600 border border-brand-100 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-lg shadow-brand-500/10">
-                      {s.name?.charAt(0) || "U"}
-                   </div>
-                   <div className="flex flex-col items-end">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sector</span>
-                      <Badge variant="gray" className="mt-1">{s.department || "GEN"}</Badge>
-                      {s.pendingDeletion && (
-                        <Badge variant="danger" className="mt-2">Purge Request</Badge>
-                      )}
-                   </div>
+                  <div className="h-14 w-14 rounded-3xl bg-brand-700 flex items-center justify-center font-black text-white shadow-lg shadow-brand-900/10 transition-all">
+                    {s.name?.charAt(0) || "U"}
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sector</span>
+                    <Badge variant="gray" className="mt-1">{s.department || "GEN"}</Badge>
+                    {s.pendingDeletion && (
+                      <Badge variant="danger" className="mt-2">Purge Request</Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex-1 space-y-4">
                   <div>
                     <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none truncate">{s.name || "Anonymous"}</h3>
-                    <p className="text-xs font-medium text-slate-400 mt-1 truncate">{s.email}</p>
+                    <p className="text-xs font-medium text-slate-600 mt-1 truncate">{s.email}</p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-50">
+
+                  <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-100">
                     <div className="flex flex-col">
-                       <span className="text-[8px] font-black uppercase text-slate-300">Year</span>
-                       <span className="text-xs font-bold text-slate-900 mt-0.5">{s.year ? `${s.year} Year` : "N/A"}</span>
+                      <span className="text-xs font-medium text-slate-500">Year</span>
+                      <span className="text-sm font-semibold text-slate-900 mt-0.5">{s.year ? `${s.year} Year` : "N/A"}</span>
                     </div>
                     <div className="flex flex-col">
-                       <span className="text-[8px] font-black uppercase text-slate-300">Section</span>
-                       <span className="text-xs font-bold text-slate-900 mt-0.5">{s.section || "-"}</span>
+                      <span className="text-xs font-medium text-slate-500">Section</span>
+                      <span className="text-sm font-semibold text-slate-900 mt-0.5">{s.section || "-"}</span>
                     </div>
                   </div>
 
                   {/* Manual Oversight Control Bar */}
                   {s.id !== user?.uid && (
-                    <div className="bg-slate-50/50 rounded-2xl p-3 border border-slate-100 space-y-3">
-                      <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest block text-center">Manual Oversight Protocol</span>
+                    <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3 shadow-xl">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block text-center">Protocol Elevation</span>
                       <div className="flex flex-wrap items-center justify-center gap-2">
                         {s.pendingDeletion ? (
                           <>
                             <Button
                               onClick={() => decide(s.id, "delete", s.delDocId)}
-                              variant="secondary"
-                              className="!py-2 !px-5 text-[9px] font-black uppercase border border-rose-100 hover:bg-rose-500 hover:text-white transition-all"
+                              variant="danger"
+                              size="sm"
                             >
                               Accept Purge
                             </Button>
                             <Button
                               onClick={() => decide(s.id, "reject_deletion", s.delDocId)}
-                              variant="ghost"
-                              className="!py-2 !px-5 text-[9px] font-black uppercase text-rose-500 border border-rose-100 hover:bg-rose-50 transition-all"
+                              variant="secondary"
+                              size="sm"
                             >
-                              Dismiss Request
+                              Dismiss
                             </Button>
                           </>
                         ) : (
                           <>
-                            <RoleButton label="S" role="student" currentRole={s.role} onClick={() => askRoleChange(s.id, "student")} />
-                            <RoleButton label="F" role="faculty" currentRole={s.role} onClick={() => askRoleChange(s.id, "faculty")} />
-                            <RoleButton label="A" role="admin" currentRole={s.role} onClick={() => askRoleChange(s.id, "admin")} />
-                            <button 
+                            <RoleButton label="Student" role="student" currentRole={s.role} onClick={() => askRoleChange(s.id, "student")} />
+                            <RoleButton label="Faculty" role="faculty" currentRole={s.role} onClick={() => askRoleChange(s.id, "faculty")} />
+                            <RoleButton label="Admin" role="admin" currentRole={s.role} onClick={() => askRoleChange(s.id, "admin")} />
+                            <button
                               onClick={() => decide(s.id, "delete")}
-                              className="ml-1 p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm"
-                              title="Purge Legacy Data"
+                              className="p-1.5 rounded-lg bg-red-700 text-white hover:bg-red-800 transition-colors border border-red-700 shadow-md"
+                              title="Delete user"
                             >
-                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
-                              <span className="sr-only">Purge Legacy Data</span>
                             </button>
                           </>
                         )}
@@ -434,13 +365,14 @@ export default function AdminStudentsDashboard() {
                 </div>
 
                 <div className="mt-6 flex gap-3 pt-4">
-                   <Button
-                     onClick={() => setSelectedStudentUid(s.id)}
-                     variant="secondary"
-                     className="flex-1 text-[10px] font-black uppercase"
-                   >
-                     Inspect Profile
-                   </Button>
+                  <Button
+                    onClick={() => setSelectedStudentUid(s.id)}
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    View Profile
+                  </Button>
                 </div>
               </div>
             ))}

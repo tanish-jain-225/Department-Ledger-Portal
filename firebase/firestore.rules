@@ -43,13 +43,10 @@ service cloud.firestore {
     // Shared rules for: academicRecords, achievements, activities,
     //                   placements, projects, skills, aiReports
     //
-    // READ:   Any authenticated user.
-    //         Faculty/admin need to read all student records for dashboards.
-    //         The get()-based isStaff() check on collection queries causes
-    //         Firebase SDK payload errors, so we keep read open to all auth users.
-    //         Write operations are strictly owner-only or admin.
+    // READ:   Any authenticated user (faculty/admin need to read student records).
     // CREATE: Only the owner - studentUid must match the caller's uid.
     // UPDATE/DELETE: Owner or admin only.
+    //   Admin needs delete for the cascade purge flow in admin pages.
 
     match /academicRecords/{docId} {
       allow read:   if isAuth();
@@ -103,7 +100,8 @@ service cloud.firestore {
     match /uploadedDocuments/{docId} {
       allow read:   if isAuth() && (
         resource.data.studentUid == uid() ||
-        isAdmin()
+        isAdmin() ||
+        userRole() == 'faculty'
       );
       allow create: if isAuth() && request.resource.data.studentUid == uid();
       allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
@@ -141,7 +139,12 @@ service cloud.firestore {
 
     // ── notifications ─────────────────────────────────────────────────────
     // READ:   User can only read their own notifications.
-    // CREATE: Any authenticated user (notifyAdmins/notifyFaculty create for others).
+    //         NotificationCenter queries where userUid == uid().
+    //         syncAdminNotifications reads admin's own notifications.
+    // CREATE: Any authenticated user.
+    //         createNotification, notifyAdmins, notifyFaculty all create
+    //         notifications for other users - this requires create to be
+    //         open to any authenticated caller (not just the recipient).
     // UPDATE: User can update their own (markAllAsRead sets read=true).
     //         Admin can update any (purgeNotifications uses batch delete).
     // DELETE: User can delete their own (clearAllNotifications).
