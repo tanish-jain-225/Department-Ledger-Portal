@@ -23,6 +23,36 @@ service cloud.firestore {
       return isAuth() && getRole() == 'admin';
     }
 
+    function isAllowedAuditAction(action) {
+      return action == 'user_role_assigned' ||
+        action == 'user_deleted' ||
+        action == 'profile_updated' ||
+        action == 'deletionRequests_created' ||
+        action == 'deletionRequests_updated' ||
+        action == 'deletionRequests_deleted' ||
+        action == 'academicRecords_created' ||
+        action == 'academicRecords_updated' ||
+        action == 'academicRecords_deleted' ||
+        action == 'achievements_created' ||
+        action == 'achievements_updated' ||
+        action == 'achievements_deleted' ||
+        action == 'activities_created' ||
+        action == 'activities_updated' ||
+        action == 'activities_deleted' ||
+        action == 'placements_created' ||
+        action == 'placements_updated' ||
+        action == 'placements_deleted' ||
+        action == 'projects_created' ||
+        action == 'projects_updated' ||
+        action == 'projects_deleted' ||
+        action == 'skills_created' ||
+        action == 'skills_updated' ||
+        action == 'skills_deleted' ||
+        action == 'aiReports_created' ||
+        action == 'aiReports_updated' ||
+        action == 'aiReports_deleted';
+    }
+
     // ── users ─────────────────────────────────────────────────────────────
     // READ: Only the user themselves, or staff (faculty/admin).
     match /users/{userId} {
@@ -130,35 +160,7 @@ service cloud.firestore {
       allow read:   if isAdmin();
       allow create: if isAuth() && request.resource.data.actorUid == uid() && (
         // Admin actions are allowed for governance workflows
-        (isAdmin() && request.resource.data.action in [
-          'user_role_assigned',
-          'user_deleted',
-          'profile_updated',
-          'deletionRequests_created',
-          'deletionRequests_updated',
-          'deletionRequests_deleted',
-          'academicRecords_created',
-          'academicRecords_updated',
-          'academicRecords_deleted',
-          'achievements_created',
-          'achievements_updated',
-          'achievements_deleted',
-          'activities_created',
-          'activities_updated',
-          'activities_deleted',
-          'placements_created',
-          'placements_updated',
-          'placements_deleted',
-          'projects_created',
-          'projects_updated',
-          'projects_deleted',
-          'skills_created',
-          'skills_updated',
-          'skills_deleted',
-          'aiReports_created',
-          'aiReports_updated',
-          'aiReports_deleted'
-        ])) ||
+        (isAdmin() && isAllowedAuditAction(request.resource.data.action)) ||
         // Non-admin users can only write self-profile update audit entries
         (!isAdmin() &&
           request.resource.data.action == 'profile_updated' &&

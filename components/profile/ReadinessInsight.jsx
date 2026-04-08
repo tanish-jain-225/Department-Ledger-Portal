@@ -147,7 +147,7 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
       {/* Generate button */}
       <section className="premium-card p-12 text-center border-2 border-dashed border-brand-200 bg-brand-50/20 hover:bg-brand-50/40 group overflow-hidden relative">
         <div className="max-w-md mx-auto relative z-10">
-          <div className="mb-8 inline-flex h-24 w-24 items-center justify-center rounded-[2.5rem] bg-white text-brand-600 group-hover:rotate-[10deg] transition-all duration-500 shadow-2xl shadow-brand-500/10 border border-brand-100">
+          <div className="mb-8 inline-flex h-24 w-24 items-center justify-center rounded-[2.5rem] bg-white text-brand-600 group-hover:rotate-10 transition-all duration-500 shadow-2xl shadow-brand-500/10 border border-brand-100">
             <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.989-2.386l-.548-.547z" />
             </svg>
@@ -178,7 +178,7 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
               return (
                 <div key={h.id} className={`premium-card p-6 border-l-[6px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${accentColor}`}>
                   <div className="flex items-center gap-4 mb-4">
-                    <div className={`h-14 w-14 rounded-2xl flex flex-col items-center justify-center shadow-sm border border-slate-100 bg-white flex-shrink-0`}>
+                    <div className={`h-14 w-14 rounded-2xl flex flex-col items-center justify-center shadow-sm border border-slate-100 bg-white shrink-0`}>
                       <span className={`text-xl font-black leading-tight ${scoreColor(h.score)}`}>{h.score}</span>
                       <span className="text-[7px] uppercase font-black text-slate-400 tracking-widest">Score</span>
                     </div>
@@ -248,7 +248,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
             <p className="text-xs text-slate-500 mt-1 truncate">{profile?.name} · {report.createdAtString}</p>
           </div>
           {/* Score ring - always visible, no negative margin tricks */}
-          <div className="flex flex-col items-center flex-shrink-0 gap-1">
+          <div className="flex flex-col items-center shrink-0 gap-1">
             <div className="relative flex items-center justify-center">
               <svg width="64" height="64" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
                 <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="14" />
@@ -278,7 +278,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
             <ul className="flex flex-col gap-2">
               {report.strengths?.map((s, i) => (
                 <li key={i} className="flex gap-2 text-xs leading-relaxed font-medium">
-                  <span className="font-black text-emerald-300 flex-shrink-0 mt-px">✓</span>
+                  <span className="font-black text-emerald-300 shrink-0 mt-px">✓</span>
                   <span>{s}</span>
                 </li>
               ))}
@@ -289,7 +289,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
             <ul className="flex flex-col gap-2">
               {report.weaknesses?.map((w, i) => (
                 <li key={i} className="flex gap-2 text-xs leading-relaxed font-medium">
-                  <span className="font-black text-rose-300 flex-shrink-0 mt-px">!</span>
+                  <span className="font-black text-rose-300 shrink-0 mt-px">!</span>
                   <span>{w}</span>
                 </li>
               ))}
@@ -303,7 +303,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
           <ol className="flex flex-col gap-3">
             {report.recommendations?.map((r, i) => (
               <li key={i} className="flex gap-4 text-xs font-medium leading-relaxed">
-                <span className="flex-shrink-0 flex items-center justify-center bg-white text-brand-700 rounded font-black text-[10px] h-5 w-5 mt-px shadow-sm">{i + 1}</span>
+                <span className="shrink-0 flex items-center justify-center bg-white text-brand-700 rounded font-black text-[10px] h-5 w-5 mt-px shadow-sm">{i + 1}</span>
                 <span>{r}</span>
               </li>
             ))}
