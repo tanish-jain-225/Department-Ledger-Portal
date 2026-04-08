@@ -4,7 +4,22 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
 
+const ALLOWED_ORIGINS = new Set([
+  "https://department-ledger-portal.vercel.app",
+  "http://localhost:3000",
+]);
+const GEMINI_TIMEOUT_MS = 30_000;
+
 const VALID_SECTIONS = ["academic", "achievement", "activity", "placement", "project", "skill"];
+const VALID_MIME_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "text/plain",
+]);
 
 const SECTION_FIELDS = {
   academic: ["year", "semester", "gpa", "subjects", "branch", "rollNumber"],
@@ -16,6 +31,60 @@ const SECTION_FIELDS = {
 };
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+function isAllowedRequestOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  return ALLOWED_ORIGINS.has(origin);
+}
+
+function isPlainObject(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function isValidExistingRecord(record) {
+  if (!isPlainObject(record)) return false;
+  return Object.values(record).every((v) =>
+    v == null || typeof v === "string" || typeof v === "number" || typeof v === "boolean"
+  );
+}
+
+function sanitizeApiError(error) {
+  const raw = String(error?.message || "");
+  const status = Number(error?.status) || 500;
+
+  if (status === 429 || /429|quota/i.test(raw)) {
+    return { status: 429, message: "AI service quota is currently exceeded. Please retry shortly." };
+  }
+  if (status === 503 || /503|high demand|unavailable/i.test(raw)) {
+    return { status: 503, message: "AI service is temporarily unavailable. Please try again." };
+  }
+  if (/timeout/i.test(raw)) {
+    return { status: 504, message: "AI request timed out. Please try again." };
+  }
+
+  return { status: status >= 400 && status < 600 ? status : 500, message: "Smart Analysis failed." };
+}
+
+async function withTimeout(promise, timeoutMs) {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error("AI request timeout")), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function looksLikeBase64(value) {
+  if (typeof value !== "string" || !value.trim()) return false;
+  // Remove whitespace that some encoders may inject for wrapping.
+  const normalized = value.replace(/\s+/g, "");
+  return /^[A-Za-z0-9+/]*={0,2}$/.test(normalized);
+}
 
 export function buildPrompt(section, existingData = [], fileContext = "") {
   const fields = SECTION_FIELDS[section];
@@ -47,6 +116,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (!isAllowedRequestOrigin(req)) {
+    return res.status(403).json({ error: "Origin not allowed." });
+  }
+
   // ── Auth check ──────────────────────────────────────────────────────────────
   const uid = await verifyAuthToken(req, res);
   if (!uid) return;
@@ -64,6 +137,24 @@ export default async function handler(req, res) {
 
   if (!fileData || !fileMimeType) {
     return res.status(400).json({ error: "A file is required for Smart Analysis." });
+  }
+
+  if (!Array.isArray(existingData)) {
+    return res.status(400).json({ error: "existingData must be an array." });
+  }
+
+  if (!existingData.every(isValidExistingRecord)) {
+    return res.status(400).json({ error: "existingData contains invalid record objects." });
+  }
+
+  if (!VALID_MIME_TYPES.has(fileMimeType)) {
+    return res.status(400).json({
+      error: `Unsupported file type: ${fileMimeType}. Allowed: ${Array.from(VALID_MIME_TYPES).join(", ")}`,
+    });
+  }
+
+  if (!looksLikeBase64(fileData)) {
+    return res.status(400).json({ error: "fileData must be a valid base64 string." });
   }
 
   const estimatedBytes = (fileData.length * 3) / 4;
@@ -108,7 +199,7 @@ Extract values for these fields: ${fields.join(", ")}.
 Return ONLY a valid JSON object with exactly these keys: ${fields.join(", ")}.
 No markdown, no explanation, no preamble. Just the JSON object.`;
 
-    const result = await model.generateContent([
+    const result = await withTimeout(model.generateContent([
       prompt,
       {
         inlineData: {
@@ -116,7 +207,7 @@ No markdown, no explanation, no preamble. Just the JSON object.`;
           data: fileData,
         },
       },
-    ]);
+    ]), GEMINI_TIMEOUT_MS);
 
     const text = result.response.text();
     const data = parseAiJson(text);
@@ -127,17 +218,7 @@ No markdown, no explanation, no preamble. Just the JSON object.`;
 
     return res.status(200).json(data);
   } catch (error) {
-    const msg = error?.message || "Failed to generate suggestions";
-    const status = error?.status || 500;
-
-    // Propagate retryable status codes (429 Quota, 503 High Demand)
-    if (status === 429 || msg.includes("429")) {
-      return res.status(429).json({ error: "AI quota exceeded. Please try again later." });
-    }
-    if (status === 503 || msg.includes("503") || msg.includes("high demand")) {
-      return res.status(503).json({ error: "AI is currently experiencing high demand. Please try again." });
-    }
-
-    return res.status(status).json({ error: msg });
+    const { status, message } = sanitizeApiError(error);
+    return res.status(status).json({ error: message });
   }
 }

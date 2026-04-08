@@ -2,9 +2,7 @@ import { isRateLimited } from "@/lib/rate-limit";
 
 // Reset the global store before each test so tests are isolated
 beforeEach(() => {
-  if (globalThis.__rateLimitStore) {
-    globalThis.__rateLimitStore.clear();
-  }
+  globalThis.__ledger_rate_limit_store?.clear();
 });
 
 describe("isRateLimited", () => {
@@ -31,9 +29,12 @@ describe("isRateLimited", () => {
     expect(isRateLimited("key-d", 5, 1)).toBe(true);
 
     // Advance time past the 1ms window
-    const store = globalThis.__rateLimitStore;
+    const store = globalThis.__ledger_rate_limit_store;
     const entry = store.get("key-d");
-    store.set("key-d", { ...entry, start: Date.now() - 10 });
+    store.set("key-d", {
+      ...entry,
+      timestamps: entry.timestamps.map(() => Date.now() - 10),
+    });
 
     expect(isRateLimited("key-d", 5, 1)).toBe(false);
   });

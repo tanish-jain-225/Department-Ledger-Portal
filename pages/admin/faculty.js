@@ -22,12 +22,37 @@ export default function AdminFacultyDashboard() {
   const [selectedFacultyUid, setSelectedFacultyUid] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [roleChangeTarget, setRoleChangeTarget] = useState(null);
+  const [pendingDeletions, setPendingDeletions] = useState({ flags: {}, docIds: {} });
 
   // Debounce - 350ms after user stops typing
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
     return () => clearTimeout(t);
   }, [searchTerm]);
+
+  useEffect(() => {
+    async function loadPendingDeletions() {
+      try {
+        const db = getDb();
+        if (!db) return;
+        const delSnap = await getDocs(query(collection(db, "deletionRequests"), where("status", "==", "pending")));
+        const flags = {};
+        const docIds = {};
+        delSnap.forEach((d) => {
+          const data = d.data();
+          if (data.uid) {
+            flags[data.uid] = true;
+            docIds[data.uid] = d.id;
+          }
+        });
+        setPendingDeletions({ flags, docIds });
+      } catch (err) {
+        addToast(err?.message || "Failed to load pending deletion protocols", "error");
+      }
+    }
+
+    loadPendingDeletions();
+  }, [addToast]);
 
   // Server-side prefix search on name field (same pattern as faculty dashboard)
   useEffect(() => {
@@ -50,21 +75,11 @@ export default function AdminFacultyDashboard() {
         constraints.push(limit(PAGE_SIZE.ADMIN_DIRECTORY));
         const q = query(collection(db, "users"), ...constraints);
         const snap = await getDocs(q);
-        const delSnap = await getDocs(query(collection(db, "deletionRequests"), where("status", "==", "pending")));
-        const delMap = {};
-        const delDocIds = {};
-        delSnap.forEach((d) => {
-          const data = d.data();
-          if (data.uid) {
-            delMap[data.uid] = true;
-            delDocIds[data.uid] = d.id;
-          }
-        });
         setFaculty(snap.docs.map(d => ({
           ...d.data(),
           id: d.id,
-          pendingDeletion: delMap[d.id] || false,
-          delDocId: delDocIds[d.id] || null,
+          pendingDeletion: pendingDeletions.flags[d.id] || false,
+          delDocId: pendingDeletions.docIds[d.id] || null,
         })));
       } catch (err) {
         addToast(err?.message || "Failed to load faculty records", "error");
@@ -73,7 +88,7 @@ export default function AdminFacultyDashboard() {
       }
     }
     load();
-  }, [debouncedSearch, addToast]);
+  }, [debouncedSearch, addToast, pendingDeletions]);
 
   async function decide(uid, action, reqDocId = null, assignedRole = null) {
     const db = getDb();
@@ -93,6 +108,8 @@ export default function AdminFacultyDashboard() {
         await createNotification(uid, {
           title: "Access Updated",
           message: `Your clearance level has been updated to ${roleToAssign.toUpperCase()}`, type: "info"
+        }).catch(() => {
+          addToast("Role updated, but notification delivery failed.", "info");
         });
         addToast(`Clearance set to ${roleToAssign}`, "success");
         if (roleToAssign !== "faculty") setFaculty(prev => prev.filter(f => f.id !== uid));
@@ -101,6 +118,13 @@ export default function AdminFacultyDashboard() {
         if (reqDocId) {
           await updateDoc(doc(db, "deletionRequests", reqDocId), { status: "rejected" });
           await purgeNotifications(`del_${reqDocId}`);
+          setPendingDeletions((prev) => {
+            const flags = { ...prev.flags };
+            const docIds = { ...prev.docIds };
+            delete flags[uid];
+            delete docIds[uid];
+            return { flags, docIds };
+          });
           addToast("Purge request dismissed.", "info");
         }
       }
@@ -146,6 +170,13 @@ export default function AdminFacultyDashboard() {
               try {
                 await updateDoc(doc(getDb(), "deletionRequests", reqDocId), { status: "processed_manual" });
                 await purgeNotifications(`del_${reqDocId}`);
+                setPendingDeletions((prev) => {
+                  const flags = { ...prev.flags };
+                  const docIds = { ...prev.docIds };
+                  delete flags[uid];
+                  delete docIds[uid];
+                  return { flags, docIds };
+                });
               } catch {
                 // already removed or not found
               }
@@ -199,7 +230,7 @@ export default function AdminFacultyDashboard() {
                   className="w-full rounded-[2.5rem] border-none bg-slate-50/50 pl-16 pr-8 py-3.5 sm:py-5 text-sm font-bold text-slate-950 focus:ring-0 outline-none placeholder:text-slate-400 transition-all hover:bg-slate-100/50" />
               </div>
               <div className="hidden lg:block w-px h-10 bg-slate-100" />
-              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-end gap-3 min-w-[140px]">
+              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-end gap-3 min-w-35">
                 <div className="flex flex-col items-end">
                   <span className="text-xs text-slate-500 tracking-[0.2em]">Council</span>
                   <span className="text-[10px] font-black text-brand-600 uppercase">{faculty.length} STAFF</span>
@@ -229,7 +260,7 @@ export default function AdminFacultyDashboard() {
         ) : (
           <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
             {faculty.map(f => (
-              <div key={f.id} className="group premium-card p-responsive transition-all hover:translate-y-[-8px] hover:shadow-2xl border border-slate-100 flex flex-col h-full">
+              <div key={f.id} className="group premium-card p-responsive transition-all hover:-translate-y-2 hover:shadow-2xl border border-slate-100 flex flex-col h-full">
                 <div className="mb-6 flex items-center justify-between">
                   <div className="h-14 w-14 rounded-3xl bg-indigo-50 flex items-center justify-center font-black text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-lg shadow-indigo-500/10">
                     {f.name?.charAt(0) || "F"}

@@ -4,6 +4,52 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
 
+const ALLOWED_ORIGINS = new Set([
+  "https://department-ledger-portal.vercel.app",
+  "http://localhost:3000",
+]);
+const GEMINI_TIMEOUT_MS = 30_000;
+
+function isAllowedRequestOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  return ALLOWED_ORIGINS.has(origin);
+}
+
+function isPlainObject(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function sanitizeApiError(error) {
+  const raw = String(error?.message || "");
+  const status = Number(error?.status) || 500;
+
+  if (status === 429 || /429|quota/i.test(raw)) {
+    return { status: 429, message: "AI service quota is currently exceeded. Please retry shortly." };
+  }
+  if (status === 503 || /503|high demand|unavailable/i.test(raw)) {
+    return { status: 503, message: "AI service is temporarily unavailable. Please try again." };
+  }
+  if (/timeout/i.test(raw)) {
+    return { status: 504, message: "AI request timed out. Please try again." };
+  }
+
+  return { status: status >= 400 && status < 600 ? status : 500, message: "Readiness analysis failed." };
+}
+
+async function withTimeout(promise, timeoutMs) {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error("AI request timeout")), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ── Token Management ──────────────────────────────────────────────────────────
 
 /**
@@ -31,9 +77,62 @@ function validateAcademic(academic) {
   return null;
 }
 
+export function normalizeLabel(label, score) {
+  const raw = String(label || "").trim().toLowerCase();
+  if (raw === "ready") return "Ready";
+  if (raw === "developing") return "Developing";
+  if (raw === "needs attention" || raw === "needs_attention") return "Needs Attention";
+
+  if (score > 75) return "Ready";
+  if (score >= 50) return "Developing";
+  return "Needs Attention";
+}
+
+export function toStringArray(value, minItems) {
+  const arr = Array.isArray(value) ? value : [];
+  const cleaned = arr
+    .map((v) => String(v || "").trim())
+    .filter(Boolean)
+    .slice(0, 8);
+  if (cleaned.length >= minItems) return cleaned;
+  return null;
+}
+
+export function sanitizeReadinessReport(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+
+  const numericScore = Number(data.score);
+  if (!Number.isFinite(numericScore)) return null;
+  const score = Math.max(0, Math.min(100, Math.round(numericScore)));
+
+  const summary = String(data.summary || "").trim();
+  const careerRoadmap = String(data.careerRoadmap || "").trim();
+  const strengths = toStringArray(data.strengths, 1);
+  const weaknesses = toStringArray(data.weaknesses, 1);
+  const recommendations = toStringArray(data.recommendations, 1);
+
+  if (!summary || !careerRoadmap || !strengths || !weaknesses || !recommendations) {
+    return null;
+  }
+
+  return {
+    score,
+    label: normalizeLabel(data.label, score),
+    summary,
+    strengths,
+    weaknesses,
+    recommendations,
+    careerRoadmap,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  if (!isAllowedRequestOrigin(req)) {
+    return res.status(403).json({ error: "Origin not allowed." });
   }
 
   // ── Auth check ──────────────────────────────────────────────────────────────
@@ -54,7 +153,9 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "AI environment not configured." });
   }
 
-  if (!profile) return res.status(400).json({ error: "Profile required" });
+  if (!isPlainObject(profile)) {
+    return res.status(400).json({ error: "Profile required" });
+  }
 
   // ── Input validation ────────────────────────────────────────────────────────
   const gpaError = validateAcademic(academic);
@@ -116,7 +217,7 @@ export default async function handler(req, res) {
 
     const requiredResponseKeys = ["score", "label", "summary", "strengths", "weaknesses", "recommendations", "careerRoadmap"];
 
-    const result = await model.generateContent(prompt);
+    const result = await withTimeout(model.generateContent(prompt), GEMINI_TIMEOUT_MS);
     const text = result.response.text();
     const data = parseAiJson(text);
 
@@ -124,10 +225,14 @@ export default async function handler(req, res) {
       throw new Error("Invalid AI model response format.");
     }
 
-    res.status(200).json(data);
+    const normalized = sanitizeReadinessReport(data);
+    if (!normalized) {
+      throw new Error("AI model response failed validation.");
+    }
+
+    res.status(200).json(normalized);
   } catch (error) {
-    const msg = error?.message || "AI Analysis Fault";
-    const status = error?.status || 500;
-    return res.status(status).json({ error: msg });
+    const { status, message } = sanitizeApiError(error);
+    return res.status(status).json({ error: message });
   }
 }

@@ -5,7 +5,7 @@ import * as fc from "fast-check";
 import { isRateLimited } from "@/lib/rate-limit";
 
 beforeEach(() => {
-  if (globalThis.__rateLimitStore) globalThis.__rateLimitStore.clear();
+  globalThis.__ledger_rate_limit_store?.clear();
 });
 
 describe("isRateLimited - property-based", () => {
@@ -15,7 +15,7 @@ describe("isRateLimited - property-based", () => {
       fc.integer({ min: 1, max: 100 }),
       fc.integer({ min: 1000, max: 60000 }),
       (key, maxCount, windowMs) => {
-        if (globalThis.__rateLimitStore) globalThis.__rateLimitStore.clear();
+        globalThis.__ledger_rate_limit_store?.clear();
         return isRateLimited(key, maxCount, windowMs) === false;
       }
     ));
@@ -26,7 +26,7 @@ describe("isRateLimited - property-based", () => {
       fc.string({ minLength: 1, maxLength: 40 }),
       fc.integer({ min: 1, max: 20 }),
       (key, maxCount) => {
-        if (globalThis.__rateLimitStore) globalThis.__rateLimitStore.clear();
+        globalThis.__ledger_rate_limit_store?.clear();
         for (let i = 0; i < maxCount; i++) isRateLimited(key, maxCount, 60000);
         return isRateLimited(key, maxCount, 60000) === true;
       }
@@ -40,7 +40,7 @@ describe("isRateLimited - property-based", () => {
       fc.integer({ min: 1, max: 10 }),
       (keyA, keyB, maxCount) => {
         fc.pre(keyA !== keyB);
-        if (globalThis.__rateLimitStore) globalThis.__rateLimitStore.clear();
+        globalThis.__ledger_rate_limit_store?.clear();
         // Exhaust keyA
         for (let i = 0; i < maxCount; i++) isRateLimited(keyA, maxCount, 60000);
         isRateLimited(keyA, maxCount, 60000); // blocked
@@ -56,10 +56,10 @@ describe("isRateLimited - property-based", () => {
       fc.integer({ min: 0, max: 15 }),
       fc.integer({ min: 1, max: 10 }),
       (key, calls, maxCount) => {
-        if (globalThis.__rateLimitStore) globalThis.__rateLimitStore.clear();
+        globalThis.__ledger_rate_limit_store?.clear();
         for (let i = 0; i < calls; i++) isRateLimited(key, maxCount, 60000);
-        const entry = globalThis.__rateLimitStore?.get(key);
-        return !entry || entry.count >= 0;
+        const entry = globalThis.__ledger_rate_limit_store?.get(key);
+        return !entry || (Array.isArray(entry.timestamps) && entry.timestamps.length <= calls);
       }
     ));
   });

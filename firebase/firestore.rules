@@ -26,7 +26,15 @@ service cloud.firestore {
     // ── users ─────────────────────────────────────────────────────────────
     // READ: Only the user themselves, or staff (faculty/admin).
     match /users/{userId} {
-      allow read:   if isAuth();
+      // Privacy boundary:
+      // - users can read their own profile
+      // - admins can read any profile
+      // - staff can read student/faculty profiles for operational workflows
+      allow read:   if isAuth() && (
+        uid() == userId ||
+        isAdmin() ||
+        (isStaff() && (resource.data.role == 'student' || resource.data.role == 'faculty'))
+      );
       allow create: if isAuth() && uid() == userId;
       allow update: if isAuth() && (uid() == userId || isAdmin());
       allow delete: if isAdmin();
@@ -111,7 +119,8 @@ service cloud.firestore {
     // ── notifications ─────────────────────────────────────────────────────
     match /notifications/{docId} {
       allow read:   if isAuth() && resource.data.userUid == uid();
-      allow create: if isAuth() && request.resource.data.userUid == uid(); 
+      // Users may create their own notifications; admins may create for any recipient.
+      allow create: if isAuth() && (request.resource.data.userUid == uid() || isAdmin());
       allow update: if isAuth() && (resource.data.userUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.userUid == uid() || isAdmin());
     }
@@ -119,7 +128,42 @@ service cloud.firestore {
     // ── auditLogs ─────────────────────────────────────────────────────────
     match /auditLogs/{docId} {
       allow read:   if isAdmin();
-      allow create: if isAuth() && request.resource.data.actorUid == uid();
+      allow create: if isAuth() && request.resource.data.actorUid == uid() && (
+        // Admin actions are allowed for governance workflows
+        (isAdmin() && request.resource.data.action in [
+          'user_role_assigned',
+          'user_deleted',
+          'profile_updated',
+          'deletionRequests_created',
+          'deletionRequests_updated',
+          'deletionRequests_deleted',
+          'academicRecords_created',
+          'academicRecords_updated',
+          'academicRecords_deleted',
+          'achievements_created',
+          'achievements_updated',
+          'achievements_deleted',
+          'activities_created',
+          'activities_updated',
+          'activities_deleted',
+          'placements_created',
+          'placements_updated',
+          'placements_deleted',
+          'projects_created',
+          'projects_updated',
+          'projects_deleted',
+          'skills_created',
+          'skills_updated',
+          'skills_deleted',
+          'aiReports_created',
+          'aiReports_updated',
+          'aiReports_deleted'
+        ])) ||
+        // Non-admin users can only write self-profile update audit entries
+        (!isAdmin() &&
+          request.resource.data.action == 'profile_updated' &&
+          request.resource.data.targetUid == uid())
+      );
       allow update: if false;
       allow delete: if false;
     }

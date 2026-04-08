@@ -14,6 +14,8 @@ import { computeReport } from "@/lib/student-analytics";
 import { PAGE_SIZE } from "@/lib/constants";
 import { fetchExhaustiveStudentData } from "@/lib/student-data";
 
+const EXPORT_MAX_STUDENTS = 2000;
+
 export default function AdminStudentsDashboard() {
   const { user, loading } = useAuth();
   const { addToast } = useToast();
@@ -66,10 +68,14 @@ export default function AdminStudentsDashboard() {
     setExportProgress(0);
 
     try {
-      const q = query(collection(db, "users"), where("role", "==", "student"));
+      const q = query(collection(db, "users"), where("role", "==", "student"), limit(EXPORT_MAX_STUDENTS));
       const snap = await getDocs(q);
       const usersAll = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       const total = usersAll.length;
+
+      if (total === EXPORT_MAX_STUDENTS) {
+        addToast("Export capped at 2000 students for stability.", "info");
+      }
 
       const rawDataBatch = [];
       const batchSize = 10;
@@ -133,6 +139,8 @@ export default function AdminStudentsDashboard() {
           title: "Access Updated",
           message: `Your clearance level has been updated to ${roleToAssign.toUpperCase()}`,
           type: "info"
+        }).catch(() => {
+          addToast("Role updated, but notification delivery failed.", "info");
         });
 
         addToast(`Clearance set to ${roleToAssign}`, "success");
@@ -256,7 +264,7 @@ export default function AdminStudentsDashboard() {
                 />
               </div>
               <div className="hidden lg:block w-px h-10 bg-slate-100" />
-              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-[140px]">
+              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-35">
                 <div className="flex flex-col items-end">
                   <span className="text-xs text-slate-500 tracking-[0.2em]">Registry</span>
                   <span className="text-[10px] font-black text-brand-600 uppercase">
@@ -285,7 +293,7 @@ export default function AdminStudentsDashboard() {
         ) : (
           <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
             {filtered.map(s => (
-              <div key={s.id} className="group premium-card p-responsive transition-all hover:translate-y-[-8px] hover:shadow-2xl border border-slate-100 flex flex-col h-full">
+              <div key={s.id} className="group premium-card p-responsive transition-all hover:-translate-y-2 hover:shadow-2xl border border-slate-100 flex flex-col h-full">
                 <div className="mb-6 flex items-center justify-between">
                   <div className="h-14 w-14 rounded-3xl bg-brand-700 flex items-center justify-center font-black text-white shadow-lg shadow-brand-900/10">
                     {s.name?.charAt(0) || "U"}

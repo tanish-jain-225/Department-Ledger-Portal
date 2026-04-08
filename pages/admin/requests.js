@@ -141,6 +141,8 @@ export default function AdminRequestsPage() {
           message: `Administrative protocol has updated your access level to: ${roleToAssign.toUpperCase()}`,
           type: "success",
           link: "/profile"
+        }).catch(() => {
+          addToast("Role updated, but notification delivery failed.", "info");
         });
 
         // Notify all faculty when a new student is approved
@@ -153,7 +155,9 @@ export default function AdminRequestsPage() {
             type: "info",
             link: "/dashboard",
             relatedId: `student_${uid}`,
-          }).catch(() => { }); // non-blocking - don't fail the approval if this errors
+          }).catch(() => {
+            addToast("Student approved, but faculty broadcast failed.", "info");
+          }); // non-blocking - don't fail the approval if this errors
         }
 
         addToast(`Clearance set to: ${roleToAssign}`, "success");
@@ -298,7 +302,7 @@ export default function AdminRequestsPage() {
             <div className="hidden lg:block w-px h-10 bg-slate-100" />
 
             {/* Filter Module */}
-            <div className="relative min-w-[240px] group px-2">
+            <div className="relative min-w-60 group px-2">
               <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none transition-all group-hover:translate-x-1">
                 <div className="h-2 w-2 rounded-full bg-brand-500" />
                 <span className="text-[9px] font-black uppercase text-brand-600 tracking-tighter">Sector</span>
@@ -322,7 +326,7 @@ export default function AdminRequestsPage() {
             </div>
 
             {/* Status Indicator */}
-            <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-[140px]">
+            <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-35">
               <div className="flex flex-col items-end">
                 <span className="text-xs text-slate-500 tracking-[0.2em]">Stream</span>
                 <span className="text-[10px] font-black text-brand-600 transition-all">
@@ -387,7 +391,7 @@ export default function AdminRequestsPage() {
                     <div className="flex flex-wrap items-center gap-4 lg:justify-end">
                       {/* Unified Protocol Selector */}
                       {r.id !== user?.uid ? (
-                        <div className="flex flex-col gap-4 p-responsive rounded-[2rem] bg-slate-50 border border-slate-100 group-hover:bg-white group-hover:shadow-2xl group-hover:border-white transition-all duration-500">
+                        <div className="flex flex-col gap-4 p-responsive rounded-4xl bg-slate-50 border border-slate-100 group-hover:bg-white group-hover:shadow-2xl group-hover:border-white transition-all duration-500">
                           <div className="flex flex-wrap gap-2 items-center">
                             {r.pendingDeletion ? (
                               <>
@@ -425,7 +429,7 @@ export default function AdminRequestsPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="p-5 rounded-[2rem] bg-amber-50 border border-amber-100">
+                        <div className="p-5 rounded-4xl bg-amber-50 border border-amber-100">
                           <span className="text-[10px] font-black uppercase text-amber-600 tracking-widest flex items-center gap-2">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
