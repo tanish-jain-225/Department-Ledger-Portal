@@ -8,10 +8,11 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, loading } = useAuth();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [rollNumber, setRollNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState("");
@@ -26,7 +27,7 @@ export default function RegisterPage() {
     }
     setBusy(true);
     try {
-      await register({ email, password, name });
+      await register({ email, password, name, rollNumber });
       await router.push("/login?registered=1");
     } catch (error) {
       setErr(error?.message || "Internal registration fault.");
@@ -35,6 +36,7 @@ export default function RegisterPage() {
     }
   }
 
+
   return (
     <Layout title="Register" access={ACCESS.GUEST}>
       <Head>
@@ -42,8 +44,8 @@ export default function RegisterPage() {
         <meta name="description" content="Create your Department Ledger Portal account to access AI-powered academic records, placement tracking and career readiness reports." />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className="mx-auto max-w-lg pt-12 pb-24 px-6 animate-fade-in">
-        <div className="premium-card p-10 sm:p-14 relative overflow-hidden">
+      <div className="mx-auto max-w-lg pt-12 pb-24 px-responsive animate-fade-in">
+        <div className="premium-card p-responsive relative overflow-hidden">
           <div className="absolute top-0 left-0 p-8 opacity-[0.03] pointer-events-none">
             <svg className="h-48 w-48 rotate-180" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
@@ -56,14 +58,18 @@ export default function RegisterPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Create Account</h1>
-            <p className="mt-1 text-sm text-slate-500">Register for the department ledger.</p>
+            <h1 className="text-xl min-[360px]:text-2xl font-black text-slate-900 tracking-tighter uppercase">Protocol: Identity Join</h1>
+            <p className="mt-1 text-xs min-[360px]:text-sm text-slate-500 font-medium italic">&ldquo;Establish your professional identity in the ledger.&rdquo;</p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
               <Input required placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">University Roll Number</label>
+              <Input required placeholder="e.g. 210101010" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>

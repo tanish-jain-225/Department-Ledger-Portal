@@ -6,8 +6,9 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.2.2-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat&logo=vercel)](https://vercel.com/)
 [![Tests](https://img.shields.io/badge/Tests-44_passing-brightgreen?style=flat)](/__tests__)
+[![Responsive](https://img.shields.io/badge/Hardened-300px_Responsive-indigo?style=flat)](styles/globals.css)
 
-An AI-powered academic record management system for educational departments. Students manage their full academic profile, faculty oversee student progress and admins govern the entire system, all backed by Gemini AI, Firebase and a zero-trust security model.
+An AI-powered academic record management system for educational departments. Students manage their full academic profile, faculty oversee student progress and admins govern the entire system, all backed by Gemini AI, Firebase and a **Zero-Overflow 300px Responsive Architecture**.
 
 **Live Demo:** https://department-ledger-portal.vercel.app
 
@@ -45,6 +46,8 @@ The Department Ledger Portal solves "data stagnation" in academic institutions, 
 - AI-powered document parsing that extracts structured data from uploaded PDFs and images in ~10 seconds vs 20 minutes of manual entry
 - Career Pulse: an AI-generated placement readiness score (0–100) with SWOT analysis and career roadmap
 - A three-tier governance system (Student / Faculty / Admin) with strict role-based access
+- **Modular Governance Dashboard**: Mobile-optimized modals for "Security Audit Stream" and "Administrative Operations Hub" with real-time telemetry.
+- **Extreme 300px Hardening**: Guaranteed layout stability on viewports as narrow as 300px through a fluid typography and spacing system.
 - An immutable audit trail of every administrative action
 - Digital identity cards with PDF export for students and faculty
 
@@ -116,10 +119,11 @@ Route-level access is enforced in `Layout.jsx` using the `ACCESS` enum:
 
 ### Admin
 - All faculty capabilities
-- Governance Overview dashboard (live stats: users, pending requests, recent audit events)
-- Student Directory: view, search, change roles, delete users with cascade purge
-- Faculty Directory: same as student directory for faculty
-- Governance Requests: approve/reject role elevation and deletion requests (server-side search)
+- **Governance Overview** dashboard (live stats: users, pending requests, recent audit events) with mobile-responsive expanding modals.
+- **Administrative Operations Hub**: Focused management of students, faculty, and institutional oversight.
+- **Security Monitoring Protocol**: Focused, full-screen live audit telemetry for 300px devices.
+- **Student Directory**: view, search, change roles, delete users with cascade purge
+- **Governance Requests**: approve/reject role elevation and deletion requests (server-side search)
 - Audit Log: full immutable log of all admin actions, exportable as CSV
 - Real-time notifications for new registrations and deletion requests
 
@@ -348,24 +352,21 @@ For multi-instance persistent rate limiting, swap the store for [Upstash Redis](
 
 ---
 
-## UI System
+## UI System (Obsidian Premium)
 
-The design system is built on Tailwind CSS with custom tokens defined in `tailwind.config.js` and `styles/globals.css`.
+The design system is built on Tailwind CSS 4.2.2 with custom tokens defined in `tailwind.config.js` and `styles/globals.css`, focusing on an "Absolute Contrast" aesthetic.
+
+**Core Principles:**
+- **Obsidian Aesthetic**: Deep Indigo and Slate-900 color palettes with glassmorphism interactions.
+- **Extreme Responsiveness (300px)**: A "Zero-Overflow" architecture using fluid typography and spacing tokens.
+- **Modular Dashboard Architecture**: Multi-level modals used on mobile to maintain focus on dense information (Audit Stream, Admin Hub, Identity Card).
 
 **Custom classes:**
-- `.premium-card` - rounded-[2.5rem] card with subtle shadow and hover lift
-- `.glass` - frosted glass background
-- `.glass-island` - floating island nav style
-- `.btn-premium` - base button with active scale
-- `.animate-slide-up`, `.animate-fade-in`, `.animate-scale-up`, `.animate-float` - keyframe animations
-
-**Component variants (Button):** `primary`, `secondary`, `soft`, `danger`, `ghost`
-
-**Skeleton loaders:** `Skeleton`, `ProfileSkeleton`, `CardSkeleton`, `TableRowSkeleton`
-
-**Page transitions:** `PageTransition` in `_app.js` fades between routes using CSS class toggling.
-
-**Sidebar:** Collapsible (160px collapsed / 400px expanded), state persisted to `localStorage` under key `sidebar_collapsed`.
+- `.premium-card` - Rounded-[2.5rem] card with obsidian hover lift and ring effects.
+- `.p-responsive` - Fluid padding: `p-4` (300px) to `p-10` (Desktop).
+- `.h-responsive` - Fluid typography scaling from `text-2xl` to `text-5xl`.
+- `.glass` - Frosted glass background with dynamic blur.
+- `.animate-slide-up`, `.animate-fade-in`, `.animate-scale-up`, `.animate-float` - Keyframe-based premium motion.
 
 ---
 

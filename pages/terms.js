@@ -12,12 +12,12 @@ export default function TermsPage() {
   return (
     <Layout title="Terms of Use" access={ACCESS.PUBLIC}>
       <article className="mx-auto max-w-3xl py-12 space-y-10">
-        <div className="space-y-3">
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Terms of Use</h1>
-          <p className="text-slate-400 text-sm font-medium">Last updated: March 2026</p>
+        <div className="space-y-3 px-responsive">
+          <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Terms of Use</h1>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Last updated: March 2026</p>
         </div>
 
-        <div className="premium-card p-8 space-y-8">
+        <div className="premium-card p-responsive space-y-8">
           <Section title="1. Acceptance of Terms">
             <p>By accessing and using the Department Ledger Portal, you agree to be bound by these Terms of Use. If you do not agree, you must not use this portal.</p>
           </Section>

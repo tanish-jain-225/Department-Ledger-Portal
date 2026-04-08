@@ -132,33 +132,36 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
           {!showSidebar && (
             <header className={`no-print sticky top-0 z-50 transition-colors duration-200 ${scrolled ? "bg-white border-b border-slate-200 shadow-sm" : "bg-transparent"
               }`}>
-              <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
+              <div className="mx-auto max-w-7xl px-4 min-[400px]:px-6 h-16 flex items-center justify-between gap-4">
                 {/* Logo */}
-                <Link href={logoHref} className="flex items-center gap-2.5">
-                  <div className="bg-brand-700 rounded-lg p-1.5 flex-shrink-0">
+                <Link href={logoHref} className="flex items-center gap-2.5 px-0.5 min-w-0 group">
+                  <div className="bg-brand-700 rounded-xl p-1.5 flex-shrink-0 shadow-lg shadow-brand-700/20 group-hover:scale-110 transition-transform">
                     <Image src="/logo.png" alt="Logo" width={20} height={20} className="h-5 w-5" style={{ height: 'auto' }} priority />
                   </div>
-                  <span className="text-sm font-bold text-slate-900">Department Ledger Portal</span>
+                  <div className="flex flex-col leading-none transition-all duration-300">
+                    <p className="text-sm font-black text-slate-900 tracking-tight whitespace-nowrap">Department Ledger</p>
+                    <p className="hidden sm:block text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Academic Portal</p>
+                  </div>
                 </Link>
 
                 {/* Desktop nav */}
-                <nav className="hidden md:flex items-center gap-2">
+                <nav className="hidden md:flex items-center gap-2 bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
                   {!isLogged && !loading && (
                     <>
-                      <Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                      <Link href="/login" className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-colors">
                         Sign In
                       </Link>
-                      <Link href="/register" className="px-4 py-2 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">
+                      <Link href="/register" className="px-4 py-2 text-sm font-bold bg-white text-brand-700 shadow-sm border border-slate-200 rounded-lg hover:bg-brand-50 transition-all">
                         Get Started
                       </Link>
                     </>
                   )}
                   {isLogged && (
                     <>
-                      <Link href={logoHref} className="px-4 py-2 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">
+                      <Link href={logoHref} className="px-4 py-2 text-sm font-bold bg-brand-700 text-white rounded-lg hover:bg-brand-800 shadow-lg shadow-brand-700/20 transition-all">
                         Dashboard
                       </Link>
-                      <button onClick={logout} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                      <button onClick={logout} className="ml-1 px-4 py-2 text-sm font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                         Sign Out
                       </button>
                     </>
@@ -180,17 +183,17 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
 
               {/* Mobile dropdown */}
               {mobileMenuOpen && (
-                <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-2 animate-menu-down shadow-sm">
+                <div className="md:hidden glass border-t border-slate-200/50 px-6 py-8 space-y-4 animate-menu-down shadow-2xl overflow-y-auto max-h-[calc(100vh-64px)] sidebar-scroll">
                   {!isLogged && (
                     <>
-                      <Link href="/login" className="block w-full text-center py-2.5 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Sign In</Link>
-                      <Link href="/register" className="block w-full text-center py-2.5 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">Get Started</Link>
+                      <Link href="/login" className="block w-full text-center py-3 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Sign In</Link>
+                      <Link href="/register" className="block w-full text-center py-3 text-sm font-bold bg-brand-700 text-white rounded-xl shadow-lg shadow-brand-700/20 hover:bg-brand-800 transition-all">Get Started</Link>
                     </>
                   )}
                   {isLogged && (
                     <>
-                      <Link href={logoHref} className="block w-full text-center py-2.5 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors">Dashboard</Link>
-                      <button onClick={logout} className="block w-full text-center py-2.5 text-sm font-black text-white bg-slate-600 hover:bg-slate-700 rounded-lg transition-colors scale-95 active:scale-90">Sign Out</button>
+                      <Link href={logoHref} className="block w-full text-center py-3 text-sm font-bold bg-brand-700 text-white rounded-xl shadow-lg shadow-brand-700/20 hover:bg-brand-800 transition-all">Dashboard</Link>
+                      <button onClick={logout} className="block w-full text-center py-3 text-sm font-bold text-slate-500 bg-slate-100 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all">Sign Out</button>
                     </>
                   )}
                 </div>
@@ -224,23 +227,23 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
 
               {/* Mobile nav drawer */}
               {mobileMenuOpen && (
-                <div className="absolute top-14 left-0 right-0 bg-white border-b border-slate-200 shadow-md z-50 px-4 py-4 animate-menu-down">
-                  <nav className="space-y-0.5 mb-4">
+                <div className="absolute top-14 left-0 right-0 glass shadow-2xl z-50 px-6 py-8 animate-menu-down border-b border-slate-200/50 rounded-b-[2.5rem] overflow-y-auto max-h-[calc(100vh-56px)] sidebar-scroll">
+                  <nav className="space-y-1 mb-6">
                     <NavContent role={role} activePath={activePath} router={router} />
                   </nav>
-                  <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="h-8 w-8 rounded-lg bg-brand-700 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                  <div className="border-t border-slate-200/50 pt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-xl bg-brand-700 flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-lg shadow-brand-700/20">
                         {profile?.name?.charAt(0)?.toUpperCase() || "U"}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{profile?.name || "User"}</p>
-                        <p className="text-xs text-slate-500 capitalize">{role}</p>
+                        <p className="text-sm font-bold text-slate-900 truncate tracking-tight">{profile?.name || "User"}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{role}</p>
                       </div>
                     </div>
                     <button
                       onClick={logout}
-                      className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+                      className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
                     >
                       Sign Out
                     </button>
@@ -251,7 +254,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
           )}
 
           {/* Page content */}
-          <main id="main-content" className="flex-1 px-6 py-8 mx-auto w-full max-w-7xl">
+          <main id="main-content" className="flex-1 px-4 min-[400px]:px-6 py-8 mx-auto w-full max-w-7xl">
             {allowed ? children : (
               <div className="flex h-[60vh] items-center justify-center">
                 <div className="text-center max-w-sm">

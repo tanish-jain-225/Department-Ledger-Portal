@@ -111,13 +111,13 @@ export default function ProfilePage() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t.id
+                className={`flex items-center justify-center gap-2 px-3 min-[380px]:px-5 py-3 text-sm font-medium border-b-2 transition-colors flex-1 min-w-0 ${tab === t.id
                     ? "border-brand-600 text-brand-600"
                     : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
                   }`}
               >
                 {t.icon}
-                <span className="hidden sm:inline">{t.label}</span>
+                <span className="hidden min-[400px]:inline truncate">{t.label}</span>
               </button>
             ))}
           </nav>

@@ -258,8 +258,8 @@ export default function AdminRequestsPage() {
         {/* Header */}
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Requests</h1>
-            <p className="text-base text-slate-500 mt-2 font-medium">Coordinate clearance, policy overrides and data lifecycle protocols.</p>
+            <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Requests</h1>
+            <p className="text-sm min-[360px]:text-base text-slate-500 mt-2 font-medium">Coordinate clearance, policy overrides and data lifecycle protocols.</p>
           </div>
           <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-sm p-1 px-4 rounded-2xl">
             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Global Activity</span>
@@ -270,7 +270,15 @@ export default function AdminRequestsPage() {
         </div>
 
         {/* Search & Filter Island */}
-        <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
+        <div className="premium-card p-responsive mb-12 animate-slide-up no-print">
+          <div className="flex flex-col gap-4 min-[360px]:gap-6 mb-8">
+            <div>
+              <h2 className="text-2xl min-[360px]:text-3xl font-black text-slate-900 tracking-tighter uppercase">Clearance Filters</h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium italic">&ldquo;Query pending protocols and role elevations.&rdquo;</p>
+            </div>
+          </div>
+
+          <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
 
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
             {/* Search Core */}
@@ -328,6 +336,7 @@ export default function AdminRequestsPage() {
               </div>
             </div>
           </div>
+          </div>
         </div>
 
         {/* List */}
@@ -345,7 +354,7 @@ export default function AdminRequestsPage() {
                 <div
                   key={r.id}
                   style={isUnassigned ? { boxShadow: '0 10px 40px -18px rgba(245, 158, 11, 0.45)' } : undefined}
-                  className={`group premium-card p-8 border transition-all ${isUnassigned ? 'border-amber-400 bg-amber-50/50 hover:bg-amber-50/80' : r.pendingRoleReq || r.pendingDeletion ? 'border-brand-200 bg-brand-50/5' : 'border-slate-100 hover:bg-slate-50/20'}`}
+                  className={`group premium-card p-responsive border transition-all ${isUnassigned ? 'border-amber-400 bg-amber-50/50 hover:bg-amber-50/80' : r.pendingRoleReq || r.pendingDeletion ? 'border-brand-200 bg-brand-50/5' : 'border-slate-100 hover:bg-slate-50/20'}`}
                 >
 
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
@@ -378,7 +387,7 @@ export default function AdminRequestsPage() {
                     <div className="flex flex-wrap items-center gap-4 lg:justify-end">
                       {/* Unified Protocol Selector */}
                       {r.id !== user?.uid ? (
-                        <div className="flex flex-col gap-4 p-5 rounded-[2rem] bg-slate-50 border border-slate-100 group-hover:bg-white group-hover:shadow-2xl group-hover:border-white transition-all duration-500">
+                        <div className="flex flex-col gap-4 p-responsive rounded-[2rem] bg-slate-50 border border-slate-100 group-hover:bg-white group-hover:shadow-2xl group-hover:border-white transition-all duration-500">
                           <div className="flex flex-wrap gap-2 items-center">
                             {r.pendingDeletion ? (
                               <>

@@ -36,7 +36,7 @@ export default function Modal({
     <div
       className={clsx(
         "fixed inset-0 z-[100000] flex items-center justify-center transition-all duration-500",
-        fullScreen ? "p-0" : "p-4 sm:p-8"
+        fullScreen ? "p-0" : "p-2 min-[340px]:p-4 sm:p-8"
       )}
       role="dialog"
       aria-modal="true"
@@ -60,7 +60,7 @@ export default function Modal({
         {/* Sticky Header */}
         <div className={clsx(
           "sticky top-0 z-20 flex flex-col gap-3 border-b border-slate-200 bg-white",
-          fullScreen ? "px-8 py-6" : "px-6 py-4"
+          fullScreen ? "px-5 py-6 sm:px-8" : "px-responsive py-4"
         )}>
           <div className="flex w-full items-center justify-between gap-3 min-w-0">
             <h2 className="min-w-0 text-lg font-bold text-slate-900 tracking-tight truncate">
@@ -80,7 +80,7 @@ export default function Modal({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto p-responsive sidebar-scroll">
           {children}
         </div>
       </div>

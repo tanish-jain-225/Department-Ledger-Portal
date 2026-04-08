@@ -57,8 +57,8 @@ export default function LoginPage() {
         <meta name="description" content="Sign in to your Department Ledger Portal account to access your academic records, AI reports and departmental dashboard." />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className="mx-auto max-w-lg pt-12 pb-24 px-6 animate-fade-in">
-        <div className="premium-card p-10 sm:p-14 relative overflow-hidden">
+      <div className="mx-auto max-w-lg pt-12 pb-24 px-responsive animate-fade-in">
+        <div className="premium-card p-responsive relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
             <svg className="h-48 w-48" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
@@ -71,8 +71,8 @@ export default function LoginPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
-            <p className="mt-1 text-sm text-slate-500">Sign in to your account.</p>
+            <h1 className="text-xl min-[360px]:text-2xl font-black text-slate-900 tracking-tighter uppercase">Welcome Back</h1>
+            <p className="mt-1 text-xs min-[360px]:text-sm text-slate-500 font-medium italic">&ldquo;Verify your identity and enter the ledger.&rdquo;</p>
           </div>
 
           {resetSent && (

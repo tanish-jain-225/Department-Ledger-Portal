@@ -125,8 +125,8 @@ export default function AdminAuditPage() {
         {/* Header */}
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Audit</h1>
-            <p className="text-base text-slate-500 mt-2 font-medium">Real-time oversight of administrative and professional operations.</p>
+            <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Audit</h1>
+            <p className="text-sm min-[360px]:text-base text-slate-500 mt-2 font-medium">Real-time oversight of administrative and professional operations.</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-100">
@@ -195,7 +195,7 @@ export default function AdminAuditPage() {
               const details = r.details && typeof r.details === "object" ? r.details : {};
 
               return (
-                <div key={r.id} className="group premium-card p-6 border border-slate-200 bg-white transition-all shadow-sm hover:shadow-md hover:border-brand-200">
+                <div key={r.id} className="group premium-card p-responsive border border-slate-200 bg-white transition-all shadow-sm hover:shadow-md hover:border-brand-200">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-5">
                       <div className={`mt-1 h-10 w-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-slate-900/5 ${style.color} text-white`}>
@@ -212,12 +212,12 @@ export default function AdminAuditPage() {
                         </div>
                         <p className="mt-4 text-sm font-black text-slate-900 tracking-tight leading-snug">{r.description || "No description provided."}</p>
 
-                        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                          <DataPoint label="Actor" value={r.actorUid || "SYSTEM"} />
-                          <DataPoint label="Target" value={r.targetUid || "N/A"} />
-                          <DataPoint label="Sector" value={sector} />
-                          <DataPoint label="Timestamp" value={date ? date.toLocaleString() : "Unknown"} />
-                        </div>
+                        <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                           <DataPoint label="Actor" value={r.actorUid || "SYSTEM"} />
+                           <DataPoint label="Target" value={r.targetUid || "N/A"} />
+                           <DataPoint label="Sector" value={sector} />
+                           <DataPoint label="Timestamp" value={date ? date.toLocaleString() : "Unknown"} />
+                         </div>
                       </div>
                     </div>
 

@@ -30,56 +30,47 @@ export default function Sidebar({ collapsed = false, onCollapse }) {
         ${collapsed ? "w-16" : "w-64"}`}
     >
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 flex-shrink-0">
-        {!collapsed ? (
-          <>
-            <Link href="/" className="flex items-center gap-2.5 min-w-0">
-              <div className="flex-shrink-0 bg-brand-700 rounded-lg p-1.5">
-                <Image src="/logo.png" alt="Logo" width={20} height={20} className="h-5 w-5" style={{ height: 'auto' }} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-900 leading-none truncate">Department Ledger Portal</p>
-              </div>
-            </Link>
+      <div className="relative flex items-center h-16 border-b border-slate-200 flex-shrink-0 overflow-hidden">
+        <Link href="/" className="flex items-center gap-2.5 px-4 min-w-0 flex-1 group">
+          <div className="flex-shrink-0 bg-brand-700 rounded-xl p-1.5 shadow-lg shadow-brand-700/20 group-hover:scale-110 transition-transform">
+            <Image src="/logo.png" alt="Logo" width={20} height={20} className="h-5 w-5" style={{ height: 'auto' }} />
+          </div>
+          <div className={`transition-all duration-300 overflow-hidden ${collapsed ? "w-0 opacity-0 invisible" : "w-48 opacity-100 visible"}`}>
+            <p className="text-sm font-black text-slate-900 leading-tight whitespace-nowrap">Department Ledger</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Academic Portal</p>
+          </div>
+        </Link>
 
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <NotificationBoundary><NotificationCenter /></NotificationBoundary>
-              <button
-                onClick={() => onCollapse?.(!collapsed)}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                title="Collapse sidebar"
-                aria-label="Collapse sidebar"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mx-auto">
-              <div className="bg-brand-700 rounded-lg p-1.5">
-                <Image src="/logo.png" alt="Logo" width={20} height={20} className="h-5 w-5" style={{ height: 'auto' }} />
-              </div>
-            </div>
-            {/* Expand button — floats on the right edge */}
-            <button
-              onClick={() => onCollapse?.(!collapsed)}
-              className="absolute -right-3 top-[18px] h-6 w-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 shadow-sm transition-colors"
-              title="Expand sidebar"
-              aria-label="Expand sidebar"
-            >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            </button>
-          </>
+        {/* Action icons — only visible when expanded */}
+        <div className={`flex items-center gap-1 px-2 transition-opacity duration-300 ${collapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"}`}>
+          <NotificationBoundary><NotificationCenter /></NotificationBoundary>
+          <button
+            onClick={() => onCollapse?.(!collapsed)}
+            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            title="Collapse sidebar"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Expand button — visible ONLY when collapsed */}
+        {collapsed && (
+          <button
+            onClick={() => onCollapse?.(!collapsed)}
+            className="absolute -right-3 top-[18px] h-6 w-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 shadow-xl z-50 transition-all animate-fade-in"
+            title="Expand sidebar"
+          >
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            </svg>
+          </button>
         )}
       </div>
 
       {/* ── Navigation ─────────────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 sidebar-scroll">
         {!collapsed ? (
           <NavContent role={role} activePath={activePath} router={router} />
         ) : (

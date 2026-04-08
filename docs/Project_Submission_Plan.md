@@ -26,13 +26,13 @@ Supports: pdf file upto 5 MB.
 
 ## Provide a brief overview of your solution and how it solves the problem.
 
-Department Ledger Portal is an AI-powered academic records platform for colleges and departments. It replaces fragmented spreadsheets and manual tracking with one secure ledger where students manage their profile, academic records, achievements, activities, placements, projects, skills and AI-generated career insights.
+Department Ledger Portal is an AI-powered academic records platform for colleges and departments, built with the **"Obsidian Premium"** design system. It replaces fragmented spreadsheets and manual tracking with one secure ledger where students manage their profile, academic records, achievements, activities, placements, projects, skills and AI-generated career insights.
 
-The solution solves the problem of data stagnation and slow record handling by letting users upload supporting documents and automatically extract structured data with Gemini AI. Faculty can search and review student records quickly, while admins maintain full governance with role assignment, request approval, audit logging and secure deletion workflows.
+The solution solves the problem of data stagnation and slow record handling by letting users upload supporting documents and automatically extract structured data with Gemini AI. It uniquely offers an **Extreme 300px Responsive Architecture**, ensuring full administrative oversight even on ultra-narrow mobile devices through a modular modal system.
 
-Tech stack: Next.js 16.2.2 (React 19.2.4), Tailwind CSS 4.2.2, Firebase Authentication + Firestore, Google Generative AI SDK (Gemini 2.5 Flash), and deployed on Vercel.
+Tech stack: Next.js 16.2.2 (React 19.2.4), Tailwind CSS 4.2.2 (with fluid utility tokens), Firebase Authentication + Firestore, Google Generative AI SDK (Gemini 2.5 Flash), and deployed on Vercel.
 
-Google tools use-case: Gemini is used for Smart Analysis document-to-data extraction and Career Pulse readiness scoring. Firebase is used for secure user authentication, role-based access workflows and real-time academic ledger storage.
+Google tools use-case: Gemini is used for Smart Analysis document-to-data extraction and Career Pulse readiness scoring. Firebase handles secure authentication, role-based workflows, and real-time academic ledger storage.
 
 ## Share the link to your live prototype demonstrating the core functionality.
 
@@ -112,6 +112,8 @@ Department Ledger Portal is built for a three-role academic workflow:
 - New registrations are created with a pending role and cannot access the app until an admin assigns a valid role.
 - Route access is enforced centrally through the layout component and role checks.
 - AI requests are protected by Firebase ID token verification and rate limits.
+- **Obsidian Design System**: Unified glassmorphism and absolute contrast styling.
+- **Zero-Width Contention**: 300px responsiveness hardening across all modals and dashboards.
 - Firestore audit logs are append-only and used for all major admin actions.
 - Exported CSVs can mask sensitive fields for safer sharing.
 - Profile data is loaded lazily so the main profile page stays responsive.

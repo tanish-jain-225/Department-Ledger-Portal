@@ -221,13 +221,13 @@ roleRequests, deletionRequests, auditLogs, notifications
 
 # 7. 🏆 Winning Differentiators
 
+* **Advanced Responsive Engineering** - "Zero-Overflow" architecture supporting viewports as narrow as 300px.
+* **Obsidian Premium Design** - Professional absolute-contrast glassmorphism system.
 * **AI reads real documents** - not just text prompts, actual file parsing (PDF/image)
 * **Context-aware AI** - Gemini sees existing records, suggests only new non-duplicate entries
 * **Two distinct AI features** - auto-fill + readiness analysis
 * **Full institutional system** - not just a student app, complete role-based governance
 * **Immutable audit trail** - every record change logged, append-only
-* **Privacy-first** - documents processed in-memory, never stored
-* **Production-grade security** - Firestore row-level rules, not just auth checks
 
 ---
 
@@ -237,9 +237,9 @@ roleRequests, deletionRequests, auditLogs, notifications
 
 1. **Problem** - Manual record keeping, no AI insights, no oversight
 2. **Solution** - Department Ledger Portal
-3. **Why it matters** - Every college has this problem
-4. **Features** - Ledger sections, Smart Analysis, Readiness Report
-5. **Architecture** - Next.js → Firebase → Gemini
+3. **Why it matters** - Scalable academic governance with "Obsidian Premium" reliability.
+4. **Features** - Master Ledger AI, Smart Analysis, Career Pulse Readiness.
+5. **Architecture** - **Modular & Hardened**: Next.js → Firebase → Gemini (Tested to 300px).
 6. **Tech Stack** - Next.js, Tailwind, Firebase, Gemini 2.5 Flash
 7. **Demo screenshots** - Auto-fill in action, readiness report
 8. **AI (Gemini)** - Show actual input → output

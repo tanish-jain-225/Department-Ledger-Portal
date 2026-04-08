@@ -36,11 +36,11 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
   }
 
   return (
-    <section className="premium-card p-8 animate-slide-up transition-all duration-300">
+    <section className="premium-card p-responsive animate-slide-up transition-all duration-300">
       <div className="flex flex-col sm:flex-row items-start justify-between gap-6 mb-8">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Personal Identity</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium italic">&ldquo;Manage your legal and professional identification.&rdquo;</p>
+          <h2 className="text-2xl min-[360px]:text-3xl font-black text-slate-900 tracking-tighter uppercase">Personal Identity</h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium italic">&ldquo;Manage your legal and professional identification.&rdquo;</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {!isEditing && (
@@ -67,7 +67,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
       </div>
 
       {!isEditing ? (
-        <div className="grid gap-8 sm:grid-cols-2">
+        <div className="grid gap-4 min-[360px]:gap-6 sm:gap-8 sm:grid-cols-2">
           {[
             { label: "Full Name", value: profile?.name },
             { label: "Email Address", value: profile?.email },

@@ -35,10 +35,8 @@ graph TD
 ```
 
 ### Key Infrastructure:
-- **Frontend**: Next.js 16 (Pages Router) + Tailwind CSS + Framer Motion.
-- **Backend**: Next.js Serverless API Routes.
-- **Database**: Firebase Firestore (NoSQL) with composite indexing.
-- **Intelligence Core**: Google Gemini API (`gemini-2.5-flash`).
+- **UI Architecture**: Obsidian Premium Design System (Tailwind 4.2.2 + Fluid Utility Tokens).
+- **Hardened Sustainability**: Optimized for 100% layout stability down to 300px viewports through modular modal architecture.
 - **Security**: Zero-Trust RBAC handled via custom Auth Context and Firestore Rules.
 
 ---
@@ -114,7 +112,7 @@ Why this project wins:
 1.  **Direct AI Impact**: We used Gemini for a high-value institutional problem, not just a gimmick.
 2.  **Multimodal Mastery**: The project handles images, PDFs and text-demonstrating deep AI integration.
 3.  **Governance Focus**: Judges love features like Audit Logs and RBAC as they show "real-world" readiness.
-4.  **Premium UX**: Used Glassmorphism, Shimmer loaders and responsive layouts to maximize the "WOW" factor.
+4.  **Premium UX**: Used "Obsidian Premium" glassmorphism and **Extreme 300px Hardening** to maximize the "WOW" factor and accessible reach.
 
 ---
 

@@ -28,7 +28,7 @@ The **Department Ledger Portal** is an AI-first "Master Ledger" system. It lever
 ## Slide 4: Opportunities
 - **a. How different is it?**: While traditional portals are simple CRUD systems, ours is **Intelligent & Proactive**. It doesn't just store data; it reads and understands documents like a human assistant, deduplicating records and generating SWOT analysis on-the-fly.
 - **b. Solving the Problem**: We eliminate ~90% of manual entry effort. A 10-second AI parse replaces a 20-minute manual data entry session, ensuring 100% data fidelity and real-time oversight for faculty.
-- **c. USP of the Solution**: **Zero-Trust AI Document-to-Ledger Protocol**. Using Gemini's multimodal capabilities, we provide 100% accurate field extraction while maintaining an immutable audit trail for every single record change-unmatched in institutional systems.
+- **c. USP of the Solution**: **Zero-Overflow Responsive Resilience**. While traditional portals break at 350px, our "Obsidian Premium" architecture guarantees 100% stable governance down to 300px viewports through a modular modal-based oversight system—unmatched in institutional systems.
 
 ---
 
@@ -54,8 +54,9 @@ The **Department Ledger Portal** is an AI-first "Master Ledger" system. It lever
 ---
 
 ## Slide 8: Architecture Diagram
-- **Frontend**: Next.js 16 (Pages Router), React 19, Tailwind CSS.
+- **Frontend**: Next.js 16 (Pages Router), React 19, Tailwind CSS 4.2.2.
 - **Intelligence**: Google Gemini API (`gemini-2.5-flash`) for multimodality.
+- **UI Architecture**: Obsidian Premium Design System (Hardened for 300px).
 - **Backend/Ops**: Next.js APIRoutes + Firestore Security Rules.
 - **Data**: Firebase Authentication & Firestore (NoSQL Scalable Database).
 
@@ -76,10 +77,10 @@ The **Department Ledger Portal** is an AI-first "Master Ledger" system. It lever
 ---
 
 ## Slide 11: Snapshots of the MVP
-1.  **Universal Dashboard**: Showing the high-density metrics for the student.
-2.  **Smart Analysis In-Action**: Showing Gemini parsing a certificate in 2 seconds.
-3.  **Career Pulse Verdict**: Showing the SWOT analysis and career roadmap projection.
-4.  **Admin Governance**: Highlighting the Audit Log and User Role management.
+1.  **Universal Dashboard**: Showing high-density metrics and "Obsidian" branding.
+2.  **300px Mobility**: Screenshots of the Modular Governance Hub on an ultra-narrow device.
+3.  **Smart Analysis In-Action**: Showing Gemini parsing a certificate in 2 seconds.
+4.  **Career Pulse Verdict**: Showing the SWOT analysis and career roadmap projection.
 
 ---
 

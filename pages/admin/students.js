@@ -9,7 +9,7 @@ import { downloadAdminStudentsCsv, buildStudentExportRow, calculateDynamicSlots,
 import { useToast } from "@/lib/toast-context";
 import { logAudit } from "@/lib/audit";
 import { createNotification, syncAdminNotifications, purgeNotifications } from "@/lib/notifications";
-import { purgeUser, listByStudent, listStudentDocuments } from "@/lib/data";
+import { purgeUser } from "@/lib/data";
 import { computeReport } from "@/lib/student-analytics";
 import { PAGE_SIZE } from "@/lib/constants";
 import { fetchExhaustiveStudentData } from "@/lib/student-data";
@@ -59,12 +59,6 @@ export default function AdminStudentsDashboard() {
     load();
   }, [addToast]);
 
-  /**
-   * Builds a complete student registry with computed analytics and sub-collection counts.
-   * Rows are pre-assembled with plain email/phone (admin has full access, no masking needed).
-   * downloadAdminStudentsCsv passes maskSensitive:false, so flattenRowsForExport will
-   * preserve the original email/phone values as-is — this is intentional for admin exports.
-   */
   async function exportGlobalRegistry() {
     const db = getDb();
     if (!db) return;
@@ -91,19 +85,14 @@ export default function AdminStudentsDashboard() {
         setExportProgress(Math.round(((i + chunk.length) / total) * 100));
       }
 
-      // 1. Calculate dynamic slots for the entire registry
       const slots = calculateDynamicSlots(rawDataBatch);
-      
-      // 2. Generate fields based on these slots
       const fields = getDynamicStudentFields(slots);
-      
-      // 3. Map into final export rows
       const rows = rawDataBatch.map(({ user, lists, report }) => 
         buildStudentExportRow(user, lists, report, slots)
       );
 
       downloadAdminStudentsCsv(rows, "global-registry-dynamic.csv", { fields });
-      addToast("Exhaustive registry exported with dynamic scaling.", "success");
+      addToast("Exhaustive registry exported.", "success");
     } catch (error) {
       addToast(error?.message || "Failed to export", "error");
     } finally {
@@ -162,20 +151,6 @@ export default function AdminStudentsDashboard() {
       }
 
       await syncAdminNotifications(user.uid);
-
-      // Cleanup any pending requests for this user specifically
-      const qR = query(collection(db, "roleRequests"), where("uid", "==", uid), where("status", "==", "pending"));
-      const qD = query(collection(db, "deletionRequests"), where("uid", "==", uid), where("status", "==", "pending"));
-      const [sR, sD] = await Promise.all([getDocs(qR), getDocs(qD)]);
-
-      for (const d of sR.docs) {
-        await updateDoc(d.ref, { status: "processed_manual" });
-        await purgeNotifications(`role_${d.id}`);
-      }
-      for (const d of sD.docs) {
-        await updateDoc(d.ref, { status: "processed_manual" });
-        await purgeNotifications(`del_${d.id}`);
-      }
     } catch (e) {
       addToast(e.message, "error");
     }
@@ -191,7 +166,7 @@ export default function AdminStudentsDashboard() {
       <ConfirmDialog
         open={!!roleChangeTarget}
         title="Confirm Role Change"
-        message={`Confirm update role to ${roleChangeTarget?.role?.toUpperCase()}? This will immediately change access level for the selected user.`}
+        message={`Confirm update role to ${roleChangeTarget?.role?.toUpperCase()}?`}
         onConfirm={async () => {
           const target = roleChangeTarget;
           setRoleChangeTarget(null);
@@ -204,15 +179,15 @@ export default function AdminStudentsDashboard() {
       <ConfirmDialog
         open={!!deleteTarget}
         title="Protocol: Permanent Purge"
-        message="CRITICAL: You are about to permanently erase this scholar from the global ledger. This includes all academic records, activities and professional achievements. This action is irreversible."
+        message="CRITICAL: Permanently erase this scholar from the global ledger?"
         onConfirm={async () => {
-          const uid = deleteTarget;
+          const target = deleteTarget;
           setDeleteTarget(null);
           setBusy(true);
           try {
-            await purgeUser(uid, user.uid, `Manual Purge: Deleted student entity ${uid}`);
-            addToast("Scholar purged from ledger.", "success");
-            setStudents(prev => prev.filter(s => s.id !== uid));
+            await purgeUser(target.uid, user.uid, `Manual Purge: Deleted student entity ${target.uid}`);
+            addToast("Scholar purged.", "success");
+            setStudents(prev => prev.filter(s => s.id !== target.uid));
             await syncAdminNotifications(user.uid);
           } catch (e) {
             addToast(e.message, "error");
@@ -227,10 +202,10 @@ export default function AdminStudentsDashboard() {
 
       <div className="space-y-10 animate-slide-up">
         {/* Header */}
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Student Registry</h1>
-            <p className="text-base text-slate-500 mt-2 font-medium">Comprehensive registry of all scholars currently in the ledger.</p>
+            <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Student Registry</h1>
+            <p className="text-sm min-[360px]:text-base text-slate-500 mt-2 font-medium">Comprehensive registry of all scholars currently in the ledger.</p>
           </div>
           <div className="flex flex-col items-end gap-2">
             {exportProgress !== null && (
@@ -258,33 +233,36 @@ export default function AdminStudentsDashboard() {
           </div>
         </div>
 
-        {/* Filter Island */}
-        <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
-            <div className="relative flex-1 group">
-              <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all duration-300 transform group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="search"
-                placeholder="Identify scholars in the global registry..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-[2.5rem] border-none bg-slate-50/50 pl-16 pr-8 py-5 text-sm font-bold text-slate-950 focus:ring-0 outline-none placeholder:text-slate-400 transition-all hover:bg-slate-100/50"
-              />
+        <div className="premium-card p-responsive mb-12 animate-slide-up no-print">
+          <div className="flex flex-col gap-4 min-[360px]:gap-6 mb-8">
+            <div>
+              <h2 className="text-2xl min-[360px]:text-3xl font-black text-slate-900 tracking-tighter uppercase">Filter Island</h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium italic">&ldquo;Query the global registry for specific scholar entities.&rdquo;</p>
             </div>
-            <div className="hidden lg:block w-px h-10 bg-slate-100" />
-            <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-[140px]">
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-slate-500 tracking-[0.2em]">Registry</span>
-                <span className="text-[10px] font-black text-brand-600">
-                  {filtered.length} / {students.length} ACTIVE
-                </span>
-              </div>
-              <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </div>
+
+          <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
+              <div className="relative flex-1 group">
+                <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all duration-300 transform group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
+                <input
+                  type="search"
+                  placeholder="Identify scholars..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-[2.5rem] border-none bg-slate-50/50 pl-16 pr-8 py-3.5 sm:py-5 text-sm font-bold text-slate-950 focus:ring-0 outline-none placeholder:text-slate-400 transition-all hover:bg-slate-100/50"
+                />
+              </div>
+              <div className="hidden lg:block w-px h-10 bg-slate-100" />
+              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-[140px]">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-slate-500 tracking-[0.2em]">Registry</span>
+                  <span className="text-[10px] font-black text-brand-600 uppercase">
+                    {filtered.length} / {students.length} ACTIVE
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -292,25 +270,12 @@ export default function AdminStudentsDashboard() {
 
         {/* List */}
         {loading || busy ? (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="premium-card p-8 animate-pulse">
-                <div className="flex justify-between items-center mb-6">
-                  <Skeleton className="h-14 w-14 rounded-3xl" />
-                  <Skeleton className="h-6 w-20 rounded-xl" />
-                </div>
+          <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="premium-card p-responsive animate-pulse">
+                <Skeleton className="h-14 w-14 rounded-3xl mb-6" />
                 <Skeleton className="h-6 w-3/4 mb-2" />
                 <Skeleton className="h-4 w-1/2 mb-8" />
-                <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-50 mb-6">
-                  <div className="space-y-1">
-                    <Skeleton className="h-2 w-10" />
-                    <Skeleton className="h-4 w-16" />
-                  </div>
-                  <div className="space-y-1">
-                    <Skeleton className="h-2 w-10" />
-                    <Skeleton className="h-4 w-16" />
-                  </div>
-                </div>
                 <Skeleton className="h-10 w-full rounded-2xl" />
               </div>
             ))}
@@ -318,11 +283,11 @@ export default function AdminStudentsDashboard() {
         ) : filtered.length === 0 ? (
           <EmptyState title="Registry Empty" message="No active student records discovered." />
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
             {filtered.map(s => (
-              <div key={s.id} className="group premium-card p-8 transition-all hover:translate-y-[-8px] hover:shadow-2xl border border-slate-100 flex flex-col h-full">
+              <div key={s.id} className="group premium-card p-responsive transition-all hover:translate-y-[-8px] hover:shadow-2xl border border-slate-100 flex flex-col h-full">
                 <div className="mb-6 flex items-center justify-between">
-                  <div className="h-14 w-14 rounded-3xl bg-brand-700 flex items-center justify-center font-black text-white shadow-lg shadow-brand-900/10 transition-all">
+                  <div className="h-14 w-14 rounded-3xl bg-brand-700 flex items-center justify-center font-black text-white shadow-lg shadow-brand-900/10">
                     {s.name?.charAt(0) || "U"}
                   </div>
                   <div className="flex flex-col items-end">
@@ -346,8 +311,8 @@ export default function AdminStudentsDashboard() {
                       <span className="text-sm font-semibold text-slate-900 mt-0.5">{s.year ? `${s.year} Year` : "N/A"}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs font-medium text-slate-500">Section</span>
-                      <span className="text-sm font-semibold text-slate-900 mt-0.5">{s.section || "-"}</span>
+                      <span className="text-xs font-medium text-slate-500">Branch</span>
+                      <span className="text-sm font-semibold text-slate-900 mt-0.5 truncate">{s.branch || "-"}</span>
                     </div>
                   </div>
 
@@ -358,20 +323,8 @@ export default function AdminStudentsDashboard() {
                       <div className="flex flex-wrap items-center justify-center gap-2">
                         {s.pendingDeletion ? (
                           <>
-                            <Button
-                              onClick={() => decide(s.id, "delete", s.delDocId)}
-                              variant="danger"
-                              size="sm"
-                            >
-                              Accept Purge
-                            </Button>
-                            <Button
-                              onClick={() => decide(s.id, "reject_deletion", s.delDocId)}
-                              variant="secondary"
-                              size="sm"
-                            >
-                              Dismiss
-                            </Button>
+                            <Button onClick={() => decide(s.id, "delete", s.delDocId)} variant="danger" size="sm">Accept Purge</Button>
+                            <Button onClick={() => decide(s.id, "reject_deletion", s.delDocId)} variant="secondary" size="sm">Dismiss</Button>
                           </>
                         ) : (
                           <>
@@ -380,7 +333,7 @@ export default function AdminStudentsDashboard() {
                             <RoleButton label="Admin" role="admin" currentRole={s.role} onClick={() => askRoleChange(s.id, "admin")} />
                             <button
                               onClick={() => decide(s.id, "delete")}
-                              className="p-1.5 rounded-lg bg-red-700 text-white hover:bg-red-800 transition-colors border border-red-700 shadow-md"
+                              className="p-1.5 rounded-lg bg-red-700 text-white hover:bg-red-800 transition-colors border border-red-700"
                               title="Delete user"
                             >
                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -394,14 +347,13 @@ export default function AdminStudentsDashboard() {
                   )}
                 </div>
 
-                <div className="mt-6 flex gap-3 pt-4">
+                <div className="mt-6 pt-4 border-t border-slate-100">
                   <Button
                     onClick={() => setSelectedStudentUid(s.id)}
                     variant="secondary"
-                    size="sm"
-                    className="flex-1"
+                    className="w-full py-3"
                   >
-                    View Profile
+                    Examine Profile
                   </Button>
                 </div>
               </div>

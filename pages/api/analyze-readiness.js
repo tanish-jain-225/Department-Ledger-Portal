@@ -4,19 +4,27 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
 
-// ── Input validation ──────────────────────────────────────────────────────────
+// ── Token Management ──────────────────────────────────────────────────────────
+
+/**
+ * Prunes an array to a safe size to prevent Gemini API "Payload Too Large" errors.
+ * Preserves the most recent entries (assuming they are sorted by date).
+ */
+function prune(arr, limit = 12) {
+  if (!Array.isArray(arr)) return [];
+  return arr.slice(0, limit);
+}
 
 /**
  * Validates and sanitises the academic array before sending to Gemini.
- * Returns an error string if invalid, or null if clean.
  */
 function validateAcademic(academic) {
-  if (!Array.isArray(academic)) return null; // optional field
+  if (!Array.isArray(academic)) return null;
   for (const r of academic) {
     if (r.gpa !== undefined && r.gpa !== "") {
       const gpa = parseFloat(r.gpa);
       if (isNaN(gpa) || gpa < 0 || gpa > 10) {
-        return `Invalid GPA value "${r.gpa}" - must be a number between 0 and 10.`;
+        return `Invalid GPA value "${r.gpa}" - must range 0-10.`;
       }
     }
   }
@@ -34,7 +42,7 @@ export default async function handler(req, res) {
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
   if (isRateLimited(`analyze:${ip}`, RATE_LIMIT.ANALYZE, RATE_LIMIT.WINDOW_MS)) {
-    return res.status(429).json({ error: "Too many requests. Please wait a moment." });
+    return res.status(429).json({ error: "Rate limit exceeded. Protocol paused." });
   }
 
   const { profile, academic, activities, achievements, placements, projects, skills } = req.body;
@@ -42,16 +50,11 @@ export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
   const modelName = process.env.GEMINI_MODEL;
 
-  if (!apiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEY is not configured." });
-  }
-  if (!modelName) {
-    return res.status(500).json({ error: "GEMINI_MODEL is not configured." });
+  if (!apiKey || !modelName) {
+    return res.status(500).json({ error: "AI environment not configured." });
   }
 
-  if (!profile) {
-    return res.status(400).json({ error: "Profile data is required" });
-  }
+  if (!profile) return res.status(400).json({ error: "Profile required" });
 
   // ── Input validation ────────────────────────────────────────────────────────
   const gpaError = validateAcademic(academic);
@@ -61,85 +64,70 @@ export default async function handler(req, res) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: modelName });
 
+    // Prune data to avoid token bloat while maintaining context
+    const context = {
+      profile: {
+        name: profile.name,
+        gender: profile.gender,
+        branch: profile.branch,
+        year: profile.year,
+        isAlumni: !!profile.alumni
+      },
+      academic: prune(academic, 8),
+      activities: prune(activities, 10),
+      achievements: prune(achievements, 10),
+      placements: prune(placements, 6),
+      projects: prune(projects, 8),
+      skills: prune(skills, 20)
+    };
+
     const prompt = `
-      You are an elite Career Strategist and Senior Placement Officer at a top-tier University.
-      Analyze the provided student data to generate a high-fidelity "Placement Readiness Report".
+      You are an elite University Placement Strategist. Use the following Student Ledger data to generate a high-precision Readiness Report.
       
-      STUDENT METRICS:
-      - Name: ${profile?.name}
-      - Roll Number: ${academic?.length > 0 ? (academic[0]?.rollNumber || "N/A") : "N/A"}
-      - Gender: ${profile?.gender}
-      - Alumni Status: ${profile?.alumni ? "Alumni" : "Current Student"}
+      STUDENT CONTEXT:
+      ${JSON.stringify(context.profile)}
       
-      ACADEMIC PROFILE (GPA, Semesters, Subjects):
-      ${JSON.stringify(academic, null, 2)}
-      
-      TECHNICAL ACTIVITIES & EXTRACURRICULARS:
-      ${JSON.stringify(activities, null, 2)}
-      
-      PROFESSIONAL ACHIEVEMENTS:
-      ${JSON.stringify(achievements, null, 2)}
-      
-      INDUSTRY EXPOSURE (Placements/Internships):
-      ${JSON.stringify(placements, null, 2)}
-      
-      TECHNICAL PROJECTS & ARCHITECTURE:
-      ${JSON.stringify(projects, null, 2)}
-      
-      SPECIALIZED SKILLS & COMPETENCIES:
-      ${JSON.stringify(skills, null, 2)}
+      LEDGER DATA (PRUNED FOR TOKEN EFFICIENCY):
+      - Academics: ${JSON.stringify(context.academic)}
+      - Activities: ${JSON.stringify(context.activities)}
+      - Achievements: ${JSON.stringify(context.achievements)}
+      - Industry: ${JSON.stringify(context.placements)}
+      - Projects: ${JSON.stringify(context.projects)}
+      - Skills: ${JSON.stringify(context.skills)}
 
-      EVALUATION GUIDELINES:
-      - Score (0-100): Be critical. >80 is for students with strong GPA AND industry exposure.
-      - Label: "Ready" (Score > 75), "Developing" (50-75), "Needs Attention" (< 50).
-      - Strengths: Focus on specific skills mentioned in achievements and projects.
-      - Weaknesses: Identify missing critical skills (e.g., if no internships, mention "Lack of practical industry exposure").
-      - Recommendations: Provide 3-4 highly specific technical or skill development recommendations.
-      - Career Roadmap: A strategic paragraph on the most probable job role (e.g., "Full Stack Dev", "Data Analyst") based on their academic and project history.
+      EVALUATION PARAMETERS:
+      1. Score (0-100): Critical assessment. >80 requires strong technical projects + verified skills.
+      2. Verdict: "Ready" (>75), "Developing" (50-75), "Needs Attention" (<50).
+      3. Strengths: 3-word bullet points of top competitive advantages.
+      4. Weaknesses: Actionable gaps (e.g. "Lack of Live Project experience").
+      5. Roadmap: A strategic paragraph on the target job profile based on their portfolio.
 
-      RESPONSE FORMAT: You MUST return ONLY a valid JSON object. No markdown, no preamble.
+      JSON-ONLY RESPONSE:
       {
         "score": number,
         "label": string,
-        "summary": "Professional 2-sentence executive summary.",
+        "summary": "2-sentence executive summary.",
         "strengths": ["string", "string", "string"],
         "weaknesses": ["string", "string", "string"],
         "recommendations": ["string", "string", "string", "string"],
-        "careerRoadmap": "Detailed career trajectory prediction."
+        "careerRoadmap": "string"
       }
     `;
 
-    const requiredResponseKeys = [
-      "score",
-      "label",
-      "summary",
-      "strengths",
-      "weaknesses",
-      "recommendations",
-      "careerRoadmap",
-    ];
+    const requiredResponseKeys = ["score", "label", "summary", "strengths", "weaknesses", "recommendations", "careerRoadmap"];
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     const data = parseAiJson(text);
 
     if (!isValidAiJsonResponse(data, requiredResponseKeys)) {
-      return res.status(500).json({ error: "AI returned invalid JSON format" });
+      throw new Error("Invalid AI model response format.");
     }
 
     res.status(200).json(data);
   } catch (error) {
-    const msg = error?.message || "Failed to analyze profile";
+    const msg = error?.message || "AI Analysis Fault";
     const status = error?.status || 500;
-
-    // Propagate retryable status codes (429 Quota, 503 High Demand)
-    if (status === 429 || msg.includes("429")) {
-      return res.status(429).json({ error: "AI quota exceeded. Please try again later." });
-    }
-    if (status === 503 || msg.includes("503") || msg.includes("high demand")) {
-      return res.status(503).json({ error: "AI is currently experiencing high demand. Please try again." });
-    }
-
     return res.status(status).json({ error: msg });
   }
 }

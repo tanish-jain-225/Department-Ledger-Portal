@@ -101,6 +101,22 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  .animate-menu-down {
+    animation: menu-down 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+@keyframes menu-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fade-in {
@@ -137,7 +153,33 @@
   }
 }
 
-/* ─── Premium Scrollbar ──────────────────────────────────────────────────── */
+/* ─── Premium Scrollbar ────────────────────────────────────────────────────/* Responsive Type Scaling */
+.h-responsive {
+  @apply text-2xl min-[360px]:text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight;
+}
+
+/* Fluid Spacing Hooks */
+.p-responsive {
+  @apply p-4 min-[350px]:p-6 sm:p-10;
+}
+
+.px-responsive {
+  @apply px-4 min-[400px]:px-6;
+}
+
+.gap-responsive {
+  @apply gap-4 min-[400px]:gap-6 sm:gap-8;
+}
+
+/* Branded Constraints for 300px */
+.min-w-300 {
+  min-width: 300px;
+}
+
+.max-w-card {
+  max-width: calc(100vw - 32px);
+}
+
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -148,6 +190,19 @@
 
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-200 rounded-full border-4 border-slate-50 hover:bg-slate-300 transition-colors;
+}
+
+/* Sidebar Specific Scrollbar (Premium & Discrete) */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-brand-300 transition-colors;
 }
 
 /* Typography Perfection */

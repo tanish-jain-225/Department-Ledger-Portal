@@ -45,19 +45,19 @@ export default function Home() {
         <div className="absolute top-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
 
         {/* Hero Section */}
-        <div className="relative z-10 text-center py-24 px-6">
+        <div className="relative z-10 text-center py-16 sm:py-24 px-6">
 
           <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-xs font-black text-brand-700 uppercase tracking-wider mb-10 shadow-sm animate-slide-up">
             <span className="h-2.5 w-2.5 rounded-full bg-brand-700 animate-pulse flex-shrink-0"></span>
             Next-Gen Academic Infrastructure
           </div>
 
-          <h1 className="text-5xl sm:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9] animate-slide-up" style={{ animationDelay: "0.1s" }}>
+          <h1 className="text-4xl min-[360px]:text-5xl sm:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9] animate-slide-up" style={{ animationDelay: "0.1s" }}>
             The Modern Ledger <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-indigo-600">for Departments.</span>
           </h1>
 
-          <p className="mt-8 text-xl sm:text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <p className="mt-8 text-lg min-[360px]:text-xl sm:text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium animate-slide-up" style={{ animationDelay: "0.2s" }}>
             A unified platform for academic records, student performance tracking and departmental oversight.
           </p>
 
@@ -91,7 +91,7 @@ export default function Home() {
         </div>
 
         {/* Feature Grid */}
-        <div className="grid gap-8 sm:grid-cols-3 mt-12 px-6 animate-slide-up" style={{ animationDelay: "0.4s" }}>
+        <div className="grid gap-6 sm:gap-8 sm:grid-cols-3 mt-12 px-4 min-[400px]:px-6 animate-slide-up" style={{ animationDelay: "0.4s" }}>
           {[
             {
               title: "AI Pulse Readiness",
@@ -124,7 +124,7 @@ export default function Home() {
               iconClass: "bg-indigo-700 text-white border-indigo-700 shadow-lg shadow-indigo-500/10",
             },
           ].map((feature) => (
-            <div key={feature.title} className="premium-card p-8">
+            <div key={feature.title} className="premium-card p-responsive">
               <div className={`mb-5 inline-flex h-10 w-10 items-center justify-center rounded-lg border ${feature.iconClass}`}>
                 {feature.icon}
               </div>
@@ -134,8 +134,8 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="mt-16 px-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
-          <div className="premium-card p-10">
+        <div className="mt-16 px-4 min-[400px]:px-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
+          <div className="premium-card p-responsive">
             <div className="grid gap-8 md:grid-cols-3 text-center">
               {[
                 { label: "AI Features", value: "2" },

@@ -5,19 +5,19 @@ export default function FacultyCard({ data }) {
   if (!data) return null;
 
   return (
-    <article className="mx-auto w-full max-w-full sm:max-w-4xl rounded-xl border bg-white p-4 sm:p-10 print:border-0 print:shadow-none print:p-0" style={{ borderColor: '#e2e8f0' }}>
+    <article className="mx-auto w-full max-w-full sm:max-w-4xl rounded-xl border bg-white p-responsive shadow-md print:border-0 print:shadow-none print:p-0" style={{ borderColor: '#e2e8f0' }}>
       {/* Header */}
       <header className="pb-4 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ borderBottom: '2px solid #e2e8f0' }}>
         <div>
           <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#475569' }}>
             Department Ledger Portal · Faculty
           </p>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          <h1 className="text-xl min-[360px]:text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
             {data.name}
           </h1>
-          <div className="flex flex-wrap items-center gap-3 text-slate-500 text-sm font-medium mt-1">
-            <span>{data.email}</span>
-            {data.phone && <span>· {data.phone}</span>}
+          <div className="flex flex-wrap items-center gap-2 min-[360px]:gap-3 text-slate-500 text-xs min-[360px]:text-sm font-medium mt-1">
+            <span className="truncate max-w-[200px]">{data.email}</span>
+            {data.phone && <span className="hidden min-[360px]:inline">· {data.phone}</span>}
           </div>
         </div>
         <div className="flex flex-col items-end">

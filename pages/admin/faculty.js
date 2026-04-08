@@ -164,8 +164,8 @@ export default function AdminFacultyDashboard() {
       <div className="space-y-10 animate-slide-up">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">Faculty Ledger</h1>
-            <p className="text-base text-slate-500 mt-2 font-medium">Registry of verified instructional staff and departmental leads.</p>
+            <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Faculty Ledger</h1>
+            <p className="text-sm min-[360px]:text-base text-slate-500 mt-2 font-medium">Registry of verified instructional staff and departmental leads.</p>
           </div>
           <Button onClick={() => {
             const mapped = faculty.map(f => buildFacultyExportRow(f));
@@ -180,21 +180,30 @@ export default function AdminFacultyDashboard() {
           </Button>
         </div>
 
-        <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
-            <div className="relative flex-1 group">
-              <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input type="search" placeholder="Identify instructional staff in the ledger..."
-                value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-[2.5rem] border-none bg-slate-50/50 pl-16 pr-8 py-5 text-sm font-bold text-slate-950 focus:ring-0 outline-none placeholder:text-slate-400 transition-all hover:bg-slate-100/50" />
+        <div className="premium-card p-responsive mb-12 animate-slide-up no-print">
+          <div className="flex flex-col gap-4 min-[360px]:gap-6 mb-8">
+            <div>
+              <h2 className="text-2xl min-[360px]:text-3xl font-black text-slate-900 tracking-tighter uppercase">Filter Island</h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium italic">&ldquo;Query the global registry for specific staff entities.&rdquo;</p>
             </div>
-            <div className="hidden lg:block w-px h-10 bg-slate-100" />
-            <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-end gap-3 min-w-[140px]">
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-slate-500 tracking-[0.2em]">Council</span>
-                <span className="text-[10px] font-black text-brand-600">{faculty.length} STAFF</span>
+          </div>
+
+          <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
+              <div className="relative flex-1 group">
+                <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="search" placeholder="Identify instructional staff..."
+                  value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-[2.5rem] border-none bg-slate-50/50 pl-16 pr-8 py-3.5 sm:py-5 text-sm font-bold text-slate-950 focus:ring-0 outline-none placeholder:text-slate-400 transition-all hover:bg-slate-100/50" />
+              </div>
+              <div className="hidden lg:block w-px h-10 bg-slate-100" />
+              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-end gap-3 min-w-[140px]">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-slate-500 tracking-[0.2em]">Council</span>
+                  <span className="text-[10px] font-black text-brand-600 uppercase">{faculty.length} STAFF</span>
+                </div>
               </div>
             </div>
           </div>
@@ -218,9 +227,9 @@ export default function AdminFacultyDashboard() {
         ) : faculty.length === 0 ? (
           <EmptyState title="Staff Registry Empty" message="No active faculty records discovered." />
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
             {faculty.map(f => (
-              <div key={f.id} className="group premium-card p-8 transition-all hover:translate-y-[-8px] hover:shadow-2xl border border-slate-100 flex flex-col h-full">
+              <div key={f.id} className="group premium-card p-responsive transition-all hover:translate-y-[-8px] hover:shadow-2xl border border-slate-100 flex flex-col h-full">
                 <div className="mb-6 flex items-center justify-between">
                   <div className="h-14 w-14 rounded-3xl bg-indigo-50 flex items-center justify-center font-black text-indigo-600 border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-lg shadow-indigo-500/10">
                     {f.name?.charAt(0) || "F"}
