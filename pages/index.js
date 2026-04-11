@@ -48,13 +48,13 @@ export default function Home() {
         <div className="relative z-10 text-center py-16 sm:py-24 px-6">
 
           <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-xs font-black text-brand-700 uppercase tracking-wider mb-10 shadow-sm animate-slide-up">
-            <span className="h-2.5 w-2.5 rounded-full bg-brand-700 animate-pulse flex-shrink-0"></span>
+            <span className="h-2.5 w-2.5 rounded-full bg-brand-700 animate-pulse shrink-0"></span>
             Next-Gen Academic Infrastructure
           </div>
 
           <h1 className="text-4xl min-[360px]:text-5xl sm:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9] animate-slide-up" style={{ animationDelay: "0.1s" }}>
             The Modern Ledger <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-indigo-600">for Departments.</span>
+            <span className="bg-clip-text text-transparent bg-linear-to-r from-brand-600 to-indigo-600">for Departments.</span>
           </h1>
 
           <p className="mt-8 text-lg min-[360px]:text-xl sm:text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium animate-slide-up" style={{ animationDelay: "0.2s" }}>

@@ -1,40 +1,63 @@
-# Project Submission Plan
+# GDG Solution Challenge Submission Format
 
-This file is a submission-ready narrative aligned with the current repository.
+Use this file as direct copy text for the submission portal fields.
 
-## Brief Overview
+## Challenge
 
-Department Ledger Portal is a role-based academic records platform that combines Firestore-backed ledgers with Gemini-powered AI assistance.
+[Smart Resource Allocation] Open Innovation
 
-- Students maintain profile and ledger sections, run Smart Analysis autofill, and generate Career Pulse reports.
-- Faculty can review and search student records and export CSVs.
-- Admins handle approvals, deletion workflows, and audit monitoring.
+## Submission Window (Reference)
 
-## Deployed Prototype
+- Starting Date: 14/03/2026 07:00:00 PM (IST)
+- Ending Date: 24/04/2026 11:59:00 PM (IST)
 
-- Live URL: https://department-ledger-portal.vercel.app
-- Hosting: Vercel
+## Upload your Prototype deck/presentation
 
-## Repository
+- File type: PDF
+- Max size: 5 MB
+- Suggested filename: GDGSolutionChallengeSolution.pdf
+- Current deck asset in repo: docs/GDG_Solution_Challenge_Solution_PPT_compressed.pdf
 
-- GitHub: https://github.com/tanish-jain-225/Department-Ledger-Portal
+## Brief Overview (Copy-Paste Ready)
 
-## Google AI Usage
+Department Ledger Portal is an AI-powered academic records platform for colleges and departments. It replaces fragmented spreadsheets and manual tracking with a secure, role-based ledger where students maintain profile information, academic records, achievements, activities, placements, projects, skills, and AI-generated career insights.
 
-- Model integration: Gemini (via @google/generative-ai)
-- Use cases:
-  - document-to-form extraction (autofill-section)
-  - readiness report generation (analyze-readiness)
+The solution addresses data stagnation and slow record handling by allowing document uploads and automatically extracting structured data using Gemini AI. Faculty can quickly search and review student records, while admins maintain governance through role assignment, request approval, audit logging, and secure deletion workflows.
 
-## Core Technical Stack
+Tech stack: Next.js 16.2.3 (React 19), Tailwind CSS 4.2.2, Firebase Authentication + Firestore, Google Generative AI SDK (Gemini 2.5 Flash), deployed on Vercel.
 
-- Next.js 16.2.2
-- React 19.2.4
-- Firebase Auth + Firestore
-- firebase-admin (server-side token verification)
-- Tailwind CSS 4.2.2
+Google tools use-case: Gemini is used for Smart Analysis document-to-data extraction and Career Pulse readiness scoring. Firebase is used for secure authentication, role-based workflow control, and academic ledger storage.
 
-## Code Areas Reviewers Can Inspect
+## Live Prototype Link
+
+https://department-ledger-portal.vercel.app
+
+## GitHub Repository Link
+
+https://github.com/tanish-jain-225/Department-Ledger-Portal
+
+## Demo Video Link
+
+https://drive.google.com/drive/folders/1a2Bklmxa7QwUcPPeY83r4hymXAEa6kbX?usp=sharing
+
+## Have you deployed your solution on Google Cloud?
+
+No
+
+Rationale: The prototype is hosted on Vercel. Google technologies used are Firebase and Gemini APIs.
+
+## Which Google AI model/service have you used?
+
+Gemini 2.5 Flash via the Google Generative AI API.
+
+## Verification Snapshot (April 11, 2026)
+
+- npm run lint: pass
+- npm test: 57 passed (10 suites)
+- npm run build: pass
+- npm run test:e2e: 2 passed
+
+## Reviewer Quick-Inspect Code Paths
 
 - pages/api/autofill-section.js
 - pages/api/analyze-readiness.js
@@ -43,20 +66,3 @@ Department Ledger Portal is a role-based academic records platform that combines
 - lib/data.js
 - lib/auth-context.js
 - lib/rate-limit.js
-
-## Validation Snapshot (April 8, 2026)
-
-- npm run lint: pass
-- npm test: 55 passed
-- npm run build: pass
-
-## Quality Hardening Included
-
-- Autofill endpoint enforces supported MIME types and base64 payload validity.
-- Readiness endpoint validates and normalizes AI output structure before returning to clients.
-- Search fallback implemented for failed-precondition index errors in dashboard student listing.
-
-## Notes for Submission Form
-
-- If asked about cloud hosting on Google Cloud: hosting is Vercel; Google services are used via Firebase and Gemini APIs.
-- If asked for architecture: Next.js frontend + serverless API + Firebase + Gemini.

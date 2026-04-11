@@ -49,6 +49,25 @@ function isValidExistingRecord(record) {
   );
 }
 
+function sanitizeExistingDataForSection(section, existingData = []) {
+  const fields = SECTION_FIELDS[section] || [];
+  if (!Array.isArray(existingData) || fields.length === 0) return [];
+
+  return existingData
+    .filter(isPlainObject)
+    .map((record) => {
+      const sanitized = {};
+      for (const field of fields) {
+        const value = record[field];
+        if (value == null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+          sanitized[field] = value;
+        }
+      }
+      return sanitized;
+    })
+    .filter((record) => Object.keys(record).length > 0);
+}
+
 function sanitizeApiError(error) {
   const raw = String(error?.message || "");
   const status = Number(error?.status) || 500;
@@ -125,7 +144,7 @@ export default async function handler(req, res) {
   if (!uid) return;
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
-  if (isRateLimited(`autofill:${ip}`, RATE_LIMIT.AUTOFILL, RATE_LIMIT.WINDOW_MS)) {
+  if (await isRateLimited(`autofill:${ip}`, RATE_LIMIT.AUTOFILL, RATE_LIMIT.WINDOW_MS)) {
     return res.status(429).json({ error: "Too many requests. Please wait a moment." });
   }
 
@@ -143,9 +162,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "existingData must be an array." });
   }
 
-  if (!existingData.every(isValidExistingRecord)) {
-    return res.status(400).json({ error: "existingData contains invalid record objects." });
-  }
+  const sanitizedExistingData = existingData.every(isValidExistingRecord)
+    ? existingData
+    : sanitizeExistingDataForSection(section, existingData);
 
   if (!VALID_MIME_TYPES.has(fileMimeType)) {
     return res.status(400).json({
@@ -177,9 +196,9 @@ export default async function handler(req, res) {
     const model = genAI.getGenerativeModel({ model: modelName });
 
     const fields = SECTION_FIELDS[section];
-    const existingJson = JSON.stringify(existingData, null, 2);
+    const existingJson = JSON.stringify(sanitizedExistingData, null, 2);
 
-    const hasExisting = existingData.length > 0;
+    const hasExisting = sanitizedExistingData.length > 0;
     const existingNote = hasExisting
       ? `The student already has these ${section} records saved - DO NOT repeat or duplicate any of them:
 ${existingJson}

@@ -140,7 +140,7 @@ export default async function handler(req, res) {
   if (!uid) return;
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
-  if (isRateLimited(`analyze:${ip}`, RATE_LIMIT.ANALYZE, RATE_LIMIT.WINDOW_MS)) {
+  if (await isRateLimited(`analyze:${ip}`, RATE_LIMIT.ANALYZE, RATE_LIMIT.WINDOW_MS)) {
     return res.status(429).json({ error: "Rate limit exceeded. Protocol paused." });
   }
 

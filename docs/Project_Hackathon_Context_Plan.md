@@ -24,11 +24,12 @@ Department Ledger Portal centralizes student records and governance workflows wi
 
 ## Verified Technical Points
 
-- Framework: Next.js 16.2.2 (Pages Router)
+- Framework: Next.js 16.2.3 (Pages Router)
 - Data/Auth: Firebase Firestore + Firebase Auth
 - AI model integration: Gemini via @google/generative-ai
 - API routes: /api/autofill-section, /api/analyze-readiness, /api/health
-- Tests: 55 passing
+- Tests: 57 passing across 10 suites
+- E2E smoke tests: 2 passing (Playwright)
 - Validation hardening: strict MIME/base64 checks and AI response sanitization
 
 ## Risk and Mitigation Notes

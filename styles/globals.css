@@ -153,7 +153,9 @@
   }
 }
 
-/* ─── Premium Scrollbar ────────────────────────────────────────────────────/* Responsive Type Scaling */
+/* ─── Premium Scrollbar ──────────────────────────────────────────────────── */
+
+/* Responsive Type Scaling */
 .h-responsive {
   @apply text-2xl min-[360px]:text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight;
 }
@@ -217,6 +219,11 @@
     size: a4 portrait;
   }
 
+  @page landscape-print {
+    margin: 10mm;
+    size: a4 landscape;
+  }
+
   body {
     background: white !important;
     -webkit-print-color-adjust: exact !important;
@@ -234,6 +241,10 @@
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  body.isolate-print-landscape .print-container .print-page-landscape {
+    page: landscape-print;
   }
 
   /* Global print-hidden utility */

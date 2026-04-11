@@ -15,6 +15,8 @@ const ACCEPTED_TYPES = {
   "text/plain": true,
 };
 
+const MAX_ANALYSIS_ATTEMPTS = 5;
+
 export default function SmartAssistant({
   mode,
   studentUid,
@@ -32,13 +34,15 @@ export default function SmartAssistant({
   const [previewType, setPreviewType] = useState("");
   const [documentInfo, setDocumentInfo] = useState(null);
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
-  const runAnalysis = async (file, attempt = 1) => {
+  const runAnalysis = async (file) => {
     setIsLoading(true);
     try {
       const base64 = await readFileAsBase64(file);
@@ -48,56 +52,62 @@ export default function SmartAssistant({
 
       const token = await getIdToken();
 
-      const res = await fetch("/api/autofill-section", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          section: mode,
-          existingData,
-          fileData: base64,
-          fileMimeType: file.type,
-        }),
-      });
+      for (let attempt = 1; attempt <= MAX_ANALYSIS_ATTEMPTS; attempt += 1) {
+        const res = await fetch("/api/autofill-section", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            section: mode,
+            existingData,
+            fileData: base64,
+            fileMimeType: file.type,
+          }),
+        });
 
-      if (res.status === 413) {
-        addToast("File too large. Please use a file under 10MB.", "error");
-        return;
-      }
-
-      if (!res.ok) {
-        const errorBody = await res.json().catch(() => null);
-        const apiMessage = errorBody?.error || `Server error ${res.status}`;
-
-        // Handle Gemini High Demand (503) or Server Error with high-demand message with retry
-        const isHighDemand = res.status === 503 ||
-          (res.status === 500 && apiMessage.toLowerCase().includes("high demand"));
-
-        if (isHighDemand && attempt < 5) {
-          const delay = attempt * 2000;
-          console.warn(`Gemini high demand detected. Retrying in ${delay}ms... (Attempt ${attempt}/5)`);
-          await new Promise(r => setTimeout(r, delay));
-          return runAnalysis(file, attempt + 1);
+        if (res.status === 413) {
+          addToast("File too large. Please use a file under 10MB.", "error");
+          return;
         }
 
-        // Final failure after retries or non-retryable error
+        if (res.ok) {
+          const data = await res.json();
+          if (onExtract) onExtract(data);
+          addToast("Form filled from your document!", "success");
+
+          setFileName("");
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+
+        const errorBody = await res.json().catch(() => null);
+        const apiMessage = errorBody?.error || `Server error ${res.status}`;
+        const apiMessageLower = apiMessage.toLowerCase();
+        const isHighDemand = res.status === 503 || (res.status === 500 && apiMessageLower.includes("high demand"));
+        const isTimeout = res.status === 504 || apiMessageLower.includes("timed out") || apiMessageLower.includes("timeout");
+        const isRetryable = isHighDemand || isTimeout || res.status === 429;
+
+        if (isRetryable && attempt < MAX_ANALYSIS_ATTEMPTS) {
+          const delay = attempt * 2000;
+          console.warn(`SmartAssistant retry in ${delay}ms (attempt ${attempt}/${MAX_ANALYSIS_ATTEMPTS}) due to: ${apiMessage}`);
+          await sleep(delay);
+          continue;
+        }
+
         console.error("SmartAssistant extraction failed:", apiMessage);
         let userMessage = "Smart Analysis failed. Please try again.";
         if (isHighDemand) {
           userMessage = "AI is currently experiencing peak demand. Please wait a moment and try again.";
+        } else if (isTimeout) {
+          userMessage = "AI request timed out. Please retry with a smaller/clearer file or try again in a moment.";
+        } else if (res.status === 429) {
+          userMessage = "Too many requests. Please wait a moment and try again.";
         }
         addToast(userMessage, "error");
         return;
       }
-
-      const data = await res.json();
-      if (onExtract) onExtract(data);
-      addToast("Form filled from your document!", "success");
-
-      setFileName("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("SmartAssistant critical failure:", error);
       addToast("A communication error occurred. Please refresh and try again.", "error");
@@ -159,7 +169,7 @@ export default function SmartAssistant({
           {isLoading ? (
             <>
               <div className="h-4 w-4 border-2 border-brand-400 border-t-transparent rounded-full animate-spin shrink-0" />
-              <span className="truncate max-w-[180px]">Analyzing {fileName}…</span>
+              <span className="truncate max-w-45">Analyzing {fileName}…</span>
             </>
           ) : (
             <>
@@ -206,7 +216,7 @@ export default function SmartAssistant({
             <textarea
               readOnly
               value={previewText}
-              className="w-full min-h-[9rem] rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700"
+              className="w-full min-h-36 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700"
             />
           ) : (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 text-[11px] text-slate-600">

@@ -132,6 +132,7 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
                 filename={buildFilename("Career_Report", profile?.name || "Student")}
                 label="Download PDF"
                 orientation="portrait"
+                windowWidth={700}
               />
             </div>
             <ReportContent

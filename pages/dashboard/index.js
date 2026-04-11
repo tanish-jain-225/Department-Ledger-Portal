@@ -209,7 +209,7 @@ export default function DashboardPage() {
             <div key={s.id} className="premium-card p-6 hover:border-brand-200 hover:shadow-md transition-all">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-brand-700 flex items-center justify-center font-black text-white shadow-lg shadow-brand-900/10 text-sm flex-shrink-0">
+                  <div className="h-10 w-10 rounded-xl bg-brand-700 flex items-center justify-center font-black text-white shadow-lg shadow-brand-900/10 text-sm shrink-0">
                     {s.name?.charAt(0)?.toUpperCase() || "U"}
                   </div>
                   <div className="min-w-0">

@@ -2,6 +2,8 @@
 
 Use this as the source content for presentation slides.
 
+Last metrics refresh: April 11, 2026
+
 ## Slide Outline (10-12 slides)
 
 1. Title
@@ -41,7 +43,8 @@ Use this as the source content for presentation slides.
 
 9. Reliability and Quality
 - lint, tests, and production build status
-- current test total: 55 passing
+- current test total: 57 passing (10 suites)
+- Playwright smoke tests: 2 passing
 
 10. Evidence Slide (recommended)
 - Before: manual record entry workflow
