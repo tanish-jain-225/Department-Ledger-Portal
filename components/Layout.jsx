@@ -110,7 +110,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
 
       {/* Logout overlay */}
       {isLoggingOut && (
-        <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center no-print">
+        <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center no-print">
           <div className="h-10 w-10 border-2 border-brand-600 border-t-transparent rounded-full animate-spin mb-4" />
           <p className="text-sm font-medium text-slate-600">Signing out...</p>
         </div>
@@ -135,7 +135,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
               <div className="mx-auto max-w-7xl px-4 min-[400px]:px-6 h-16 flex items-center justify-between gap-4">
                 {/* Logo */}
                 <Link href={logoHref} className="flex items-center gap-2.5 px-0.5 min-w-0 group">
-                  <div className="bg-brand-700 rounded-xl p-1.5 flex-shrink-0 shadow-lg shadow-brand-700/20 group-hover:scale-110 transition-transform">
+                  <div className="bg-brand-700 rounded-xl p-1.5 shrink-0 shadow-lg shadow-brand-700/20 group-hover:scale-110 transition-transform">
                     <Image src="/logo.png" alt="Logo" width={20} height={20} className="h-5 w-5" style={{ height: 'auto' }} priority />
                   </div>
                   <div className="flex flex-col leading-none transition-all duration-300">
@@ -206,7 +206,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
             <header className="md:hidden no-print sticky top-0 z-50 bg-white border-b border-slate-200 h-14 flex items-center justify-between px-4 shadow-sm">
               <Link href={logoHref} className="flex items-center gap-2">
                 <div className="bg-brand-700 rounded-lg p-1.5">
-                  <Image src="/logo.png" alt="Logo" width={18} height={18} className="h-[18px] w-[18px]" style={{ height: 'auto' }} />
+                  <Image src="/logo.png" alt="Logo" width={18} height={18} className="h-4.5 w-4.5" style={{ height: 'auto' }} />
                 </div>
                 <span className="text-sm font-bold text-slate-900">Ledger</span>
               </Link>
@@ -233,7 +233,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
                   </nav>
                   <div className="border-t border-slate-200/50 pt-6 flex items-center justify-between">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-xl bg-brand-700 flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-lg shadow-brand-700/20">
+                      <div className="h-10 w-10 rounded-xl bg-brand-700 flex items-center justify-center text-white text-base font-bold shrink-0 shadow-lg shadow-brand-700/20">
                         {profile?.name?.charAt(0)?.toUpperCase() || "U"}
                       </div>
                       <div className="min-w-0">

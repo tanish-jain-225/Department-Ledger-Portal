@@ -63,4 +63,33 @@ describe("GET /api/health", () => {
       },
     });
   });
+
+  it("does not return debug details when token does not match", () => {
+    process.env.HEALTHCHECK_DEBUG_TOKEN = "secret-token";
+
+    const req = { headers: { "x-health-debug-token": "wrong-token" } };
+    const res = createRes();
+
+    handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({ ok: true, service: "student-ledger-portal" });
+    expect(res.body).not.toHaveProperty("details");
+  });
+
+  it("returns 503 when required environment variables are missing", () => {
+    delete process.env.GEMINI_MODEL;
+
+    const req = { headers: {} };
+    const res = createRes();
+
+    handler(req, res);
+
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toMatchObject({
+      ok: false,
+      service: "student-ledger-portal",
+    });
+    expect(res.body).not.toHaveProperty("details");
+  });
 });

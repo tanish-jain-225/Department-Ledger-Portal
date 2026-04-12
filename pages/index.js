@@ -39,29 +39,29 @@ export default function Home() {
           }}
         />
       </Head>
-      <div className="mx-auto max-w-7xl pt-12 pb-24 relative">
+      <div className="mx-auto max-w-7xl pt-8 sm:pt-12 pb-16 sm:pb-24 px-4 min-[400px]:px-6 relative overflow-x-clip">
         {/* Decorative background elements */}
         <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-brand-500/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute top-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
 
         {/* Hero Section */}
-        <div className="relative z-10 text-center py-16 sm:py-24 px-6">
+        <div className="relative z-10 text-center py-10 min-[400px]:py-14 sm:py-24 px-1 min-[400px]:px-2">
 
-          <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2 text-xs font-black text-brand-700 uppercase tracking-wider mb-10 shadow-sm animate-slide-up">
+          <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-3 min-[400px]:px-4 py-2 text-[10px] min-[400px]:text-xs font-black text-brand-700 uppercase tracking-wider mb-6 sm:mb-10 shadow-sm animate-slide-up">
             <span className="h-2.5 w-2.5 rounded-full bg-brand-700 animate-pulse shrink-0"></span>
             Next-Gen Academic Infrastructure
           </div>
 
-          <h1 className="text-4xl min-[360px]:text-5xl sm:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9] animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            The Modern Ledger <br />
-            <span className="bg-clip-text text-transparent bg-linear-to-r from-brand-600 to-indigo-600">for Departments.</span>
+          <h1 className="text-[2rem] min-[360px]:text-[2.5rem] min-[430px]:text-[2.8rem] sm:text-6xl lg:text-7xl font-black tracking-tighter text-slate-900 leading-[0.92] animate-slide-up text-balance" style={{ animationDelay: "0.1s" }}>
+            <span className="block">The Modern Ledger</span>
+            <span className="block bg-clip-text text-transparent bg-linear-to-r from-brand-600 to-indigo-600">for Departments.</span>
           </h1>
 
-          <p className="mt-8 text-lg min-[360px]:text-xl sm:text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <p className="mt-5 min-[400px]:mt-6 sm:mt-8 text-base min-[360px]:text-lg sm:text-xl lg:text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium animate-slide-up text-balance" style={{ animationDelay: "0.2s" }}>
             A unified platform for academic records, student performance tracking and departmental oversight.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md sm:max-w-none mx-auto animate-slide-up" style={{ animationDelay: "0.3s" }}>
             {loading ? (
               <div className="h-10 w-40 flex items-center justify-center bg-slate-100 rounded-xl">
                 <div className="h-4 w-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
@@ -91,7 +91,7 @@ export default function Home() {
         </div>
 
         {/* Feature Grid */}
-        <div className="grid gap-6 sm:gap-8 sm:grid-cols-3 mt-12 px-4 min-[400px]:px-6 animate-slide-up" style={{ animationDelay: "0.4s" }}>
+        <div className="grid gap-6 sm:gap-8 sm:grid-cols-3 mt-8 sm:mt-12 animate-slide-up" style={{ animationDelay: "0.4s" }}>
           {[
             {
               title: "AI Pulse Readiness",
@@ -134,9 +134,9 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="mt-16 px-4 min-[400px]:px-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
+        <div className="mt-12 sm:mt-16 animate-slide-up" style={{ animationDelay: "0.5s" }}>
           <div className="premium-card p-responsive">
-            <div className="grid gap-8 md:grid-cols-3 text-center">
+            <div className="grid gap-8 min-[500px]:grid-cols-3 text-center">
               {[
                 { label: "AI Features", value: "2" },
                 { label: "Role Systems", value: "3" },

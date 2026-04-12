@@ -31,6 +31,13 @@ const SECTION_FIELDS = {
 };
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "12mb",
+    },
+  },
+};
 
 function isAllowedRequestOrigin(req) {
   const origin = req.headers.origin;

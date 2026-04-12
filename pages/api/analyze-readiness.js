@@ -9,6 +9,13 @@ const ALLOWED_ORIGINS = new Set([
   "http://localhost:3000",
 ]);
 const GEMINI_TIMEOUT_MS = 30_000;
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "2mb",
+    },
+  },
+};
 
 function isAllowedRequestOrigin(req) {
   const origin = req.headers.origin;

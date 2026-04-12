@@ -64,21 +64,22 @@ export default function RegisterPage() {
 
           <form onSubmit={onSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
-              <Input required placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} />
+              <label htmlFor="register-name" className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+              <Input id="register-name" required placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">University Roll Number</label>
-              <Input required placeholder="e.g. 210101010" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} />
+              <label htmlFor="register-roll" className="block text-sm font-medium text-slate-700 mb-1.5">University Roll Number</label>
+              <Input id="register-roll" required placeholder="e.g. 210101010" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-              <Input type="email" required placeholder="you@university.edu" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <label htmlFor="register-email" className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+              <Input id="register-email" type="email" required placeholder="you@university.edu" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+              <label htmlFor="register-password" className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
               <div className="relative">
                 <Input
+                  id="register-password"
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="Min. 8 characters"
