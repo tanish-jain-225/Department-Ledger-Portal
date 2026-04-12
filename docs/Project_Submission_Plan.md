@@ -20,13 +20,13 @@ Use this file as direct copy text for the submission portal fields.
 
 ## Brief Overview (Copy-Paste Ready)
 
-Department Ledger Portal is an AI-powered academic records platform for colleges and departments. It replaces fragmented spreadsheets and manual tracking with a secure, role-based ledger where students maintain profile information, academic records, achievements, activities, placements, projects, skills, and AI-generated career insights.
+Department Ledger Portal is an AI-powered academic records platform for colleges and departments. It replaces fragmented spreadsheets and manual tracking with a secure, role-based ledger where students maintain profile information, academic records, achievements, activities, placements, projects, skills and AI-generated career insights.
 
-The solution addresses data stagnation and slow record handling by allowing document uploads and automatically extracting structured data using Gemini AI. Faculty can quickly search and review student records, while admins maintain governance through role assignment, request approval, audit logging, and secure deletion workflows.
+The solution addresses data stagnation and slow record handling by allowing document uploads and automatically extracting structured data using Gemini AI. Faculty can quickly search and review student records, while admins maintain governance through role assignment, request approval, audit logging and secure deletion workflows.
 
 Tech stack: Next.js 16.2.3 (React 19), Tailwind CSS 4.2.2, Firebase Authentication + Firestore, Google Generative AI SDK (Gemini 2.5 Flash), deployed on Vercel.
 
-Google tools use-case: Gemini is used for Smart Analysis document-to-data extraction and Career Pulse readiness scoring. Firebase is used for secure authentication, role-based workflow control, and academic ledger storage.
+Google tools use-case: Gemini is used for Smart Analysis document-to-data extraction and Career Pulse readiness scoring. Firebase is used for secure authentication, role-based workflow control and academic ledger storage.
 
 ## Live Prototype Link
 
