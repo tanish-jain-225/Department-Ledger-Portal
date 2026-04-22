@@ -64,7 +64,7 @@ export default function AdminDashboard() {
         {err ? (
           <div className="premium-card p-6 bg-red-50 border-red-200 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <svg className="h-5 w-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <svg className="h-5 w-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               <p className="text-sm font-medium text-red-700">{err}</p>
             </div>
             <button onClick={fetchStats} className="text-xs font-black text-red-600 hover:text-red-800 uppercase tracking-widest border border-red-200 px-3 py-1.5 rounded-xl hover:bg-red-50 transition-all">Retry</button>
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
                         {log.timestamp?.seconds ? new Date(log.timestamp.seconds * 1000).toLocaleString() : "—"}
                       </p>
                     </div>
-                    <Badge variant="neutral" className="flex-shrink-0 text-[8px] px-1.5 py-0.5 tracking-tighter">
+                    <Badge variant="neutral" className="shrink-0 text-[8px] px-1.5 py-0.5 tracking-tighter">
                       {log.action?.replace(/_/g, ' ')?.slice(0, 12)}
                     </Badge>
                   </div>
@@ -189,10 +189,10 @@ export default function AdminDashboard() {
             
             <div className="space-y-3">
               {stats.recentAudits.map(log => (
-                <div key={log.id} className="p-3 min-[400px]:p-4 rounded-[1.5rem] bg-white border border-slate-100 flex flex-col gap-3 shadow-sm min-w-0">
+                <div key={log.id} className="p-3 min-[400px]:p-4 rounded-3xl bg-white border border-slate-100 flex flex-col gap-3 shadow-sm min-w-0">
                   <div className="flex flex-col min-[450px]:flex-row min-[450px]:items-start justify-between gap-3 min-w-0">
-                    <p className="text-sm font-black text-slate-900 tracking-tight leading-snug break-words flex-1">{log.description}</p>
-                    <Badge variant="neutral" className="flex-shrink-0 text-[8px] tracking-widest p-0.5 px-2 self-start min-[450px]:self-auto">
+                    <p className="text-sm font-black text-slate-900 tracking-tight leading-snug wrap-break-word flex-1">{log.description}</p>
+                    <Badge variant="neutral" className="shrink-0 text-[8px] tracking-widest p-0.5 px-2 self-start min-[450px]:self-auto">
                       {log.action?.replace(/_/g, ' ')}
                     </Badge>
                   </div>
@@ -224,7 +224,7 @@ export default function AdminDashboard() {
           title="Administrative Operations Hub"
         >
           <div className="space-y-6 py-2">
-            <div className="p-4 min-[400px]:p-5 rounded-[2rem] bg-slate-900 text-white relative overflow-hidden group">
+            <div className="p-4 min-[400px]:p-5 rounded-4xl bg-slate-900 text-white relative overflow-hidden group">
               <div className="absolute -right-4 -top-4 opacity-[0.05] group-hover:scale-125 transition-transform duration-700">
                 <svg className="h-24 w-24 min-[400px]:h-32 min-[400px]:w-32" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
               </div>
               <p className="text-[9px] min-[400px]:text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] mb-2">Central Node</p>
               <h3 className="text-xl min-[400px]:text-2xl font-black tracking-tighter leading-none">High-Trust Portal Control</h3>
-              <p className="text-[10px] min-[400px]:text-[11px] text-slate-400 mt-3 font-medium italic opacity-80 leading-relaxed break-words">&ldquo;Executing departmental governance with cryptographic record-keeping protocols.&rdquo;</p>
+              <p className="text-[10px] min-[400px]:text-[11px] text-slate-400 mt-3 font-medium italic opacity-80 leading-relaxed wrap-break-word">&ldquo;Executing departmental governance with cryptographic record-keeping protocols.&rdquo;</p>
             </div>
 
             <div className="grid gap-3 min-[400px]:grid-cols-1">
@@ -263,7 +263,7 @@ export default function AdminDashboard() {
 
 function StatCard({ title, value, loading, icon, color, highlight }) {
   return (
-    <div className={`premium-card p-responsive group transition-all duration-300 min-w-0 ${highlight ? 'border-amber-500/50 shadow-amber-500/10' : 'hover:translate-y-[-4px]'}`}>
+    <div className={`premium-card p-responsive group transition-all duration-300 min-w-0 ${highlight ? 'border-amber-500/50 shadow-amber-500/10' : 'hover:-translate-y-1'}`}>
       <div className="flex flex-col gap-4 min-[400px]:gap-6 min-w-0">
         <div className={`h-10 w-10 min-[340px]:h-12 min-[340px]:w-12 min-[400px]:h-14 min-[400px]:w-14 rounded-2xl flex items-center justify-center border transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${color}`}>
           <svg className="h-5 w-5 min-[340px]:h-6 min-[340px]:w-6 min-[400px]:h-7 min-[400px]:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -289,7 +289,7 @@ function QuickActionLink({ href, title, icon, color }) {
       href={href}
       className="flex items-center gap-3 min-[360px]:gap-4 p-3 min-[360px]:p-4 rounded-xl min-[360px]:rounded-2xl bg-white hover:bg-slate-50 transition-all group border border-slate-200 hover:border-brand-300 shadow-sm hover:shadow-md active:scale-[0.98] min-w-0"
     >
-      <div className={`${color} h-8 w-8 min-[360px]:h-10 min-[360px]:w-10 rounded-lg min-[360px]:rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all flex-shrink-0`}>
+      <div className={`${color} h-8 w-8 min-[360px]:h-10 min-[360px]:w-10 rounded-lg min-[360px]:rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all shrink-0`}>
         <svg className="h-4 w-4 min-[360px]:h-5 min-[360px]:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           {icon}
         </svg>

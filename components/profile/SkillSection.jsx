@@ -108,7 +108,7 @@ export default function SkillSection({ uid, rows, onRefresh }) {
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">
-                    <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${PROFICIENCY_DOT[r.proficiency] || "bg-slate-400"}`} />
+                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${PROFICIENCY_DOT[r.proficiency] || "bg-slate-400"}`} />
                     {r.proficiency}
                   </span>
                   <div className="flex gap-2">

@@ -10,12 +10,12 @@ export function SidebarLink({ href, icon, children, active }) {
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
         }`}
     >
-      <span className={`flex-shrink-0 ${active ? "text-brand-700" : "text-slate-400"}`}>
+      <span className={`shrink-0 ${active ? "text-brand-700" : "text-slate-400"}`}>
         {icon}
       </span>
       <span className="truncate">{children}</span>
       {active && (
-        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-700 flex-shrink-0" />
+        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-700 shrink-0" />
       )}
     </Link>
   );

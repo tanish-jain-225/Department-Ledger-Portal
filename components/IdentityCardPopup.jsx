@@ -37,26 +37,31 @@ export default function IdentityCardPopup({
       title={role === "faculty" ? "Faculty Identity Card" : "Student Identity Card"}
       fullScreen={true}
     >
-      <div className="flex flex-col h-full gap-4">
+      <div className="flex h-full min-h-0 flex-col gap-4">
         {/* Toolbar */}
-        <div className="flex items-center justify-between flex-shrink-0">
-          <p className="text-sm text-slate-500">
+        <div className="shrink-0 rounded-2xl border border-slate-200 bg-white/90 px-3 py-3 sm:px-4 backdrop-blur-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="min-w-0 text-xs sm:text-sm text-slate-500 leading-relaxed">
             Preview your identity card below. Use the button to download as PDF.
-          </p>
-          {showPdf && (
-            <DownloadPdfButton
-              elementRef={cardRef}
-              filename={filename}
-              label="Download PDF"
-              allowedRoles={allowedRoles}
-              orientation="portrait"
-            />
-          )}
+            </p>
+            {showPdf && (
+              <div className="w-full sm:w-auto shrink-0">
+                <DownloadPdfButton
+                  elementRef={cardRef}
+                  filename={filename}
+                  label="Download PDF"
+                  allowedRoles={allowedRoles}
+                  orientation="portrait"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Card preview */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden flex justify-center py-2">
-          <div ref={cardRef} className="w-full max-w-4xl">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain py-1 sm:py-2">
+          <div className="mx-auto w-full max-w-5xl px-0 sm:px-1">
+            <div ref={cardRef} className="w-full">
             {role === "faculty" ? (
               <FacultyCard data={data} />
             ) : (
@@ -68,6 +73,7 @@ export default function IdentityCardPopup({
                 placements={placements}
               />
             )}
+            </div>
           </div>
         </div>
       </div>

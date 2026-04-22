@@ -3,11 +3,13 @@ import { useRouter } from "next/router";
 import { getDb } from "@/lib/firebase";
 import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import Modal from "@/components/ui/Modal";
 import { markAllAsRead, clearAllNotifications } from "@/lib/notifications";
 
 export default function NotificationCenter() {
   const { user } = useAuth();
+  const { addToast } = useToast();
   const router = useRouter();
   const [notifications, setNotifications] = useState([]);
   const [show, setShow] = useState(false);
@@ -27,7 +29,20 @@ export default function NotificationCenter() {
 
     const unsub = onSnapshot(q,
       (snap) => {
-        setNotifications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const normalized = snap.docs
+          .map((snapDoc) => {
+            const data = snapDoc.data() || {};
+            return {
+              id: snapDoc.id,
+              title: String(data.title || "Notification"),
+              message: String(data.message || ""),
+              type: String(data.type || "info"),
+              link: typeof data.link === "string" ? data.link : "",
+              read: Boolean(data.read),
+              createdAt: data.createdAt || null,
+            };
+          });
+        setNotifications(normalized);
       },
       (err) => {
         // Listener errors are non-fatal - silently ignore permission/auth errors
@@ -37,10 +52,15 @@ export default function NotificationCenter() {
     return () => unsub();
   }, [user]);
 
-  const handleNotificationClick = (link) => {
-    if (link) {
-      router.push(link);
+  const handleNotificationClick = async (link) => {
+    if (typeof link !== "string" || !link.trim()) return;
+    if (!link.startsWith("/")) return;
+
+    try {
+      await router.push(link);
       setShow(false);
+    } catch {
+      addToast("Unable to open notification link.", "error");
     }
   };
 
@@ -67,7 +87,7 @@ export default function NotificationCenter() {
         title="Notifications Window"
         maxWidth="max-w-xl"
       >
-        <div className="flex flex-col h-full min-h-[400px]">
+        <div className="flex flex-col h-full min-h-100">
           <div className="flex items-center justify-between mb-6">
             <div>
               <p className="text-sm font-semibold text-slate-900">{unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}</p>
@@ -76,8 +96,12 @@ export default function NotificationCenter() {
               {notifications.length > 0 && (
                 <button
                   onClick={async () => {
-                    await clearAllNotifications(user?.uid);
-                    setNotifications([]);
+                    try {
+                      await clearAllNotifications(user?.uid);
+                      setNotifications([]);
+                    } catch {
+                      addToast("Failed to clear notifications.", "error");
+                    }
                   }}
                   className="text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50"
                 >
@@ -86,7 +110,13 @@ export default function NotificationCenter() {
               )}
               {unreadCount > 0 && (
                 <button
-                  onClick={() => markAllAsRead(user?.uid)}
+                  onClick={async () => {
+                    try {
+                      await markAllAsRead(user?.uid);
+                    } catch {
+                      addToast("Failed to mark notifications as read.", "error");
+                    }
+                  }}
                   className="text-xs font-black text-brand-700 hover:text-brand-800 transition-colors border border-brand-200 px-3 py-1.5 rounded-lg hover:bg-brand-50"
                 >
                   Mark all read
@@ -119,7 +149,7 @@ export default function NotificationCenter() {
                     }`}
                 >
                   <div className="flex gap-3">
-                    <div className={`mt-0.5 flex-shrink-0 h-8 w-8 rounded-lg flex items-center justify-center
+                    <div className={`mt-0.5 shrink-0 h-8 w-8 rounded-lg flex items-center justify-center
                       ${n.type === "alert" || n.type === "warning" ? "bg-amber-100 text-amber-700" : "bg-brand-100 text-brand-700"}`}>
                       {(n.type === "alert" || n.type === "warning") ? (
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -136,7 +166,7 @@ export default function NotificationCenter() {
                         <p className={`text-sm font-semibold truncate ${n.read ? "text-slate-700" : "text-slate-900"}`}>
                           {n.title}
                         </p>
-                        <span className="text-xs text-slate-500 flex-shrink-0">
+                        <span className="text-xs text-slate-500 shrink-0">
                           {n.createdAt?.seconds ? new Date(n.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
                         </span>
                       </div>

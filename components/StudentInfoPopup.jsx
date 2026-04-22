@@ -42,7 +42,7 @@ function ReportPopup({ data, lists, onClose }) {
 
         {/* ── Header: score + identity ── */}
         <div className="flex flex-col sm:flex-row items-center gap-5 p-5 rounded-2xl bg-slate-50 border border-slate-100">
-          <div className="relative flex items-center justify-center flex-shrink-0">
+          <div className="relative flex items-center justify-center shrink-0">
             <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: "rotate(-90deg)" }}>
               <circle cx="48" cy="48" r="36" fill="none" stroke="#e2e8f0" strokeWidth="10" />
               <circle cx="48" cy="48" r="36" fill="none" stroke={ringColor} strokeWidth="10"
@@ -77,7 +77,7 @@ function ReportPopup({ data, lists, onClose }) {
             { label: "Documents", value: lists.uploadedDocuments.length, sub: r.documentRating && r.documentRating !== "none" ? r.documentRating.replace(/-/g, " ") : null },
             { label: "Internships", value: r.internships.length, sub: r.placed ? "Placed ✓" : null },
           ].map((s, i) => (
-            <div key={i} className="flex flex-col gap-0.5 flex-1 min-w-[90px] p-3 rounded-xl bg-white border border-slate-100 text-center">
+            <div key={i} className="flex flex-col gap-0.5 flex-1 min-w-22 p-3 rounded-xl bg-white border border-slate-100 text-center">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{s.label}</p>
               <p className="text-lg font-black text-slate-900">{s.value}</p>
               {s.sub && <p className="text-[9px] font-bold text-brand-600 uppercase tracking-widest">{s.sub}</p>}
@@ -147,7 +147,7 @@ function ReportPopup({ data, lists, onClose }) {
             <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Strengths</p>
             {r.strengths.map((s, i) => (
               <div key={i} className="flex items-start gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-xs text-emerald-800 font-medium">
-                <span className="flex-shrink-0 font-black">✓</span>{s}
+                <span className="shrink-0 font-black">✓</span>{s}
               </div>
             ))}
           </div>
@@ -159,7 +159,7 @@ function ReportPopup({ data, lists, onClose }) {
             <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Recommendations</p>
             {r.recommendations.map((rec, i) => (
               <div key={i} className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100 text-xs text-amber-800 font-medium">
-                <span className="flex-shrink-0 font-black text-amber-500">{i + 1}.</span>{rec}
+                <span className="shrink-0 font-black text-amber-500">{i + 1}.</span>{rec}
               </div>
             ))}
           </div>
@@ -175,7 +175,7 @@ function BarRow({ label, pct, barColor, sub }) {
     <div className="flex flex-col gap-1.5 p-3 sm:p-4 rounded-2xl bg-white border border-slate-100">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-black text-slate-700">{label}</span>
-        <span className="text-xs font-black flex-shrink-0" style={{ color: barColor }}>{Math.min(pct, 100)}%</span>
+        <span className="text-xs font-black shrink-0" style={{ color: barColor }}>{Math.min(pct, 100)}%</span>
       </div>
       <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
@@ -260,7 +260,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                 variant="secondary"
                 className="font-black"
               >
-                <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 View Profile Report
@@ -270,7 +270,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                 variant="success"
                 className="font-black"
               >
-                <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 Download CSV
@@ -284,7 +284,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">{data.name}</h2>
                   <p className="text-sm text-slate-500 truncate">{data.email}</p>
                 </div>
-                <span className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${data.facultyVerification === "approved"
+                <span className={`shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${data.facultyVerification === "approved"
                   ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                   : "bg-amber-50 text-amber-700 border-amber-100"
                   }`}>
@@ -328,7 +328,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                         <p className="text-sm font-black text-slate-900">{r.title}</p>
                         {r.issuer && <p className="text-xs text-slate-500">{r.issuer}</p>}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <Chip color="brand">{r.level}</Chip>
                         {r.date && <span className="text-xs text-slate-500">{r.date}</span>}
                         {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}
@@ -346,7 +346,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                         <p className="text-sm font-black text-slate-900">{r.title}</p>
                         {r.description && <p className="text-xs text-slate-500 line-clamp-1">{r.description}</p>}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <Chip color="slate">{r.type}</Chip>
                         {r.date && <span className="text-xs text-slate-500">{r.date}</span>}
                         {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}
@@ -364,7 +364,7 @@ export default function StudentInfoPopup({ uid, onClose }) {
                         <p className="text-sm font-black text-slate-900">{r.company}</p>
                         {r.role && <p className="text-xs text-slate-500">{r.role}</p>}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <Chip color={r.status === "placed" ? "emerald" : "brand"}>{r.status}</Chip>
                         {r.package && <span className="text-xs font-black text-emerald-600">₹ {r.package}</span>}
                         {r.document && <DocumentPreview document={r.document} triggerLabel="Preview" />}

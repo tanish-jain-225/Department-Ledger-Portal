@@ -11,13 +11,13 @@ export default function Alert({ variant = "info", className, children, ...props 
   return (
     <div
       className={clsx(
-        "flex gap-3 rounded-xl border px-4 py-3 text-sm",
+        "flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-sm sm:gap-3 sm:px-4 sm:py-3",
         styles[variant],
         className
       )}
       {...props}
     >
-      <div className="min-w-0">{children}</div>
+      <div className="min-w-0 flex-1 wrap-break-word">{children}</div>
     </div>
   );
 }

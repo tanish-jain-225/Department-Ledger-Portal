@@ -11,18 +11,18 @@ export default function Breadcrumb({ items }) {
           return (
             <li key={i} className="flex items-center gap-1.5">
               {i > 0 && (
-                <svg className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <svg className="h-3.5 w-3.5 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
               )}
               {isLast ? (
-                <span className="font-semibold text-slate-900 truncate max-w-[200px]">
+                <span className="font-semibold text-slate-900 truncate max-w-50">
                   {item.label}
                 </span>
               ) : (
                 <Link
                   href={item.href}
-                  className="text-slate-500 hover:text-brand-600 transition-colors truncate max-w-[200px]"
+                  className="text-slate-500 hover:text-brand-600 transition-colors truncate max-w-50"
                 >
                   {item.label}
                 </Link>

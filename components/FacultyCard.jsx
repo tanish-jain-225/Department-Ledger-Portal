@@ -16,7 +16,7 @@ export default function FacultyCard({ data }) {
             {data.name}
           </h1>
           <div className="flex flex-wrap items-center gap-2 min-[360px]:gap-3 text-slate-500 text-xs min-[360px]:text-sm font-medium mt-1">
-            <span className="truncate max-w-[200px]">{data.email}</span>
+            <span className="truncate max-w-50">{data.email}</span>
             {data.phone && <span className="hidden min-[360px]:inline">· {data.phone}</span>}
           </div>
         </div>
