@@ -6,14 +6,14 @@ export default function RoleButton({ label, role, currentRole, onClick }) {
   const active = currentRole === role;
 
   const activeStyles = {
-    student: "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20",
-    faculty: "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20",
-    admin: "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20",
+    student: "bg-brand-700 text-white border-brand-700 shadow-sm",
+    faculty: "bg-brand-700 text-white border-brand-700 shadow-sm",
+    admin: "bg-brand-700 text-white border-brand-700 shadow-sm",
   };
   const idleStyles = {
-    student: "bg-slate-200 text-slate-600 border-slate-200 hover:bg-slate-300 hover:text-slate-900",
-    faculty: "bg-slate-200 text-slate-600 border-slate-200 hover:bg-slate-300 hover:text-slate-900",
-    admin: "bg-slate-200 text-slate-600 border-slate-200 hover:bg-slate-300 hover:text-slate-900",
+    student: "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900",
+    faculty: "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900",
+    admin: "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900",
   };
 
   return (

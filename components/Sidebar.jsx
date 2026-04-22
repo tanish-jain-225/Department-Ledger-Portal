@@ -25,14 +25,17 @@ export default function Sidebar({ collapsed = false, onCollapse }) {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-[110] flex flex-col bg-white border-r border-slate-200 no-print
+      className={`fixed inset-y-0 left-0 z-120 h-screen md:h-dvh overflow-visible flex flex-col bg-white border-r border-slate-200 no-print
         ${mounted ? "transition-all duration-300" : ""}
         ${collapsed ? "w-16" : "w-64"}`}
     >
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="relative flex items-center h-16 border-b border-slate-200 flex-shrink-0 overflow-hidden">
-        <Link href="/" className="flex items-center gap-2.5 px-4 min-w-0 flex-1 group">
-          <div className="flex-shrink-0 bg-brand-700 rounded-xl p-1.5 shadow-lg shadow-brand-700/20 group-hover:scale-110 transition-transform">
+      <div className="flex items-center h-16 border-b border-slate-200 shrink-0 px-2 min-w-0">
+        <Link
+          href="/"
+          className={`flex items-center gap-2.5 min-w-0 group ${collapsed ? "flex-none px-1" : "flex-1 px-2"}`}
+        >
+          <div className="shrink-0 bg-brand-700 rounded-xl p-1.5 shadow-lg shadow-brand-700/20 group-hover:scale-110 transition-transform">
             <Image src="/logo.png" alt="Logo" width={20} height={20} className="h-5 w-5" style={{ height: 'auto' }} />
           </div>
           <div className={`transition-all duration-300 overflow-hidden ${collapsed ? "w-0 opacity-0 invisible" : "w-48 opacity-100 visible"}`}>
@@ -41,36 +44,28 @@ export default function Sidebar({ collapsed = false, onCollapse }) {
           </div>
         </Link>
 
-        {/* Action icons — only visible when expanded */}
-        <div className={`flex items-center gap-1 px-2 transition-opacity duration-300 ${collapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"}`}>
-          <NotificationBoundary><NotificationCenter /></NotificationBoundary>
+        <div className="ml-2 shrink-0 flex items-center gap-2">
+          {/* Action icons — only visible when expanded */}
+          <div className={collapsed ? "hidden" : "flex items-center"}>
+            <NotificationBoundary><NotificationCenter /></NotificationBoundary>
+          </div>
+
+          {/* Toggle button in normal flex flow for consistent layout */}
           <button
             onClick={() => onCollapse?.(!collapsed)}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-            title="Collapse sidebar"
+            className="shrink-0 h-7 w-7 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 shadow-sm transition-colors"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d={collapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} />
             </svg>
           </button>
         </div>
-
-        {/* Expand button — visible ONLY when collapsed */}
-        {collapsed && (
-          <button
-            onClick={() => onCollapse?.(!collapsed)}
-            className="absolute -right-3 top-[18px] h-6 w-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 shadow-xl z-50 transition-all animate-fade-in"
-            title="Expand sidebar"
-          >
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
       </div>
 
       {/* ── Navigation ─────────────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 sidebar-scroll">
+      <nav className="flex-1 min-h-0 overflow-y-auto py-3 px-2 sidebar-scroll">
         {!collapsed ? (
           <NavContent role={role} activePath={activePath} router={router} />
         ) : (
@@ -79,10 +74,10 @@ export default function Sidebar({ collapsed = false, onCollapse }) {
       </nav>
 
       {/* ── Footer / User ──────────────────────────────────────────── */}
-      <div className="flex-shrink-0 border-t border-slate-200 p-3">
+      <div className="shrink-0 border-t border-slate-200 p-3">
         {!collapsed ? (
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-brand-700 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+            <div className="h-8 w-8 rounded-lg bg-brand-700 flex items-center justify-center text-white text-sm font-semibold shrink-0">
               {profile?.name?.charAt(0)?.toUpperCase() || "U"}
             </div>
             <div className="flex-1 min-w-0">
@@ -91,7 +86,7 @@ export default function Sidebar({ collapsed = false, onCollapse }) {
             </div>
             <button
               onClick={logout}
-              className="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+              className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
               title="Sign out"
               aria-label="Sign out"
             >

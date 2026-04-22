@@ -36,23 +36,23 @@ export default function ConfirmDialog({
     variant === "danger"
       ? {
           icon: "text-red-500 bg-red-100",
-          btn: "bg-red-600 hover:bg-red-700 shadow-red-500/15",
+          btn: "bg-red-600 text-white hover:bg-red-700 shadow-red-500/15",
         }
       : {
           icon: "text-amber-500 bg-amber-100",
-          btn: "bg-amber-600 hover:bg-amber-700 shadow-amber-500/15",
+          btn: "bg-amber-600 text-white hover:bg-amber-700 shadow-amber-500/15",
         };
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100000] flex items-center justify-center p-4"
+      className="fixed inset-0 z-100000 flex items-center justify-center p-4"
       role="alertdialog"
       aria-modal="true"
       aria-label={title}
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 animate-fade-in"
+        className="absolute inset-0 bg-slate-900/30 backdrop-blur-[1px] animate-fade-in"
         onClick={onCancel}
       />
 
@@ -73,7 +73,7 @@ export default function ConfirmDialog({
             )}
           </div>
 
-          <h3 className="text-xl font-black">{title}</h3>
+          <h3 className="text-xl font-extrabold">{title}</h3>
           {message && (
             <p className="mt-3 text-sm text-slate-600 leading-relaxed">{message}</p>
           )}

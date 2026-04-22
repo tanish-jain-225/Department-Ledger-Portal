@@ -53,12 +53,20 @@ function createRes() {
   return {
     statusCode: 200,
     body: null,
+    headers: {},
+    setHeader(key, value) {
+      this.headers[key] = value;
+      return this;
+    },
     status(code) {
       this.statusCode = code;
       return this;
     },
     json(payload) {
       this.body = payload;
+      return this;
+    },
+    end() {
       return this;
     },
   };
@@ -93,14 +101,14 @@ describe("POST /api/analyze-readiness", () => {
     expect(res.body).toEqual({ error: "Method not allowed" });
   });
 
-  it("rejects disallowed origins", async () => {
+  it("allows any origin with universal CORS", async () => {
     const req = createReq({ headers: { origin: "https://malicious.example" } });
     const res = createRes();
 
     await handler(req, res);
 
-    expect(res.statusCode).toBe(403);
-    expect(res.body).toEqual({ error: "Origin not allowed." });
+    expect(res.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(res.statusCode).toBe(200);
   });
 
   it("returns early when auth fails", async () => {

@@ -1,4 +1,16 @@
 export default function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-health-debug-token");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const geminiKey = process.env.GEMINI_API_KEY;
   const geminiModel = process.env.GEMINI_MODEL;

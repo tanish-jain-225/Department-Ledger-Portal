@@ -1,23 +1,23 @@
 import clsx from "clsx";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-300 " +
+  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-200 " +
   "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/20 focus-visible:ring-offset-0 " +
-  "disabled:opacity-40 disabled:pointer-events-none hover:scale-[1.02] active:scale-[0.97] active:duration-75";
+  "disabled:opacity-45 disabled:pointer-events-none";
 
 const variants = {
   primary:
-    "bg-brand-700 text-white hover:bg-brand-800 hover:shadow-xl hover:shadow-brand-500/20 active:bg-brand-900 border border-brand-700",
+    "bg-brand-700 text-white hover:bg-brand-800 active:bg-brand-900 border border-brand-700 shadow-sm",
   secondary:
-    "bg-slate-700 text-white hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-500/20 active:bg-slate-900 border border-slate-700",
+    "bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 border border-slate-700 shadow-sm",
   soft:
-    "bg-brand-50 text-brand-700 hover:bg-brand-100 hover:shadow-md active:bg-brand-200 border border-brand-100",
+    "bg-brand-50 text-brand-700 hover:bg-brand-100 active:bg-brand-200 border border-brand-100",
   brand:
-    "bg-brand-700 text-white hover:bg-brand-800 hover:shadow-xl hover:shadow-brand-500/20 active:bg-brand-900 border border-brand-700",
+    "bg-brand-700 text-white hover:bg-brand-800 active:bg-brand-900 border border-brand-700 shadow-sm",
   success:
-    "bg-emerald-700 text-white hover:bg-emerald-800 hover:shadow-xl hover:shadow-emerald-500/20 active:bg-emerald-900 border border-emerald-700",
+    "bg-emerald-700 text-white hover:bg-emerald-800 active:bg-emerald-900 border border-emerald-700 shadow-sm",
   danger:
-    "bg-red-700 text-white hover:bg-red-800 hover:shadow-xl hover:shadow-red-500/20 active:bg-red-900 border border-red-700",
+    "bg-red-700 text-white hover:bg-red-800 active:bg-red-900 border border-red-700 shadow-sm",
   ghost:
     "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200",
 };
@@ -45,7 +45,7 @@ export default function Button({
     >
       {loading ? (
         <>
-          <svg className="animate-spin h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>

@@ -35,7 +35,7 @@ export default function Modal({
   return createPortal(
     <div
       className={clsx(
-        "fixed inset-0 z-[100000] flex items-center justify-center transition-all duration-500",
+        "fixed inset-0 z-100000 flex items-center justify-center transition-all duration-500",
         fullScreen ? "p-0" : "p-2 min-[340px]:p-4 sm:p-8"
       )}
       role="dialog"
@@ -44,14 +44,14 @@ export default function Modal({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-slate-900/30 backdrop-blur-[1px] animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal Container */}
       <div
         className={clsx(
-          "relative overflow-hidden bg-white/95 backdrop-blur-xl flex flex-col border border-white/20 animate-scale-in transition-all duration-500",
+          "relative overflow-hidden bg-white flex flex-col border border-slate-200 animate-scale-in transition-all duration-300",
           fullScreen ? "w-screen h-screen rounded-none border-0" : [maxWidth, "w-full rounded-3xl shadow-2xl"],
           className
         )}

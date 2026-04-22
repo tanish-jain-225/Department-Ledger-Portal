@@ -29,7 +29,7 @@ class ErrorBoundary extends Component {
             <p className="text-slate-500 font-medium mb-8 text-sm">An unexpected error occurred. Please refresh the page.</p>
             <button
               onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = "/"; }}
-              className="px-8 py-3 rounded-2xl bg-slate-900  font-black text-sm uppercase tracking-widest transition-all"
+              className="px-8 py-3 rounded-xl bg-slate-900 text-white font-semibold text-sm transition-colors hover:bg-slate-800"
             >
               Return Home
             </button>

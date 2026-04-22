@@ -4,10 +4,6 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
 
-const ALLOWED_ORIGINS = new Set([
-  "https://department-ledger-portal.vercel.app",
-  "http://localhost:3000",
-]);
 const GEMINI_TIMEOUT_MS = 30_000;
 
 const VALID_SECTIONS = ["academic", "achievement", "activity", "placement", "project", "skill"];
@@ -38,12 +34,6 @@ export const config = {
     },
   },
 };
-
-function isAllowedRequestOrigin(req) {
-  const origin = req.headers.origin;
-  if (!origin) return true;
-  return ALLOWED_ORIGINS.has(origin);
-}
 
 function isPlainObject(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -138,12 +128,16 @@ ${fields.map((f) => `  "${f}": "suggested value"`).join(",\n")}
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
   }
 
-  if (!isAllowedRequestOrigin(req)) {
-    return res.status(403).json({ error: "Origin not allowed." });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   // ── Auth check ──────────────────────────────────────────────────────────────
