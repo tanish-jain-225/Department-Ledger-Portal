@@ -44,9 +44,6 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        env:
-          npm_config_platform: linux
-          npm_config_arch: x64
         run: npm ci --include=optional
 
       - name: Audit production dependencies
@@ -87,9 +84,6 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        env:
-          npm_config_platform: linux
-          npm_config_arch: x64
         run: npm ci --include=optional
 
       - name: Install Playwright browsers
