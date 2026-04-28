@@ -98,7 +98,7 @@ export default function SkillSection({ uid, rows, onRefresh }) {
       {/* Skill cards - flex column, no grid */}
       <div className="flex flex-col gap-3">
         {rows.length === 0 ? (
-          <div className="flex items-center justify-center py-16 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-100">
+          <div className="flex items-center justify-center py-16 bg-slate-50/50 rounded-4xl border-2 border-dashed border-slate-100">
             <p className="text-sm text-slate-500 italic">&ldquo;No professional competencies recorded in the ledger.&rdquo;</p>
           </div>
         ) : (

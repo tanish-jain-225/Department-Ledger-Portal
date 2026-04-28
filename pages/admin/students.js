@@ -194,6 +194,14 @@ export default function AdminStudentsDashboard() {
           setBusy(true);
           try {
             await purgeUser(target.uid, user.uid, `Manual Purge: Deleted student entity ${target.uid}`);
+            if (target.reqDocId) {
+              try {
+                await updateDoc(doc(getDb(), "deletionRequests", target.reqDocId), { status: "processed_manual" });
+                await purgeNotifications(`del_${target.reqDocId}`);
+              } catch {
+                // Deletion request already removed or not found.
+              }
+            }
             addToast("Scholar purged.", "success");
             setStudents(prev => prev.filter(s => s.id !== target.uid));
             await syncAdminNotifications(user.uid);

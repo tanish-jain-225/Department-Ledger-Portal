@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
-import { listStudentsForDashboard, listByStudent, listStudentDocuments } from "@/lib/data";
+import { listStudentsForDashboard } from "@/lib/data";
 import {
   downloadFacultyStudentRecordsCsv,
   buildStudentExportRow,
-  STUDENT_RECORD_FIELDS
+  calculateDynamicSlots,
+  getDynamicStudentFields,
 } from "@/lib/csv-download";
 import { computeReport } from "@/lib/student-analytics";
+import { fetchExhaustiveStudentData } from "@/lib/student-data";
 import { getDb } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import StudentInfoPopup from "@/components/StudentInfoPopup";

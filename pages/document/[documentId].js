@@ -124,7 +124,7 @@ export default function DocumentViewerPage() {
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               {previewUrl ? (
                 documentData.mimeType?.startsWith("image/") ? (
-                  <div className="relative w-full aspect-[16/9]">
+                  <div className="relative w-full aspect-video">
                     <Image
                       src={previewUrl}
                       alt={documentData.fileName}
@@ -134,12 +134,12 @@ export default function DocumentViewerPage() {
                     />
                   </div>
                 ) : documentData.mimeType === "application/pdf" ? (
-                  <iframe src={previewUrl} title={documentData.fileName} className="h-[650px] w-full rounded-3xl border" />
+                  <iframe src={previewUrl} title={documentData.fileName} className="h-162 w-full rounded-3xl border" />
                 ) : documentData.mimeType?.startsWith("text/") ? (
                   <textarea
                     readOnly
                     value={atob(documentData.data)}
-                    className="min-h-[20rem] w-full rounded-3xl border border-slate-200 p-4 text-sm font-medium text-slate-700"
+                    className="min-h-80 w-full rounded-3xl border border-slate-200 p-4 text-sm font-medium text-slate-700"
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-3 py-20 text-center text-slate-500">
