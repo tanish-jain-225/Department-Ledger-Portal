@@ -8,7 +8,7 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 
 export default function RegisterPage() {
-  const { register, loading } = useAuth();
+  const { register, loading, login } = useAuth();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -17,6 +17,31 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [demoBusyRole, setDemoBusyRole] = useState("");
+
+  const demoAccounts = [
+    {
+      key: "admin",
+      label: "Demo Admin",
+      email: process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL || "",
+      password: process.env.NEXT_PUBLIC_DEMO_ADMIN_PASSWORD || "",
+      variant: "primary",
+    },
+    {
+      key: "faculty",
+      label: "Demo Faculty",
+      email: process.env.NEXT_PUBLIC_DEMO_FACULTY_EMAIL || "",
+      password: process.env.NEXT_PUBLIC_DEMO_FACULTY_PASSWORD || "",
+      variant: "secondary",
+    },
+    {
+      key: "student",
+      label: "Demo Student",
+      email: process.env.NEXT_PUBLIC_DEMO_STUDENT_EMAIL || "",
+      password: process.env.NEXT_PUBLIC_DEMO_STUDENT_PASSWORD || "",
+      variant: "soft",
+    },
+  ];
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -33,6 +58,23 @@ export default function RegisterPage() {
       setErr(error?.message || "Internal registration fault.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onDemoLogin(account) {
+    setErr("");
+    if (!account.email || !account.password) {
+      setErr("Demo credentials are not configured. Ask an admin to set the demo env vars.");
+      return;
+    }
+    setDemoBusyRole(account.key);
+    try {
+      await login(account.email, account.password);
+      router.push("/");
+    } catch (error) {
+      setErr(error?.message || "Internal authentication fault.");
+    } finally {
+      setDemoBusyRole("");
     }
   }
 
@@ -133,6 +175,27 @@ export default function RegisterPage() {
             <Button type="submit" loading={busy} className="w-full">
               Create Account
             </Button>
+
+            <div className="space-y-3 pt-2">
+              <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                Or continue with a demo role
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {demoAccounts.map((account) => (
+                  <Button
+                    key={account.key}
+                    type="button"
+                    variant={account.variant}
+                    size="sm"
+                    onClick={() => onDemoLogin(account)}
+                    loading={demoBusyRole === account.key}
+                    className="cursor-pointer"
+                  >
+                    {account.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </form>
 
           <p className="mt-8 text-center text-sm text-slate-500">
