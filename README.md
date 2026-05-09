@@ -8,9 +8,9 @@
 
 Production-grade academic ledger platform for departments. The system centralizes student records, faculty review workflows, governance actions, and AI-assisted insights using a secure role model and Firestore-backed data.
 
-- Live demo: https://department-ledger-portal.vercel.app
+- Live demo: [Demo Link](https://department-ledger-portal.vercel.app)
 - Hackathon presentation: [docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf](docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf)
-- Prototype video: https://drive.google.com/drive/folders/1a2Bklmxa7QwUcPPeY83r4hymXAEa6kbX
+- Prototype video: [Prototype Video](https://drive.google.com/drive/folders/1a2Bklmxa7QwUcPPeY83r4hymXAEa6kbX)
 
 ---
 
@@ -404,7 +404,7 @@ Deployment checklist:
 ## Hackathon Resources
 
 - Presentation: [docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf](docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf)
-- Video recording: https://drive.google.com/drive/folders/1a2Bklmxa7QwUcPPeY83r4hymXAEa6kbX
+- Video recording: [Prototype Video](https://drive.google.com/drive/folders/1a2Bklmxa7QwUcPPeY83r4hymXAEa6kbX)
 
 ---
 
