@@ -8,26 +8,28 @@
 
 Production-grade academic ledger platform for departments. The system centralizes student records, faculty review workflows, governance actions, and AI-assisted insights using a secure role model and Firestore-backed data.
 
-Live demo: https://department-ledger-portal.vercel.app
+- Live demo: https://department-ledger-portal.vercel.app
+- Hackathon presentation: [docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf](docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf)
+- Prototype video: https://drive.google.com/drive/folders/1a2Bklmxa7QwUcPPeY83r4hymXAEa6kbX
 
 ---
 
 ## 1. What This Project Solves
 
-Departments usually manage student progression across multiple disconnected tools. This project provides one unified portal for:
+Departments often manage student progression across multiple disconnected tools. Department Ledger Portal provides a unified, secure platform for:
 
 - student record management
 - faculty review and search
-- admin governance and approvals
+- administrative governance and approvals
 - AI-assisted autofill and readiness analysis
 - auditability of critical actions
 
-Core value:
+Core values:
 
 - single source of truth for academic profiles
 - role-based access boundaries
 - standardized data model across sections
-- operational confidence via CI and automated testing
+- operational confidence through CI and automated testing
 
 ---
 
@@ -118,9 +120,9 @@ Route access levels are defined in [lib/route-access.js](lib/route-access.js):
 - staff
 - admin
 
-Operational rule:
+Operational model:
 
-- new users register as pending and cannot access protected role routes until approved by admin
+- new users register as pending and cannot access protected routes until approved by an administrator
 
 ---
 
@@ -162,8 +164,8 @@ Returns service health status with `ok`, `service`, and `time`.
 - returns 200 when required service env vars are present
 - returns 503 when required service env vars are missing
 - optional debug details only when both conditions are true:
-	- `HEALTHCHECK_DEBUG_TOKEN` is configured on server
-	- request header `x-health-debug-token` matches token
+  - `HEALTHCHECK_DEBUG_TOKEN` is configured on server
+  - request header `x-health-debug-token` matches token
 
 ### POST /api/autofill-section
 
@@ -357,9 +359,9 @@ Deployment checklist:
 1. Configure all required environment variables in hosting platform.
 2. Deploy Firestore rules and indexes:
 
-```bash
-firebase deploy --only firestore:rules,firestore:indexes
-```
+   ```bash
+   firebase deploy --only firestore:rules,firestore:indexes
+   ```
 
 3. Confirm `/api/health` returns 200 in production environment.
 4. Run smoke E2E after deploy.
@@ -396,6 +398,13 @@ firebase deploy --only firestore:rules,firestore:indexes
 - Project planning docs: [docs](docs)
 - Firestore rules: [firebase/firestore.rules](firebase/firestore.rules)
 - Firestore indexes: [firebase/firestore.indexes.json](firebase/firestore.indexes.json)
+
+---
+
+## Hackathon Resources
+
+- Presentation: [docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf](docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf)
+- Video recording: https://drive.google.com/drive/folders/1a2Bklmxa7QwUcPPeY83r4hymXAEa6kbX
 
 ---
 
