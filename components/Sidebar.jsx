@@ -45,7 +45,7 @@ export default function Sidebar({ collapsed = false, onCollapse }) {
         </Link>
 
         <div className="ml-2 shrink-0 flex items-center gap-2">
-          {/* Action icons — only visible when expanded */}
+          {/* Action icons - only visible when expanded */}
           <div className={collapsed ? "hidden" : "flex items-center"}>
             <NotificationBoundary><NotificationCenter /></NotificationBoundary>
           </div>

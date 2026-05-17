@@ -44,7 +44,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Read localStorage synchronously on first render to avoid flicker.
-  // The lazy initializer only runs once and is safe — typeof window check
+  // The lazy initializer only runs once and is safe - typeof window check
   // guards against SSR where localStorage doesn't exist.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -102,7 +102,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
   return (
     <>
       <Head>
-        <title>{title ? `${title} — Department Ledger Portal` : "Department Ledger Portal"}</title>
+        <title>{title ? `${title} - Department Ledger Portal` : "Department Ledger Portal"}</title>
         <meta name="description" content="Academic records management platform for departments." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#2563eb" />

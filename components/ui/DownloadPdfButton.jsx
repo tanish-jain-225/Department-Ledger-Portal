@@ -7,14 +7,14 @@ import { downloadElementAsPdf } from "../../lib/pdf-download";
  * All PDF exports in the project use this component.
  *
  * Props:
- *   elementRef   — React ref pointing to the DOM element to capture
- *   filename     — Output filename (use buildFilename() from lib/pdf-download)
- *   label        — Button label text (default: "Download PDF")
- *   orientation  — 'portrait' | 'landscape' (default: 'portrait')
- *   windowWidth  — Render width in px (default: 794 = A4 portrait at 96dpi)
- *   allowedRoles — Array of roles that can see this button (optional)
- *   disabled     — Disable the button
- *   className    — Extra classes for the button element
+ *   elementRef   - React ref pointing to the DOM element to capture
+ *   filename     - Output filename (use buildFilename() from lib/pdf-download)
+ *   label        - Button label text (default: "Download PDF")
+ *   orientation  - 'portrait' | 'landscape' (default: 'portrait')
+ *   windowWidth  - Render width in px (default: 794 = A4 portrait at 96dpi)
+ *   allowedRoles - Array of roles that can see this button (optional)
+ *   disabled     - Disable the button
+ *   className    - Extra classes for the button element
  */
 export default function DownloadPdfButton({
   elementRef,
