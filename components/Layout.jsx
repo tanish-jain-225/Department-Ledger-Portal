@@ -94,7 +94,8 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
     }
   }, [router.isReady, loading, isLoggingOut, user, role, access, router]);
 
-  const allowed = loading || !router.isReady ? false : canRender(access, role);
+  const isResolving = loading || !router.isReady;
+  const allowed = isResolving ? false : canRender(access, role);
 
   // Sidebar offset
   const sidebarWidth = showSidebar ? (sidebarCollapsed ? "md:pl-16" : "md:pl-64") : "";
@@ -255,7 +256,11 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
 
           {/* Page content */}
           <main id="main-content" className="flex-1 px-4 min-[400px]:px-6 py-8 mx-auto w-full max-w-7xl">
-            {allowed ? children : (
+            {isResolving ? (
+              <div className="flex h-[60vh] items-center justify-center">
+                <div className="h-10 w-10 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : allowed ? children : (
               <div className="flex h-[60vh] items-center justify-center">
                 <div className="text-center max-w-sm">
                   <div className="mx-auto h-14 w-14 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-4">

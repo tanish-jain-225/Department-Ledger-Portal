@@ -70,8 +70,8 @@ export default function App({ Component, pageProps, router }) {
     <ErrorBoundary>
       <AuthProvider>
         <ToastProvider>
-          <PageTransition key={router.asPath}>
-            <Component {...pageProps} />
+          <PageTransition>
+            <Component {...pageProps} key={router.asPath} />
           </PageTransition>
         </ToastProvider>
       </AuthProvider>
