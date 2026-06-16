@@ -8,6 +8,7 @@ Documentation files in this repository:
 
 - README.md
 - docs/Project_Documentation_Plan.md
+- docs/Project_API_Contract.md
 - docs/Project_Demo_Script_Plan.md
 - docs/Project_Hackathon_Context_Plan.md
 - docs/Project_Deck_Plan.md
@@ -29,12 +30,12 @@ Documentation files in this repository:
 4. Remove speculative numbers and unverifiable claims.
 5. Re-run npm test after code or test changes.
 
-## Current Verified Baseline (April 11, 2026)
+## Current Verified Baseline (June 16, 2026)
 
 - Lint: passes
-- Tests: 57 passed, 10 suites
+- Tests: 77 passed, 12 suites
 - Build: passes (Next.js 16.2.3)
-- E2E smoke tests: 2 passed (Playwright)
+- E2E smoke tests: 5 passed (Playwright)
 - API routes: analyze-readiness, autofill-section, health
 - API hardening: MIME + base64 validation for autofill, normalized AI readiness response, public-safe health response with token-gated debug details
 - Rate limiting: shared Firestore-backed sliding window with in-memory fallback and stale-key cleanup

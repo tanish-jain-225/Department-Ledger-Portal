@@ -2,7 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useState, Component } from "react";
+import { useEffect, useState, Component, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ROLES, isStaff, canManageUsers, hasApprovedRole } from "@/lib/roles";
 import { ACCESS } from "@/lib/route-access";
@@ -42,6 +42,7 @@ function homeFor(role) {
 export default function Layout({ children, title = "", access = ACCESS.PUBLIC }) {
   const { user, profile, loading, logout, isLoggingOut } = useAuth();
   const router = useRouter();
+  const redirectingRef = useRef(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Read localStorage synchronously on first render to avoid flicker.
   // The lazy initializer only runs once and is safe - typeof window check
@@ -80,16 +81,32 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
   // Auth redirect
   useEffect(() => {
     if (!router.isReady || loading || isLoggingOut) return;
+    if (redirectingRef.current) return;
+
     if (access === ACCESS.GUEST && user && hasApprovedRole(role)) {
+      redirectingRef.current = true;
       router.replace(homeFor(role)); return;
     }
     if (access !== ACCESS.PUBLIC && access !== ACCESS.GUEST) {
-      if (!user || !hasApprovedRole(role)) { router.replace("/"); return; }
-      if (access === ACCESS.STUDENT && role !== ROLES.STUDENT) { router.replace(homeFor(role)); return; }
-      if (access === ACCESS.STAFF && !isStaff(role)) { router.replace(homeFor(role)); return; }
-      if (access === ACCESS.ADMIN && !canManageUsers(role)) { router.replace(homeFor(role)); return; }
+      if (!user || !hasApprovedRole(role)) {
+        redirectingRef.current = true;
+        router.replace("/"); return;
+      }
+      if (access === ACCESS.STUDENT && role !== ROLES.STUDENT) {
+        redirectingRef.current = true;
+        router.replace(homeFor(role)); return;
+      }
+      if (access === ACCESS.STAFF && !isStaff(role)) {
+        redirectingRef.current = true;
+        router.replace(homeFor(role)); return;
+      }
+      if (access === ACCESS.ADMIN && !canManageUsers(role)) {
+        redirectingRef.current = true;
+        router.replace(homeFor(role)); return;
+      }
     }
     if (access === ACCESS.PUBLIC && router.asPath === "/" && user && hasApprovedRole(role)) {
+      redirectingRef.current = true;
       router.replace(homeFor(role));
     }
   }, [router.isReady, loading, isLoggingOut, user, role, access, router]);

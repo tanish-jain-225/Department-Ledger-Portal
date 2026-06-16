@@ -16,7 +16,7 @@ Use this file as direct copy text for the submission portal fields.
 - File type: PDF
 - Max size: 5 MB
 - Suggested filename: GDGSolutionChallengeSolution.pdf
-- Current deck asset in repo: docs/GDG_Solution_Challenge_Solution_PPT_compressed.pdf
+- Current deck asset in repo: docs/GDG_Solution_Challenge_Solution_PPT_Final_compressed.pdf
 
 ## Brief Overview (Copy-Paste Ready)
 
@@ -50,12 +50,12 @@ Rationale: The prototype is hosted on Vercel. Google technologies used are Fireb
 
 Gemini 2.5 Flash via the Google Generative AI API.
 
-## Verification Snapshot (April 11, 2026)
+## Verification Snapshot (June 16, 2026)
 
 - npm run lint: pass
-- npm test: 57 passed (10 suites)
+- npm test: 77 passed (12 suites)
 - npm run build: pass
-- npm run test:e2e: 2 passed
+- npm run test:e2e: 5 passed
 
 ## Reviewer Quick-Inspect Code Paths
 

@@ -150,7 +150,7 @@ Important files:
 - [lib/api-auth.js](lib/api-auth.js)
 - [lib/rate-limit.js](lib/rate-limit.js)
 - [firebase/firestore.rules](firebase/firestore.rules)
-- [docs/API_Contract.md](docs/API_Contract.md)
+- [docs/Project_API_Contract.md](docs/Project_API_Contract.md)
 - [.github/workflows/ci.yml](.github/workflows/ci.yml)
 
 ---
@@ -184,7 +184,7 @@ Returns service health status with `ok`, `service`, and `time`.
 
 Full contract, error shapes, and compatibility policy:
 
-- [docs/API_Contract.md](docs/API_Contract.md)
+- [docs/Project_API_Contract.md](docs/Project_API_Contract.md)
 
 ---
 
@@ -394,7 +394,7 @@ Deployment checklist:
 
 ## 17. Documentation Index
 
-- API contract: [docs/API_Contract.md](docs/API_Contract.md)
+- API contract: [docs/Project_API_Contract.md](docs/Project_API_Contract.md)
 - Project planning docs: [docs](docs)
 - Firestore rules: [firebase/firestore.rules](firebase/firestore.rules)
 - Firestore indexes: [firebase/firestore.indexes.json](firebase/firestore.indexes.json)

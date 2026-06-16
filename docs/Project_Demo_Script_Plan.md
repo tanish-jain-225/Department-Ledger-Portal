@@ -4,7 +4,7 @@ Duration: 2-3 minutes
 
 Goal: deliver a winning, high-clarity walkthrough of the complete project flow with visible proof.
 
-Last validated against current build: April 11, 2026
+Last validated against current build: June 16, 2026
 
 ## Winning Structure
 

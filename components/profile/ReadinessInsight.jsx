@@ -34,64 +34,68 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
     loadHistory();
   }, [loadHistory]);
 
-  async function analyze(attempt = 1) {
+  async function analyze() {
     setLoading(true);
     try {
-      const token = await getIdToken();
-      const resp = await fetch("/api/analyze-readiness", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ profile, academic, activities, achievements, placements, projects, skills }),
-      });
-
-      // Handle Gemini High Demand (503) or Server Error with high-demand message with retry
-      if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({}));
-        const msg = errorData.error || "AI Analysis failed";
-        const status = resp.status;
-
-        const isHighDemand = status === 503 || (status === 500 && msg.toLowerCase().includes("high demand"));
-
-        if (isHighDemand && attempt < 5) {
-          const delay = attempt * 2000;
-          console.warn(`Career Intelligence high demand detected. Retrying in ${delay}ms... (Attempt ${attempt}/5)`);
-          await new Promise(r => setTimeout(r, delay));
-          return analyze(attempt + 1);
-        }
-
-        // Final failure after retries
-        console.error("Career Intelligence extraction failed:", msg);
-        let userMessage = "AI Analysis failed. Please try again.";
-        if (isHighDemand) {
-          userMessage = "AI is currently experiencing peak demand. Please wait a moment and try again.";
-        }
-        addToast(userMessage, "error");
-        return;
-      }
-
-      const result = await resp.json();
-      await createRecord("aiReports", {
-        studentUid: profile.id,
-        ...result,
-        createdAtString: new Date().toLocaleDateString(),
-      });
-      addToast("Intelligence report saved to vault!", "success");
-      await loadHistory();
-      await createNotification(profile.id, {
-        title: "AI Report Ready",
-        message: "Your placement readiness report has been generated.",
-        type: "info",
-        link: "/profile?tab=intelligence",
-      });
+      await runAnalysis(1);
     } catch (err) {
       console.error("Analysis Critical Failure:", err);
       addToast("A communication error occurred. Please refresh and try again.", "error");
     } finally {
-      if (attempt === 1) setLoading(false);
+      setLoading(false);
     }
+  }
+
+  async function runAnalysis(attempt = 1) {
+    const token = await getIdToken();
+    const resp = await fetch("/api/analyze-readiness", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ profile, academic, activities, achievements, placements, projects, skills }),
+    });
+
+    // Handle Gemini High Demand (503) or Server Error with high-demand message with retry
+    if (!resp.ok) {
+      const errorData = await resp.json().catch(() => ({}));
+      const msg = errorData.error || "AI Analysis failed";
+      const status = resp.status;
+
+      const isHighDemand = status === 503 || (status === 500 && msg.toLowerCase().includes("high demand"));
+
+      if (isHighDemand && attempt < 5) {
+        const delay = attempt * 2000;
+        console.warn(`Career Intelligence high demand detected. Retrying in ${delay}ms... (Attempt ${attempt}/5)`);
+        await new Promise(r => setTimeout(r, delay));
+        return runAnalysis(attempt + 1);
+      }
+
+      // Final failure after retries
+      console.error("Career Intelligence extraction failed:", msg);
+      let userMessage = "AI Analysis failed. Please try again.";
+      if (isHighDemand) {
+        userMessage = "AI is currently experiencing peak demand. Please wait a moment and try again.";
+      }
+      addToast(userMessage, "error");
+      return;
+    }
+
+    const result = await resp.json();
+    await createRecord("aiReports", {
+      studentUid: profile.id,
+      ...result,
+      createdAtString: new Date().toLocaleDateString(),
+    });
+    addToast("Intelligence report saved to vault!", "success");
+    await loadHistory();
+    await createNotification(profile.id, {
+      title: "AI Report Ready",
+      message: "Your placement readiness report has been generated.",
+      type: "info",
+      link: "/profile?tab=intelligence",
+    });
   }
 
   const scoreColor = (s) => s > 75 ? "text-emerald-500" : s >= 50 ? "text-amber-500" : "text-red-500";
