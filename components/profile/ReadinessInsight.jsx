@@ -318,7 +318,7 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
         {/* Career Trajectory */}
         <div className="flex flex-col gap-2 rounded-lg p-4">
           <p className="text-[9px] font-black text-sky-400 uppercase tracking-widest">Career Trajectory</p>
-          <p className="text-xs text-slate-300 leading-relaxed italic">&ldquo;{report.careerRoadmap}&rdquo;</p>
+          <p className="text-xs text-slate-600 leading-relaxed italic">&ldquo;{report.careerRoadmap}&rdquo;</p>
         </div>
 
         {/* Footer */}
