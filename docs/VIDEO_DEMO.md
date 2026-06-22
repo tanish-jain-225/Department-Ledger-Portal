@@ -14,7 +14,7 @@ Last validated against current build: June 16, 2026
 4. Prove governance and institutional readiness.
 5. Close with deployment and impact.
 
-## Full Recording Script (Verbatim)
+## Full Recording Script (Department Ledger Portal)
 
 ### 0:00-0:10 | Problem Hook
 
