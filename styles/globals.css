@@ -301,3 +301,12 @@
     transform: scale(1);
   }
 }
+
+/* Custom NProgress Color to match Obsidian Brand */
+#nprogress .bar {
+  background: var(--color-brand-700) !important;
+  height: 3px !important;
+}
+#nprogress .peg {
+  box-shadow: 0 0 10px var(--color-brand-700), 0 0 5px var(--color-brand-700) !important;
+}

@@ -25,7 +25,20 @@ export default function StudentCard({
           <div className="flex flex-wrap items-center gap-2 min-[360px]:gap-3 text-slate-500 text-xs min-[360px]:text-sm font-medium mt-1">
             <span className="truncate max-w-[200px]">{data.email}</span>
             {data.phone && <span className="hidden min-[360px]:inline">· {data.phone}</span>}
+            {data.rollNumber && <span className="hidden min-[360px]:inline">· Roll No: {data.rollNumber}</span>}
           </div>
+          {data.year && (
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <span className="inline-flex items-center gap-1 text-[10px] font-black text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-2 py-0.5 uppercase tracking-wider">
+                {data.year} Year
+              </span>
+              {data.branch && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-0.5 uppercase tracking-wider">
+                  {data.branch}
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-2 mt-2">
             {data.linkedin && (
               <span className="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded flex items-center gap-1">

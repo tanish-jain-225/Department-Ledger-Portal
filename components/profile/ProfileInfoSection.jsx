@@ -4,6 +4,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Select from "@/components/ui/Select";
 
 export default function ProfileInfoSection({ user, profile, refreshProfile, onViewCard }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -16,6 +17,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
     linkedin: profile?.linkedin || "",
     github: profile?.github || "",
     alumni: !!profile?.alumni,
+    year: profile?.year || "",
   });
 
   const {
@@ -31,6 +33,7 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
       address: form.address.trim(), alumni: form.alumni,
       dob: form.dob, gender: form.gender,
       linkedin: form.linkedin.trim(), github: form.github.trim(),
+      year: form.year,
     });
     if (ok) setIsEditing(false);
   }
@@ -74,6 +77,17 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
             { label: "Contact Phone", value: profile?.phone },
             { label: "Gender Identity", value: profile?.gender, capitalize: true },
             { label: "Date of Birth", value: profile?.dob },
+            { 
+              label: "Academic Year", 
+              value: profile?.year ? (
+                <span className="inline-flex items-center gap-1.5 text-brand-700 bg-brand-50 border border-brand-100 rounded-xl px-3 py-0.5 text-sm font-black uppercase tracking-wider">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  {profile.year} Year
+                </span>
+              ) : "-"
+            },
           ].map((item) => (
             <div key={item.label} className="space-y-1.5 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-brand-200 transition-colors">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</p>
@@ -124,16 +138,15 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
             </div>
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Gender</label>
-              <select
+              <Select
                 value={form.gender}
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                className="w-full rounded-2xl border bg-white px-5 py-3.5 text-sm font-medium text-slate-900 focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition-all duration-300"
               >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
-              </select>
+              </Select>
             </div>
             <div className="sm:col-span-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Residential Address</label>
@@ -151,6 +164,19 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
                 value={form.dob}
                 onChange={(e) => setForm({ ...form, dob: e.target.value })}
               />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Academic Year of Study</label>
+              <Select
+                value={form.year}
+                onChange={(e) => setForm({ ...form, year: e.target.value })}
+              >
+                <option value="">Select year of study</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </Select>
             </div>
             <div className="flex items-center pt-6">
               <label className="flex items-center gap-3 text-sm font-black text-slate-700 cursor-pointer select-none">

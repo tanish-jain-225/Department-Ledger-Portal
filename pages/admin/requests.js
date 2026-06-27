@@ -25,6 +25,7 @@ export default function AdminRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncing, setDebouncing] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState(null); // { uid, reqDocId }
   const [dismissTarget, setDismissTarget] = useState(null); // { uid, reqDocId }
@@ -32,9 +33,15 @@ export default function AdminRequestsPage() {
 
   // Debounce search - avoids re-filtering on every keystroke
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
+    if (searchTerm.trim() !== debouncedSearch.trim()) {
+      setDebouncing(true);
+    }
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setDebouncing(false);
+    }, 350);
     return () => clearTimeout(t);
-  }, [searchTerm]);
+  }, [searchTerm, debouncedSearch]);
 
   const load = useCallback(async () => {
     const db = getDb();
@@ -295,8 +302,13 @@ export default function AdminRequestsPage() {
                 placeholder="Identify entities in the global registry..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-8 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-500 transition-all"
+                className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-12 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-500 transition-all"
               />
+              {(debouncing || loading) && (
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center">
+                  <div className="h-4 w-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
             </div>
 
             <div className="hidden lg:block w-px h-10 bg-slate-100" />
@@ -349,7 +361,23 @@ export default function AdminRequestsPage() {
             {[1, 2, 3, 4].map(i => <TableRowSkeleton key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState title="Registry Clear" message="No active governance requests found in this sector." />
+          <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-3xl border border-slate-200 shadow-sm animate-fade-in">
+            <div className="h-16 w-16 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-6">
+              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-black text-slate-900 uppercase tracking-wide">No Requests Discovered</h3>
+            <p className="text-sm text-slate-500 font-medium mt-2 text-center max-w-sm">No active clearance or role requests match your filtered criteria.</p>
+            <Button
+              onClick={() => { setSearchTerm(""); setRoleFilter("all"); }}
+              className="mt-6 px-6 py-2.5"
+              size="sm"
+              variant="secondary"
+            >
+              Clear Active Filters
+            </Button>
+          </div>
         ) : (
           <div className="space-y-6">
             {filtered.map((r) => {

@@ -4,8 +4,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
+import { Input, Button, Select } from "@/components/ui";
 
 export default function RegisterPage() {
   const { register, loading, login } = useAuth();
@@ -13,6 +12,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [rollNumber, setRollNumber] = useState("");
+  const [year, setYear] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState("");
@@ -52,7 +52,7 @@ export default function RegisterPage() {
     }
     setBusy(true);
     try {
-      await register({ email, password, name, rollNumber });
+      await register({ email, password, name, rollNumber, year });
       await router.push("/login?registered=1");
     } catch (error) {
       setErr(error?.message || "Internal registration fault.");
@@ -112,6 +112,21 @@ export default function RegisterPage() {
             <div>
               <label htmlFor="register-roll" className="block text-sm font-medium text-slate-700 mb-1.5">University Roll Number</label>
               <Input id="register-roll" required placeholder="e.g. 210101010" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="register-year" className="block text-sm font-medium text-slate-700 mb-1.5">Academic Year of Study</label>
+              <Select
+                id="register-year"
+                required
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+              >
+                <option value="">Select year of study</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </Select>
             </div>
             <div>
               <label htmlFor="register-email" className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
