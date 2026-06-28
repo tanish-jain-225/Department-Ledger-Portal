@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/lib/toast-context";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
@@ -16,6 +16,8 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("projects", uid, onRefresh);
 
+  const assistantRef = useRef(null);
+
   const [title, setTitle]           = useState("");
   const [techStack, setTechStack]   = useState("");
   const [link, setLink]             = useState("");
@@ -25,8 +27,11 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
-    await add({ title, techStack, link, github, description, document }, `Added project: ${title}`);
-    setTitle(""); setTechStack(""); setLink(""); setGithub(""); setDescription(""); setDocument(null);
+    const ok = await add({ title, techStack, link, github, description, document }, `Added project: ${title}`);
+    if (ok) {
+      setTitle(""); setTechStack(""); setLink(""); setGithub(""); setDescription(""); setDocument(null);
+      assistantRef.current?.reset();
+    }
   }
 
   const handleUpdate = () => save(
@@ -48,7 +53,7 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="project" studentUid={uid} existingData={rows}
+        <SmartAssistant ref={assistantRef} mode="project" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.title) setTitle(d.title);
             if (d.techStack) setTechStack(d.techStack);

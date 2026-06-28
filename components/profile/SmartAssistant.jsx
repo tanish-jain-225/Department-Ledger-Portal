@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { useToast } from "@/lib/toast-context";
 import { getIdToken } from "@/lib/get-id-token";
 import { uploadDocument, readFileAsBase64, FIRESTORE_MAX_UPLOAD_BYTES } from "@/lib/uploadCloud";
@@ -17,14 +17,14 @@ const ACCEPTED_TYPES = {
 
 const MAX_ANALYSIS_ATTEMPTS = 5;
 
-export default function SmartAssistant({
+const SmartAssistant = forwardRef(function SmartAssistant({
   mode,
   studentUid,
   onExtract,
   onDocumentSaved,
   existingData = [],
   label = "Smart Analysis",
-}) {
+}, ref) {
   const { addToast } = useToast();
   const fileInputRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +33,18 @@ export default function SmartAssistant({
   const [previewText, setPreviewText] = useState("");
   const [previewType, setPreviewType] = useState("");
   const [documentInfo, setDocumentInfo] = useState(null);
+
+  useImperativeHandle(ref, () => ({
+    reset() {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      setPreviewText("");
+      setPreviewType("");
+      setFileName("");
+      setDocumentInfo(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    },
+  }));
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -230,4 +242,6 @@ export default function SmartAssistant({
       )}
     </div>
   );
-}
+});
+
+export default SmartAssistant;

@@ -6,6 +6,24 @@ import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
 
 const GEMINI_TIMEOUT_MS = 30_000;
 
+/** Resolves the value for Access-Control-Allow-Origin based on the request origin.
+ * Allows: configured ALLOWED_ORIGIN, any localhost port, and falls back to * when unset.
+ * @param {string|undefined} requestOrigin - The Origin header from the request.
+ * @returns {string} The allowed origin string to reflect.
+ */
+function resolveAllowedOrigin(requestOrigin) {
+  const configured = process.env.ALLOWED_ORIGIN;
+  // Always allow localhost / 127.0.0.1 for local development
+  if (requestOrigin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin)) {
+    return requestOrigin;
+  }
+  if (configured) {
+    return requestOrigin === configured ? configured : configured;
+  }
+  // No ALLOWED_ORIGIN configured — open (matches previous behaviour)
+  return "*";
+}
+
 const VALID_SECTIONS = ["academic", "achievement", "activity", "placement", "project", "skill"];
 const VALID_MIME_TYPES = new Set([
   "application/pdf",
@@ -128,7 +146,9 @@ ${fields.map((f) => `  "${f}": "suggested value"`).join(",\n")}
 }
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const allowedOrigin = resolveAllowedOrigin(req.headers.origin);
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -144,8 +164,7 @@ export default async function handler(req, res) {
   const uid = await verifyAuthToken(req, res);
   if (!uid) return;
 
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
-  if (await isRateLimited(`autofill:${ip}`, RATE_LIMIT.AUTOFILL, RATE_LIMIT.WINDOW_MS)) {
+  if (await isRateLimited(`autofill:${uid}`, RATE_LIMIT.AUTOFILL, RATE_LIMIT.WINDOW_MS)) {
     return res.status(429).json({ error: "Too many requests. Please wait a moment." });
   }
 

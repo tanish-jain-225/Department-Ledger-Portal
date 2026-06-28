@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/lib/toast-context";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
@@ -16,6 +16,8 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("placements", uid, onRefresh);
 
+  const assistantRef = useRef(null);
+
   const [company, setCompany] = useState("");
   const [role, setRole]       = useState("");
   const [status, setStatus]   = useState("intern");
@@ -24,11 +26,14 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
-    await add(
+    const ok = await add(
       { company, role, status, package: pkg, document, year: new Date().getFullYear() },
       `Added placement: ${company} (${role})`
     );
-    setCompany(""); setRole(""); setStatus("intern"); setPkg(""); setDocument(null);
+    if (ok) {
+      setCompany(""); setRole(""); setStatus("intern"); setPkg(""); setDocument(null);
+      assistantRef.current?.reset();
+    }
   }
 
   const handleUpdate = () => save(
@@ -50,7 +55,7 @@ export default function PlacementSection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="placement" studentUid={uid} existingData={rows}
+        <SmartAssistant ref={assistantRef} mode="placement" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.company) setCompany(d.company);
             if (d.role) setRole(d.role);

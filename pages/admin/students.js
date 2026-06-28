@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, limit, doc, updateDoc } from "firebase/firestore";
+import { useEffect, useState, useRef } from "react";
+import { collection, query, where, getDocs, limit, doc, updateDoc, startAfter } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
 import { StudentInfoPopup } from "@/components";
 import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
@@ -31,6 +31,11 @@ export default function AdminStudentsDashboard() {
   const [exportPdfProgress, setExportPdfProgress] = useState(null);
   const [pdfBusy, setPdfBusy] = useState(false);
 
+  const [pendingDeletions, setPendingDeletions] = useState({ flags: {}, docIds: {} });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const lastDocRef = useRef(null);
+
   useEffect(() => {
     async function load() {
       setBusy(true);
@@ -52,8 +57,12 @@ export default function AdminStudentsDashboard() {
             limit(PAGE_SIZE.ADMIN_DIRECTORY)
           );
         }
-        const snap = await getDocs(q);
-        const delSnap = await getDocs(query(collection(db, "deletionRequests"), where("status", "==", "pending")));
+
+        const [snap, delSnap] = await Promise.all([
+          getDocs(q),
+          getDocs(query(collection(db, "deletionRequests"), where("status", "==", "pending")))
+        ]);
+
         const delMap = {};
         const delDocIds = {};
         delSnap.forEach((d) => {
@@ -63,12 +72,17 @@ export default function AdminStudentsDashboard() {
             delDocIds[data.uid] = d.id;
           }
         });
+
+        setPendingDeletions({ flags: delMap, docIds: delDocIds });
+
         setStudents(snap.docs.map(d => ({
           ...d.data(),
           id: d.id,
           pendingDeletion: delMap[d.id] || false,
           delDocId: delDocIds[d.id] || null,
         })));
+        setHasMore(snap.docs.length === PAGE_SIZE.ADMIN_DIRECTORY);
+        lastDocRef.current = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
       } catch (err) {
         addToast(err?.message || "Failed to load student records", "error");
       } finally {
@@ -77,6 +91,49 @@ export default function AdminStudentsDashboard() {
     }
     load();
   }, [addToast, selectedYear]);
+
+  async function loadMore() {
+    if (!lastDocRef.current || loadingMore) return;
+    setLoadingMore(true);
+    const db = getDb();
+    if (!db) return;
+    try {
+      let q;
+      if (selectedYear) {
+        q = query(
+          collection(db, "users"),
+          where("role", "==", "student"),
+          where("year", "==", selectedYear),
+          startAfter(lastDocRef.current),
+          limit(PAGE_SIZE.ADMIN_DIRECTORY)
+        );
+      } else {
+        q = query(
+          collection(db, "users"),
+          where("role", "==", "student"),
+          startAfter(lastDocRef.current),
+          limit(PAGE_SIZE.ADMIN_DIRECTORY)
+        );
+      }
+      const snap = await getDocs(q);
+      const data = snap.docs.map(d => ({
+        ...d.data(),
+        id: d.id,
+        pendingDeletion: pendingDeletions.flags[d.id] || false,
+        delDocId: pendingDeletions.docIds[d.id] || null,
+      }));
+      setStudents(prev => {
+        const ids = new Set(prev.map(r => r.id));
+        return [...prev, ...data.filter(r => !ids.has(r.id))];
+      });
+      setHasMore(data.length === PAGE_SIZE.ADMIN_DIRECTORY);
+      lastDocRef.current = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+    } catch (err) {
+      addToast(err?.message || "Failed to load more student records", "error");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function exportGlobalRegistry() {
     const db = getDb();
@@ -96,7 +153,7 @@ export default function AdminStudentsDashboard() {
 
       const rawDataBatch = [];
       const batchSize = 10;
-      
+
       for (let i = 0; i < total; i += batchSize) {
         const chunk = usersAll.slice(i, i + batchSize);
         const resolved = await Promise.all(chunk.map(async (u) => {
@@ -110,7 +167,7 @@ export default function AdminStudentsDashboard() {
 
       const slots = calculateDynamicSlots(rawDataBatch);
       const fields = getDynamicStudentFields(slots);
-      const rows = rawDataBatch.map(({ user, lists, report }) => 
+      const rows = rawDataBatch.map(({ user, lists, report }) =>
         buildStudentExportRow(user, lists, report, slots)
       );
 
@@ -160,26 +217,41 @@ export default function AdminStudentsDashboard() {
 
       for (let i = 0; i < total; i += batchSize) {
         const chunk = usersAll.slice(i, i + batchSize);
-        await Promise.all(
+
+        // Fetch exhaustive student records in parallel for network efficiency
+        const chunkData = await Promise.all(
           chunk.map(async (u) => {
             try {
               const lists = await fetchExhaustiveStudentData(u.id);
-              const report = computeReport(u, lists);
-              const pdfBytes = await buildStudentPdf(u, lists, report);
-
-              // Standardize name to FirstName_LastName style, stripping spaces and weird characters
-              const cleanName = (u.name || "Anonymous")
-                .trim()
-                .replace(/\s+/g, "_")
-                .replace(/[^a-zA-Z0-9_-]/g, "");
-
-              const filename = `${selectedYear}_${cleanName}_Dossier.pdf`;
-              zip.file(filename, pdfBytes);
+              return { u, lists };
             } catch (err) {
-              console.error(`Failed to compile dossier PDF for ${u.name || u.id}:`, err);
+              console.error(`Failed to fetch database records for student ${u.name || u.id}:`, err);
+              return null;
             }
           })
         );
+
+        // Render vector PDF bytes sequentially to prevent browser canvas/main thread/memory lockups
+        for (const item of chunkData) {
+          if (!item) continue;
+          const { u, lists } = item;
+          try {
+            const report = computeReport(u, lists);
+            const pdfBytes = await buildStudentPdf(u, lists, report);
+
+            // Standardize name to FirstName_LastName style, stripping spaces and weird characters
+            const cleanName = (u.name || "Anonymous")
+              .trim()
+              .replace(/\s+/g, "_")
+              .replace(/[^a-zA-Z0-9_-]/g, "");
+
+            const filename = `${selectedYear}_${cleanName}_Dossier.pdf`;
+            zip.file(filename, pdfBytes);
+          } catch (err) {
+            console.error(`Failed to compile dossier PDF for ${u.name || u.id}:`, err);
+          }
+        }
+
         const completed = Math.min(i + batchSize, total);
         setExportPdfProgress({ completed, total, percentage: Math.round((completed / total) * 100) });
       }
@@ -262,7 +334,7 @@ export default function AdminStudentsDashboard() {
 
   const filtered = students.filter(s => {
     const matchesSearch = s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      s.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesYear = selectedYear ? String(s.year) === selectedYear : true;
     return matchesSearch && matchesYear;
   });
@@ -325,8 +397,8 @@ export default function AdminStudentsDashboard() {
             <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
               {exportProgress !== null && (
                 <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                  <div 
-                    className="h-full bg-brand-600 transition-all duration-300" 
+                  <div
+                    className="h-full bg-brand-600 transition-all duration-300"
                     style={{ width: `${exportProgress}%` }}
                   />
                 </div>
@@ -354,8 +426,8 @@ export default function AdminStudentsDashboard() {
                     Dossiers Compiled: {exportPdfProgress.completed} / {exportPdfProgress.total}
                   </span>
                   <div className="w-48 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner">
-                    <div 
-                      className="h-full bg-brand-600 transition-all duration-300" 
+                    <div
+                      className="h-full bg-brand-600 transition-all duration-300"
                       style={{ width: `${exportPdfProgress.percentage}%` }}
                     />
                   </div>
@@ -474,7 +546,8 @@ export default function AdminStudentsDashboard() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
+          <>
+            <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
             {filtered.map(s => (
               <div key={s.id} className="group premium-card p-responsive transition-all hover:-translate-y-2 hover:shadow-2xl border border-slate-100 flex flex-col h-full">
                 <div className="mb-6 flex items-center justify-between">
@@ -556,6 +629,19 @@ export default function AdminStudentsDashboard() {
               </div>
             ))}
           </div>
+        
+          {hasMore && (
+          <div className="flex justify-center mt-8">
+            <Button
+              onClick={loadMore}
+              loading={loadingMore}
+              variant="secondary"
+              className="px-8 font-black"
+            >
+              Load More Students
+            </Button>
+          </div>)}
+          </>
         )}
       </div>
     </Layout>

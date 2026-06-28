@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, limit, doc, updateDoc, orderBy } from "firebase/firestore";
+import { useEffect, useState, useRef } from "react";
+import { collection, query, where, getDocs, limit, doc, updateDoc, orderBy, startAfter } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
 import { FacultyInfoPopup } from "@/components";
 import { Button, EmptyState, Badge, Skeleton, ConfirmDialog, RoleButton } from "@/components/ui";
@@ -24,35 +24,15 @@ export default function AdminFacultyDashboard() {
   const [roleChangeTarget, setRoleChangeTarget] = useState(null);
   const [pendingDeletions, setPendingDeletions] = useState({ flags: {}, docIds: {} });
 
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const lastDocRef = useRef(null);
+
   // Debounce - 350ms after user stops typing
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
     return () => clearTimeout(t);
   }, [searchTerm]);
-
-  useEffect(() => {
-    async function loadPendingDeletions() {
-      try {
-        const db = getDb();
-        if (!db) return;
-        const delSnap = await getDocs(query(collection(db, "deletionRequests"), where("status", "==", "pending")));
-        const flags = {};
-        const docIds = {};
-        delSnap.forEach((d) => {
-          const data = d.data();
-          if (data.uid) {
-            flags[data.uid] = true;
-            docIds[data.uid] = d.id;
-          }
-        });
-        setPendingDeletions({ flags, docIds });
-      } catch (err) {
-        addToast(err?.message || "Failed to load pending deletion protocols", "error");
-      }
-    }
-
-    loadPendingDeletions();
-  }, [addToast]);
 
   // Server-side prefix search on name field (same pattern as faculty dashboard)
   useEffect(() => {
@@ -74,13 +54,32 @@ export default function AdminFacultyDashboard() {
         }
         constraints.push(limit(PAGE_SIZE.ADMIN_DIRECTORY));
         const q = query(collection(db, "users"), ...constraints);
-        const snap = await getDocs(q);
+
+        const [snap, delSnap] = await Promise.all([
+          getDocs(q),
+          getDocs(query(collection(db, "deletionRequests"), where("status", "==", "pending")))
+        ]);
+
+        const flags = {};
+        const docIds = {};
+        delSnap.forEach((d) => {
+          const data = d.data();
+          if (data.uid) {
+            flags[data.uid] = true;
+            docIds[data.uid] = d.id;
+          }
+        });
+
+        setPendingDeletions({ flags, docIds });
+
         setFaculty(snap.docs.map(d => ({
           ...d.data(),
           id: d.id,
-          pendingDeletion: pendingDeletions.flags[d.id] || false,
-          delDocId: pendingDeletions.docIds[d.id] || null,
+          pendingDeletion: flags[d.id] || false,
+          delDocId: docIds[d.id] || null,
         })));
+        setHasMore(snap.docs.length === PAGE_SIZE.ADMIN_DIRECTORY);
+        lastDocRef.current = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
       } catch (err) {
         addToast(err?.message || "Failed to load faculty records", "error");
       } finally {
@@ -88,7 +87,48 @@ export default function AdminFacultyDashboard() {
       }
     }
     load();
-  }, [debouncedSearch, addToast, pendingDeletions]);
+  }, [debouncedSearch, addToast]);
+
+  async function loadMore() {
+    if (!lastDocRef.current || loadingMore) return;
+    setLoadingMore(true);
+    const db = getDb();
+    if (!db) return;
+    try {
+      const term = debouncedSearch.trim();
+      let constraints = [where("role", "==", "faculty")];
+      if (term) {
+        const end = term + "\uf8ff";
+        constraints = [
+          ...constraints,
+          orderBy("name"),
+          where("name", ">=", term),
+          where("name", "<=", end),
+        ];
+      }
+      constraints.push(startAfter(lastDocRef.current));
+      constraints.push(limit(PAGE_SIZE.ADMIN_DIRECTORY));
+      
+      const q = query(collection(db, "users"), ...constraints);
+      const snap = await getDocs(q);
+      const data = snap.docs.map(d => ({
+        ...d.data(),
+        id: d.id,
+        pendingDeletion: pendingDeletions.flags[d.id] || false,
+        delDocId: pendingDeletions.docIds[d.id] || null,
+      }));
+      setFaculty(prev => {
+        const ids = new Set(prev.map(r => r.id));
+        return [...prev, ...data.filter(r => !ids.has(r.id))];
+      });
+      setHasMore(data.length === PAGE_SIZE.ADMIN_DIRECTORY);
+      lastDocRef.current = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+    } catch (err) {
+      addToast(err?.message || "Failed to load more faculty records", "error");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function decide(uid, action, reqDocId = null, assignedRole = null) {
     const db = getDb();
@@ -258,7 +298,8 @@ export default function AdminFacultyDashboard() {
         ) : faculty.length === 0 ? (
           <EmptyState title="Staff Registry Empty" message="No active faculty records discovered." />
         ) : (
-          <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
+          <>
+            <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
             {faculty.map(f => (
               <div key={f.id} className="group premium-card p-responsive transition-all hover:-translate-y-2 hover:shadow-2xl border border-slate-100 flex flex-col h-full">
                 <div className="mb-6 flex items-center justify-between">
@@ -330,6 +371,20 @@ export default function AdminFacultyDashboard() {
               </div>
             ))}
           </div>
+
+          {hasMore && (
+            <div className="flex justify-center mt-8">
+              <Button 
+                onClick={loadMore} 
+                loading={loadingMore} 
+                variant="secondary"
+                className="px-8 font-black"
+              >
+                Load More Faculty
+              </Button>
+            </div>
+          )}
+          </>
         )}
       </div>
     </Layout>

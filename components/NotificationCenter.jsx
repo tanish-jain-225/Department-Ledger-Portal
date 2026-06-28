@@ -5,10 +5,10 @@ import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/f
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import Modal from "@/components/ui/Modal";
-import { markAllAsRead, clearAllNotifications } from "@/lib/notifications";
+import { markAllAsRead, clearAllNotifications, syncAdminNotifications } from "@/lib/notifications";
 
 export default function NotificationCenter() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { addToast } = useToast();
   const router = useRouter();
   const [notifications, setNotifications] = useState([]);
@@ -17,6 +17,13 @@ export default function NotificationCenter() {
 
   useEffect(() => {
     if (!user) return;
+
+    if (profile?.role === "admin") {
+      syncAdminNotifications(user.uid).catch((err) => {
+        console.warn("[Notification Center] Admin sync failed:", err.message);
+      });
+    }
+
     const db = getDb();
     if (!db) return;
 
@@ -50,7 +57,7 @@ export default function NotificationCenter() {
     );
 
     return () => unsub();
-  }, [user]);
+  }, [user, profile]);
 
   const handleNotificationClick = async (link) => {
     if (typeof link !== "string" || !link.trim()) return;

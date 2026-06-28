@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/lib/toast-context";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
@@ -37,6 +37,8 @@ export default function SkillSection({ uid, rows, onRefresh }) {
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("skills", uid, onRefresh);
 
+  const assistantRef = useRef(null);
+
   const [name, setName] = useState("");
   const [category, setCategory] = useState("languages");
   const [proficiency, setProficiency] = useState("intermediate");
@@ -49,9 +51,12 @@ export default function SkillSection({ uid, rows, onRefresh }) {
       addToast("Skill already exists in your ledger", "error");
       return;
     }
-    await add({ name: name.trim(), category, proficiency, document }, `Added skill: ${name.trim()}`);
-    setName("");
-    setDocument(null);
+    const ok = await add({ name: name.trim(), category, proficiency, document }, `Added skill: ${name.trim()}`);
+    if (ok) {
+      setName("");
+      setDocument(null);
+      assistantRef.current?.reset();
+    }
   }
 
   const handleUpdate = () => save(
@@ -71,7 +76,7 @@ export default function SkillSection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="skill" studentUid={uid} existingData={rows}
+        <SmartAssistant ref={assistantRef} mode="skill" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.name) setName(d.name);
             if (d.category) setCategory(d.category);

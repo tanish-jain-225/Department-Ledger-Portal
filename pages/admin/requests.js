@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   collection,
   getDocs,
@@ -6,6 +6,7 @@ import {
   orderBy,
   where,
   limit,
+  startAfter,
 } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
 import { Button, Badge, EmptyState, TableRowSkeleton, ConfirmDialog, RoleButton } from "@/components/ui";
@@ -31,6 +32,12 @@ export default function AdminRequestsPage() {
   const [dismissTarget, setDismissTarget] = useState(null); // { uid, reqDocId }
   const [roleChangeTarget, setRoleChangeTarget] = useState(null);
 
+  const [roleRequests, setRoleRequests] = useState({ map: {}, docIds: {} });
+  const [deletionRequests, setDeletionRequests] = useState({ map: {}, docIds: {} });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const lastDocRef = useRef(null);
+
   // Debounce search - avoids re-filtering on every keystroke
   useEffect(() => {
     if (searchTerm.trim() !== debouncedSearch.trim()) {
@@ -48,7 +55,6 @@ export default function AdminRequestsPage() {
     if (!db) return;
     setLoading(true);
     try {
-      // Server-side: if searching by name use prefix range query, otherwise load recent users
       const term = debouncedSearch.trim();
       let usersQuery;
       if (term) {
@@ -67,10 +73,12 @@ export default function AdminRequestsPage() {
           limit(PAGE_SIZE.ADMIN_DIRECTORY)
         );
       }
-      const snapUsers = await getDocs(usersQuery);
 
-      const qReqs = query(collection(db, "roleRequests"), where("status", "==", "pending"));
-      const snapReqs = await getDocs(qReqs);
+      const [snapUsers, snapReqs, delSnap] = await Promise.all([
+        getDocs(usersQuery),
+        getDocs(query(collection(db, "roleRequests"), where("status", "==", "pending"))),
+        getDocs(collection(db, "deletionRequests"))
+      ]);
 
       const reqMap = {};
       const reqDocIds = {};
@@ -82,7 +90,6 @@ export default function AdminRequestsPage() {
         }
       });
 
-      const delSnap = await getDocs(collection(db, "deletionRequests"));
       const delMap = {};
       const delDocIds = {};
       delSnap.forEach((d) => {
@@ -93,6 +100,9 @@ export default function AdminRequestsPage() {
         }
       });
 
+      setRoleRequests({ map: reqMap, docIds: reqDocIds });
+      setDeletionRequests({ map: delMap, docIds: delDocIds });
+
       setRows(snapUsers.docs.map((d) => ({
         ...d.data(),
         id: d.id,
@@ -101,6 +111,8 @@ export default function AdminRequestsPage() {
         pendingDeletion: delMap[d.id] || false,
         delDocId: delDocIds[d.id] || null
       })));
+      setHasMore(snapUsers.docs.length === PAGE_SIZE.ADMIN_DIRECTORY);
+      lastDocRef.current = snapUsers.docs.length > 0 ? snapUsers.docs[snapUsers.docs.length - 1] : null;
     } finally {
       setLoading(false);
     }
@@ -109,6 +121,54 @@ export default function AdminRequestsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function loadMore() {
+    if (!lastDocRef.current || loadingMore) return;
+    setLoadingMore(true);
+    const db = getDb();
+    if (!db) return;
+    try {
+      const term = debouncedSearch.trim();
+      let usersQuery;
+      if (term) {
+        const end = term + "\uf8ff";
+        usersQuery = query(
+          collection(db, "users"),
+          orderBy("name"),
+          where("name", ">=", term),
+          where("name", "<=", end),
+          startAfter(lastDocRef.current),
+          limit(PAGE_SIZE.ADMIN_DIRECTORY)
+        );
+      } else {
+        usersQuery = query(
+          collection(db, "users"),
+          orderBy("createdAt", "desc"),
+          startAfter(lastDocRef.current),
+          limit(PAGE_SIZE.ADMIN_DIRECTORY)
+        );
+      }
+      const snapUsers = await getDocs(usersQuery);
+      const data = snapUsers.docs.map((d) => ({
+        ...d.data(),
+        id: d.id,
+        pendingRoleReq: roleRequests.map[d.id] || null,
+        roleReqDocId: roleRequests.docIds[d.id] || null,
+        pendingDeletion: deletionRequests.map[d.id] || false,
+        delDocId: deletionRequests.docIds[d.id] || null
+      }));
+      setRows(prev => {
+        const ids = new Set(prev.map(r => r.id));
+        return [...prev, ...data.filter(r => !ids.has(r.id))];
+      });
+      setHasMore(snapUsers.docs.length === PAGE_SIZE.ADMIN_DIRECTORY);
+      lastDocRef.current = snapUsers.docs.length > 0 ? snapUsers.docs[snapUsers.docs.length - 1] : null;
+    } catch (err) {
+      addToast(err?.message || "Failed to load more records", "error");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function decide(uid, action, reqDocId, assignedRole = null) {
     const db = getDb();
@@ -291,67 +351,67 @@ export default function AdminRequestsPage() {
 
           <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
 
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
-            {/* Search Core */}
-            <div className="relative flex-1 group">
-              <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all duration-300 transform group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Identify entities in the global registry..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-12 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-500 transition-all"
-              />
-              {(debouncing || loading) && (
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center">
-                  <div className="h-4 w-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
+              {/* Search Core */}
+              <div className="relative flex-1 group">
+                <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all duration-300 transform group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Identify entities in the global registry..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-12 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-500 transition-all"
+                />
+                {(debouncing || loading) && (
+                  <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center">
+                    <div className="h-4 w-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              <div className="hidden lg:block w-px h-10 bg-slate-100" />
+
+              {/* Filter Module */}
+              <div className="relative min-w-60 group px-2">
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none transition-all group-hover:translate-x-1">
+                  <div className="h-2 w-2 rounded-full bg-brand-500" />
+                  <span className="text-[9px] font-black uppercase text-brand-600 tracking-tighter">Sector</span>
                 </div>
-              )}
-            </div>
-
-            <div className="hidden lg:block w-px h-10 bg-slate-100" />
-
-            {/* Filter Module */}
-            <div className="relative min-w-60 group px-2">
-              <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none transition-all group-hover:translate-x-1">
-                <div className="h-2 w-2 rounded-full bg-brand-500" />
-                <span className="text-[9px] font-black uppercase text-brand-600 tracking-tighter">Sector</span>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="w-full rounded-2xl border-none bg-slate-50/50 hover:bg-white pl-20 pr-12 py-4 text-[10px] font-black uppercase tracking-widest text-slate-900 focus:ring-0 outline-none cursor-pointer transition-all appearance-none"
+                >
+                  <option value="all">Global Catalog</option>
+                  <option value="pending">Pending Protocols</option>
+                  <option value="student">Student Registry</option>
+                  <option value="faculty">Faculty Ledger</option>
+                  <option value="admin">Administrator Pool</option>
+                </select>
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full rounded-2xl border-none bg-slate-50/50 hover:bg-white pl-20 pr-12 py-4 text-[10px] font-black uppercase tracking-widest text-slate-900 focus:ring-0 outline-none cursor-pointer transition-all appearance-none"
-              >
-                <option value="all">Global Catalog</option>
-                <option value="pending">Pending Protocols</option>
-                <option value="student">Student Registry</option>
-                <option value="faculty">Faculty Ledger</option>
-                <option value="admin">Administrator Pool</option>
-              </select>
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
 
-            {/* Status Indicator */}
-            <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-35">
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-slate-500 tracking-[0.2em]">Stream</span>
-                <span className="text-[10px] font-black text-brand-600 transition-all">
-                  {filtered.length} / {rows.length}
-                </span>
-              </div>
-              <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                </svg>
+              {/* Status Indicator */}
+              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-35">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-slate-500 tracking-[0.2em]">Stream</span>
+                  <span className="text-[10px] font-black text-brand-600 transition-all">
+                    {filtered.length} / {rows.length}
+                  </span>
+                </div>
+                <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
 
@@ -379,7 +439,8 @@ export default function AdminRequestsPage() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <>
+            <div className="space-y-6">
             {filtered.map((r) => {
               const isUnassigned = !r.role;
               return (
@@ -472,6 +533,20 @@ export default function AdminRequestsPage() {
               );
             })}
           </div>
+
+          {hasMore && (
+          <div className="flex justify-center mt-8">
+            <Button
+              onClick={loadMore}
+              loading={loadingMore}
+              variant="secondary"
+              className="px-8 font-black"
+            >
+              Load More Requests
+            </Button>
+          </div>
+        )}
+          </>
         )}
       </div>
     </Layout>

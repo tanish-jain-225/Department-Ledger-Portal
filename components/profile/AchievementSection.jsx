@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -14,6 +14,8 @@ export default function AchievementSection({ uid, rows, onRefresh }) {
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("achievements", uid, onRefresh);
 
+  const assistantRef = useRef(null);
+
   const [title, setTitle]           = useState("");
   const [issuer, setIssuer]         = useState("");
   const [level, setLevel]           = useState("college");
@@ -23,11 +25,14 @@ export default function AchievementSection({ uid, rows, onRefresh }) {
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
-    await add(
+    const ok = await add(
       { type: "achievement", title, issuer, level, date, description, document },
       `Added achievement: ${title}`
     );
-    setTitle(""); setIssuer(""); setLevel("college"); setDate(""); setDescription(""); setDocument(null);
+    if (ok) {
+      setTitle(""); setIssuer(""); setLevel("college"); setDate(""); setDescription(""); setDocument(null);
+      assistantRef.current?.reset();
+    }
   }
 
   const handleUpdate = () => save(
@@ -49,7 +54,7 @@ export default function AchievementSection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="achievement" studentUid={uid} existingData={rows}
+        <SmartAssistant ref={assistantRef} mode="achievement" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.title) setTitle(d.title);
             if (d.issuer) setIssuer(d.issuer);

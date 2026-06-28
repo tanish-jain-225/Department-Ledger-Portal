@@ -23,6 +23,14 @@ service cloud.firestore {
       return isAuth() && getRole() == 'admin';
     }
 
+    function isStudent() {
+      return isAuth() && getRole() == 'student';
+    }
+
+    function hasApprovedRole() {
+      return isAuth() && (getRole() == 'student' || getRole() == 'faculty' || getRole() == 'admin');
+    }
+
     function isAllowedAuditAction(action) {
       return action == 'user_role_assigned' ||
         action == 'user_deleted' ||
@@ -65,8 +73,15 @@ service cloud.firestore {
         isAdmin() ||
         (isStaff() && (resource.data.role == 'student' || resource.data.role == 'faculty'))
       );
-      allow create: if isAuth() && uid() == userId;
-      allow update: if isAuth() && (uid() == userId || isAdmin());
+      allow create: if isAuth() && uid() == userId && (
+        !('role' in request.resource.data) || request.resource.data.role == ""
+      );
+      allow update: if isAuth() && (
+        isAdmin() || (
+          uid() == userId && 
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'facultyVerification'])
+        )
+      );
       allow delete: if isAdmin();
     }
 
@@ -75,65 +90,68 @@ service cloud.firestore {
     //                   placements, projects, skills, aiReports
 
     match /academicRecords/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
-      allow create: if isAuth() && request.resource.data.studentUid == uid();
-      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
-      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow read:   if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isStaff());
+      allow create: if isStudent() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /achievements/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
-      allow create: if isAuth() && request.resource.data.studentUid == uid();
-      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
-      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow read:   if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isStaff());
+      allow create: if isStudent() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /activities/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
-      allow create: if isAuth() && request.resource.data.studentUid == uid();
-      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
-      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow read:   if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isStaff());
+      allow create: if isStudent() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /placements/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
-      allow create: if isAuth() && request.resource.data.studentUid == uid();
-      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
-      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow read:   if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isStaff());
+      allow create: if isStudent() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /projects/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
-      allow create: if isAuth() && request.resource.data.studentUid == uid();
-      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
-      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow read:   if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isStaff());
+      allow create: if isStudent() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /skills/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
-      allow create: if isAuth() && request.resource.data.studentUid == uid();
-      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
-      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow read:   if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isStaff());
+      allow create: if isStudent() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /aiReports/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
-      allow create: if isAuth() && request.resource.data.studentUid == uid();
-      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
-      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow read:   if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isStaff());
+      allow create: if isStudent() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     match /uploadedDocuments/{docId} {
-      allow read:   if isAuth() && (resource.data.studentUid == uid() || isStaff());
-      allow create: if isAuth() && request.resource.data.studentUid == uid();
-      allow update: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
-      allow delete: if isAuth() && (resource.data.studentUid == uid() || isAdmin());
+      allow read:   if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isStaff());
+      allow create: if isStudent() && request.resource.data.studentUid == uid();
+      allow update: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
+      allow delete: if isAuth() && hasApprovedRole() && (resource.data.studentUid == uid() || isAdmin());
     }
 
     // ── roleRequests ──────────────────────────────────────────────────────
     match /roleRequests/{docId} {
       allow read:   if isAuth() && (resource.data.uid == uid() || isAdmin());
-      allow create: if isAuth() && request.resource.data.uid == uid();
+      allow create: if isAuth() && request.resource.data.uid == uid() && (
+        request.resource.data.requestedRole == "student" || 
+        request.resource.data.requestedRole == "faculty"
+      );
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }

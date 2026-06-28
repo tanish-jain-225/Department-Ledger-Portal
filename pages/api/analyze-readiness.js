@@ -5,6 +5,25 @@ import { verifyAuthToken } from "@/lib/api-auth";
 import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
 
 const GEMINI_TIMEOUT_MS = 30_000;
+
+/** Resolves the value for Access-Control-Allow-Origin based on the request origin.
+ * Allows: configured ALLOWED_ORIGIN, any localhost port, and falls back to * when unset.
+ * @param {string|undefined} requestOrigin - The Origin header from the request.
+ * @returns {string} The allowed origin string to reflect.
+ */
+function resolveAllowedOrigin(requestOrigin) {
+  const configured = process.env.ALLOWED_ORIGIN;
+  // Always allow localhost / 127.0.0.1 for local development
+  if (requestOrigin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin)) {
+    return requestOrigin;
+  }
+  if (configured) {
+    // Exact match against the configured production origin
+    return requestOrigin === configured ? configured : configured;
+  }
+  // No ALLOWED_ORIGIN configured — open (matches previous behaviour)
+  return "*";
+}
 export const config = {
   api: {
     bodyParser: {
@@ -124,7 +143,9 @@ export function sanitizeReadinessReport(data) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const allowedOrigin = resolveAllowedOrigin(req.headers.origin);
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -140,8 +161,7 @@ export default async function handler(req, res) {
   const uid = await verifyAuthToken(req, res);
   if (!uid) return;
 
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
-  if (await isRateLimited(`analyze:${ip}`, RATE_LIMIT.ANALYZE, RATE_LIMIT.WINDOW_MS)) {
+  if (await isRateLimited(`analyze:${uid}`, RATE_LIMIT.ANALYZE, RATE_LIMIT.WINDOW_MS)) {
     return res.status(429).json({ error: "Rate limit exceeded. Protocol paused." });
   }
 
@@ -166,7 +186,7 @@ export default async function handler(req, res) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: modelName });
 
-    // Prune data to avoid token bloat while maintaining context
+    // Prune and project data to avoid token bloat while maintaining context
     const context = {
       profile: {
         name: profile.name,
@@ -175,12 +195,12 @@ export default async function handler(req, res) {
         year: profile.year,
         isAlumni: !!profile.alumni
       },
-      academic: prune(academic, 8),
-      activities: prune(activities, 10),
-      achievements: prune(achievements, 10),
-      placements: prune(placements, 6),
-      projects: prune(projects, 8),
-      skills: prune(skills, 20)
+      academic: prune(academic, 8).map(r => r ? { gpa: r.gpa, year: r.year, semester: r.semester, subjects: r.subjects } : {}),
+      activities: prune(activities, 10).map(r => r ? { type: r.type, title: r.title, date: r.date, description: r.description } : {}),
+      achievements: prune(achievements, 10).map(r => r ? { title: r.title, issuer: r.issuer, level: r.level, date: r.date } : {}),
+      placements: prune(placements, 6).map(r => r ? { company: r.company, role: r.role, status: r.status, package: r.package } : {}),
+      projects: prune(projects, 8).map(r => r ? { title: r.title, techStack: r.techStack, description: r.description } : {}),
+      skills: prune(skills, 20).map(r => r ? { name: r.name, category: r.category, proficiency: r.proficiency } : {})
     };
 
     const prompt = `

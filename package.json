@@ -18,7 +18,7 @@
   "overrides": {
     "@tootallnate/once": "^3.0.1",
     "postcss": "^8.5.10",
-    "uuid": "^14.0.0",
+    "uuid": "^11.1.1",
     "js-yaml": "^4.2.0",
     "dompurify": "^3.4.11"
   },

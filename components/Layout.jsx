@@ -26,7 +26,7 @@ function canRender(access, role) {
     case ACCESS.GUEST: return !role;
     case ACCESS.AUTH: return !!role && hasApprovedRole(role);
     case ACCESS.STUDENT: return role === ROLES.STUDENT;
-    case ACCESS.STAFF: return isStaff(role);
+    case ACCESS.STAFF: return role === ROLES.FACULTY;
     case ACCESS.ADMIN: return canManageUsers(role);
     default: return false;
   }
@@ -96,7 +96,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
         redirectingRef.current = true;
         router.replace(homeFor(role)); return;
       }
-      if (access === ACCESS.STAFF && !isStaff(role)) {
+      if (access === ACCESS.STAFF && role !== ROLES.FACULTY) {
         redirectingRef.current = true;
         router.replace(homeFor(role)); return;
       }
@@ -111,7 +111,9 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
     }
   }, [router.isReady, loading, isLoggingOut, user, role, access, router]);
 
-  const isResolving = loading || !router.isReady;
+  // Only block rendering during active auth checks, or while waiting for redirect resolution on unauthorized paths.
+  // This provides an instantaneous, flicker-free SPA transition for all allowed pages.
+  const isResolving = loading || (!router.isReady && !canRender(access, role));
   const allowed = isResolving ? false : canRender(access, role);
 
   // Sidebar offset

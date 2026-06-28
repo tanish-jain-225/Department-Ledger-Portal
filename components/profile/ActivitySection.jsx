@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/lib/toast-context";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import Modal from "@/components/ui/Modal";
@@ -16,6 +16,8 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("activities", uid, onRefresh);
 
+  const assistantRef = useRef(null);
+
   const [type, setType]               = useState("none");
   const [title, setTitle]             = useState("");
   const [description, setDescription] = useState("");
@@ -24,8 +26,11 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
 
   async function handleAdd(e) {
     if (e) e.preventDefault();
-    await add({ type, title, description, date, document }, `Added activity: ${title}`);
-    setType("none"); setTitle(""); setDescription(""); setDate(""); setDocument(null);
+    const ok = await add({ type, title, description, date, document }, `Added activity: ${title}`);
+    if (ok) {
+      setType("none"); setTitle(""); setDescription(""); setDate(""); setDocument(null);
+      assistantRef.current?.reset();
+    }
   }
 
   const handleUpdate = () => save(
@@ -47,7 +52,7 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
           <p className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Assistant</p>
           <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
         </div>
-        <SmartAssistant mode="activity" studentUid={uid} existingData={rows}
+        <SmartAssistant ref={assistantRef} mode="activity" studentUid={uid} existingData={rows}
           onExtract={(d) => {
             if (d.type) setType(d.type);
             if (d.title) setTitle(d.title);

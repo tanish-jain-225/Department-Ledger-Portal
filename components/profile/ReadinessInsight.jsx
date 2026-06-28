@@ -74,6 +74,30 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
 
       // Final failure after retries
       console.error("Career Intelligence extraction failed:", msg);
+
+      // Diagnostic assist for token verification failures
+      if (status === 401 && token) {
+        const decoded = decodeJwt(token);
+        console.group("🔑 Auth Diagnostics (Client-Side)");
+        console.log("Token Payload:", decoded);
+        console.log("Client Project ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+        if (decoded) {
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          console.log(`Current Client Time: ${new Date().toISOString()} (${nowSeconds})`);
+          console.log(`Token Issued At: ${new Date(decoded.iat * 1000).toISOString()} (${decoded.iat})`);
+          console.log(`Token Expires At: ${new Date(decoded.exp * 1000).toISOString()} (${decoded.exp})`);
+          if (decoded.exp < nowSeconds) {
+            console.error("Diagnostic: Token is expired on the client side.");
+          }
+          if (decoded.aud !== process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+            console.error(`Diagnostic: Project ID Mismatch! Token is for "${decoded.aud}" but client expects "${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}".`);
+          }
+        } else {
+          console.error("Diagnostic: Token is malformed and could not be decoded.");
+        }
+        console.groupEnd();
+      }
+
       let userMessage = "AI Analysis failed. Please try again.";
       if (isHighDemand) {
         userMessage = "AI is currently experiencing peak demand. Please wait a moment and try again.";
@@ -330,3 +354,19 @@ const ReportContent = forwardRef(function ReportContent({ report, profile, label
     </div>
   );
 });
+
+function decodeJwt(token) {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      window.atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}

@@ -63,26 +63,27 @@ Core values:
 
 ### Frontend
 
-- framework: Next.js 16 (Pages Router)
-- UI: React 19 + Tailwind CSS 4
-- route-level access control handled through shared layout/access utilities
+- **Framework**: Next.js 16 (Pages Router)
+- **UI**: React 19 + Tailwind CSS 4 (responsive tokens + global HSL colors)
+- **Route Access Control**: Client layouts ([components/Layout.jsx](components/Layout.jsx)) enforce route permissions synchronously to prevent flicker during transitions.
+- **Web Worker CSV Exports**: Heavy data exports are processed off-thread using Web Workers ([public/workers/csv-worker.js](public/workers/csv-worker.js)) to avoid UI freezes.
 
 ### Backend (Next API Routes)
 
-- auth verification via firebase-admin
-- AI integration via Gemini API
-- server-side validation, sanitization, and rate limiting
+- **Auth Verification**: JWT verification via the `firebase-admin` SDK.
+- **AI Orchestration**: Direct integration with the Gemini 2.5 API, running under strict execution timeouts.
+- **Hybrid Rate Limiting**: Distributed, transaction-safe sliding window rate limiting backed by Firestore. On timeout or failure, the logic fails-open to local in-memory limits ([lib/rate-limit.js](lib/rate-limit.js)).
 
 ### Data Layer
 
-- primary database: Firestore
-- security boundaries enforced through Firestore Rules
-- indexes pre-defined for key query patterns
+- **Primary Database**: Google Cloud Firestore.
+- **Security Boundaries**: Enforced via declarative Firestore Security Rules ([firebase/firestore.rules](firebase/firestore.rules)).
+- **Index Fallback Engine**: If queries hit unbuilt Firestore composite indexes in dev/staging (raising a `failed-precondition` exception), the data utilities ([lib/data.js](lib/data.js)) automatically page records and filter in-memory.
 
 ### Audit and Governance
 
-- audit writes are append-only by rules design
-- admin workflows are tracked for forensics and accountability
+- **Append-Only Auditing**: Write-only audit log rules prevent retrospective modifications or deletions.
+- **Vector PDF CV Assembly**: Renders vector-based resumes using `jsPDF` for text searchability, then stitches student-uploaded verification records (PDFs/Images) dynamically using `pdf-lib` into a unified PDF portfolio ([lib/pdf-export.js](lib/pdf-export.js)).
 
 ---
 
@@ -131,12 +132,13 @@ Operational model:
 ```text
 .
 ├─ .github/workflows/           # CI workflows
-├─ __tests__/                   # unit + property + API integration tests
-├─ e2e/                         # Playwright smoke tests
+├─ __tests__/                   # unit + property + API integration + UI component tests
+├─ e2e/                         # Playwright smoke and auth-flow tests
 ├─ components/                  # UI and profile components
 ├─ pages/                       # Next.js routes and API handlers
 ├─ lib/                         # shared auth/data/security/business utilities
 ├─ firebase/                    # firestore rules and indexes
+├─ cors.json                    # Firebase Storage CORS policy (deploy with gsutil or Firebase CLI)
 ├─ public/                      # static assets and worker files
 ├─ styles/                      # global styles/theme tokens
 └─ docs/                        # architecture and API contract docs
@@ -216,12 +218,13 @@ Collection constants source:
 
 Key controls implemented:
 
-- server-side Firebase token verification for protected APIs
-- Firestore Rules enforcing ownership and role constraints
-- append-only audit log semantics
-- origin checks for AI endpoints
-- rate limiting and validation before expensive operations
-- CSV export masking support for sensitive fields
+- **Server-Side Verification**: Bearer Firebase ID token authentication on all protected REST endpoints.
+- **Role Boundary Rules**: Custom rules in [firebase/firestore.rules](firebase/firestore.rules) prevent privilege escalation (e.g., users cannot edit their own `role` or verification fields).
+- **Atomic User Purging**: Administrator user purges use `writeBatch` in Firestore to guarantee either all sub-collection records (projects, achievements, academic records) and the user document are deleted, or none are.
+- **Linked Document Cascades**: Deleting individual ledger entries automatically queries and deletes linked uploaded documents to avoid orphan storage files.
+- **Non-Repudiation Logs**: Audit logs are append-only (no update or delete operations are defined in Firestore rules).
+- **PII Sensitivity Masking**: CSV export utility filters and masks telephone, email, and location details depending on whether the actor is staff or admin ([lib/csv-download.js](lib/csv-download.js)).
+- **Origin-Gated AI Endpoints**: Restricts CORS requests on expensive generative functions.
 
 Rule definitions:
 
@@ -280,6 +283,10 @@ HEALTHCHECK_DEBUG_TOKEN=
 RATE_LIMIT_STORE=shared
 FIREBASE_CLIENT_EMAIL=
 FIREBASE_PRIVATE_KEY=
+
+# Restrict AI endpoint CORS to your production origin.
+# localhost is always allowed. If omitted, endpoints accept any origin.
+ALLOWED_ORIGIN=https://your-app.vercel.app
 ```
 
 Notes:
@@ -308,17 +315,18 @@ npm run test:e2e     # playwright smoke tests
 
 Current status (latest local validation):
 
-- Jest: 77 passing tests across 12 suites
-- Playwright: 5 passing smoke tests
+- Jest: 77+ passing tests across 16 suites (includes UI component tests)
+- Playwright: 5+ passing smoke tests + auth-flow journey tests
 - Lint: pass
 - Build: pass
 
 Included test types:
 
-- unit tests
-- property-based tests (fast-check)
-- API route integration-style tests (mocked auth/rate-limit/AI)
-- browser smoke E2E tests
+- **Unit Testing**: Covers layout rendering, text styling, navigation routing, and utility scripts.
+- **UI Component Testing**: React Testing Library tests for `Button`, `Modal`, `EmptyState`, and `Skeleton` primitives — verifying rendering, accessibility, interaction, and prop contracts.
+- **Property-Based Testing**: Employs `fast-check` to run parameterized invariant checks (e.g., ensuring rate-limiting keys never interfere, and validating output formats across hundreds of randomized scenarios).
+- **Route Integration testing**: Simulates Next.js API requests with mocked authentication states, database responses, and generative API models.
+- **E2E Smoke and Auth-Flow Testing**: Playwright scripts simulate login/register page structure, unauthenticated redirect protection, home→auth navigation, mobile responsive assertions, and legal page reachability.
 
 Run full validation locally:
 
@@ -340,10 +348,10 @@ Workflow file:
 Pipeline coverage:
 
 - trigger on push/PR/all branches and manual dispatch
-- Node matrix verify on 20.x and 22.x
+- Node matrix verify on 20.x and 22.x (matching `engines` field in package.json)
 - install + production dependency audit (`npm audit --omit=dev --audit-level=high`)
-- lint + unit/property/integration tests + build
-- Playwright smoke tests in separate gated job
+- lint + unit/property/integration/UI tests + build
+- Playwright smoke and auth-flow tests in separate gated job
 
 ---
 
@@ -372,23 +380,27 @@ Deployment checklist:
 
 ### App starts but AI endpoints fail
 
-- verify `GEMINI_API_KEY` and `GEMINI_MODEL`
-- check `/api/health` response and optional debug mode with token
+- verify `GEMINI_API_KEY` and `GEMINI_MODEL` are set in `.env.local`.
+- check `/api/health` response and optional debug mode using the header `x-health-debug-token`.
+- **LLM balanced-bracket issues**: If AI output contains text wrapper prose outside JSON, the `parseAiJson` parser automatically extracts the balanced JSON block.
+- **Upstream error masking**: Raw AI connection errors are converted into standardized HTTP codes (429/503/504) to avoid leaking server logs to clients.
 
 ### Unauthorized on protected APIs
 
-- ensure client sends `Authorization: Bearer <firebase-id-token>`
-- verify server has valid firebase-admin configuration or ADC
+- ensure client sends `Authorization: Bearer <firebase-id-token>`.
+- verify server has valid firebase-admin credentials or Application Default Credentials (ADC).
+- **Role Clearance check**: Even authenticated users will receive 403 Forbidden if their role is still empty (pending approval).
 
 ### Rate limit errors in local testing
 
-- expected when repeated requests hit per-IP caps
-- tune usage patterns or local test sequencing
+- **Distributed vs Local limiting**: Local environments automatically bypass Firestore transactions to avoid rate-limiting lockouts, falling back to local memory limiters.
+- Adjust `RATE_LIMIT_STORE` in `.env.local` to bypass or enforce shared rules.
 
 ### Firestore permission errors
 
-- validate role assignment in `users` collection
-- verify rules in [firebase/firestore.rules](firebase/firestore.rules)
+- validate role assignment in `users` collection.
+- verify rules in [firebase/firestore.rules](firebase/firestore.rules).
+- **Composite Index Errors**: If composite queries fail during development, check if the console prompts to build indexes. The application will fall back to local in-memory filtering in the interim.
 
 ---
 

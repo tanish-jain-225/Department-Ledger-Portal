@@ -114,18 +114,20 @@ export default function RegisterPage() {
               <Input id="register-roll" required placeholder="e.g. 210101010" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="register-year" className="block text-sm font-medium text-slate-700 mb-1.5">Academic Year of Study</label>
+              <label htmlFor="register-year" className="block text-sm font-medium text-slate-700 mb-1.5">Academic Year / Role</label>
               <Select
                 id="register-year"
                 required
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
               >
-                <option value="">Select year of study</option>
+                <option value="">Select year / role</option>
                 <option value="1">1st Year</option>
                 <option value="2">2nd Year</option>
                 <option value="3">3rd Year</option>
                 <option value="4">4th Year</option>
+                <option value="alumni">Alumni</option>
+                <option value="faculty">Faculty</option>
               </Select>
             </div>
             <div>

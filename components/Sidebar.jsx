@@ -96,7 +96,8 @@ export default function Sidebar({ collapsed = false, onCollapse }) {
             </button>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2.5">
+            <NotificationBoundary><NotificationCenter /></NotificationBoundary>
             <div className="h-8 w-8 rounded-lg bg-brand-700 flex items-center justify-center text-white text-sm font-semibold">
               {profile?.name?.charAt(0)?.toUpperCase() || "U"}
             </div>

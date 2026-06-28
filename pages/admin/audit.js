@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { useEffect, useState, useRef } from "react";
+import { collection, getDocs, limit, orderBy, query, startAfter } from "firebase/firestore";
 import Layout, { ACCESS } from "@/components/Layout";
 import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { getDb } from "@/lib/firebase";
+import { PAGE_SIZE } from "@/lib/constants";
 
 const ACTION_STYLES = {
   // Destructive (Red 700)
@@ -63,15 +64,24 @@ export default function AdminAuditPage() {
   const [rows, setRows] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const lastDocRef = useRef(null);
 
   useEffect(() => {
     async function load() {
       const db = getDb();
       if (!db) return;
       try {
-        const q = query(collection(db, "auditLogs"), orderBy("timestamp", "desc"), limit(100));
+        const q = query(
+          collection(db, "auditLogs"), 
+          orderBy("timestamp", "desc"), 
+          limit(PAGE_SIZE.AUDIT_LOGS)
+        );
         const snap = await getDocs(q);
         setRows(snap.docs.map((d) => ({ ...d.data(), id: d.id })));
+        setHasMore(snap.docs.length === PAGE_SIZE.AUDIT_LOGS);
+        lastDocRef.current = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
       } catch (e) {
         setErr(e?.message || "Could not load audit log (check Firestore index).");
       } finally {
@@ -80,6 +90,33 @@ export default function AdminAuditPage() {
     }
     load();
   }, []);
+
+  async function loadMore() {
+    if (!lastDocRef.current || loadingMore) return;
+    setLoadingMore(true);
+    const db = getDb();
+    if (!db) return;
+    try {
+      const q = query(
+        collection(db, "auditLogs"),
+        orderBy("timestamp", "desc"),
+        startAfter(lastDocRef.current),
+        limit(PAGE_SIZE.AUDIT_LOGS)
+      );
+      const snap = await getDocs(q);
+      const data = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+      setRows(prev => {
+        const ids = new Set(prev.map(r => r.id));
+        return [...prev, ...data.filter(r => !ids.has(r.id))];
+      });
+      setHasMore(data.length === PAGE_SIZE.AUDIT_LOGS);
+      lastDocRef.current = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+    } catch (e) {
+      setErr(e?.message || "Could not load more logs.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   const downloadCSV = () => {
     if (rows.length === 0) return;
@@ -244,6 +281,19 @@ export default function AdminAuditPage() {
                 </div>
               );
             })}
+
+            {hasMore && (
+              <div className="flex justify-center mt-8">
+                <Button 
+                  onClick={loadMore} 
+                  loading={loadingMore} 
+                  variant="secondary"
+                  className="px-8 font-black"
+                >
+                  Load More Logs
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

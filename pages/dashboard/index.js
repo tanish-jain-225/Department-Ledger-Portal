@@ -11,17 +11,17 @@ import {
 import { computeReport } from "@/lib/student-analytics";
 import { fetchExhaustiveStudentData } from "@/lib/student-data";
 import { getDb } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import StudentInfoPopup from "@/components/StudentInfoPopup";
-import Button from "@/components/ui/Button";
-import EmptyState from "@/components/ui/EmptyState";
-import { Skeleton } from "@/components/ui";
+import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { PAGE_SIZE } from "@/lib/constants";
+import { useToast } from "@/lib/toast-context";
 
 const PAGE = PAGE_SIZE.DASHBOARD;
 
 export default function DashboardPage() {
   const { loading } = useAuth();
+  const { addToast } = useToast();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [rows, setRows] = useState([]);
@@ -84,10 +84,16 @@ export default function DashboardPage() {
     try {
       const db = getDb();
       if (!db) return;
-      const q = query(collection(db, "users"), where("role", "==", "student"));
+
+      const EXPORT_MAX_STUDENTS = 2000;
+      const q = query(collection(db, "users"), where("role", "==", "student"), limit(EXPORT_MAX_STUDENTS));
       const snap = await getDocs(q);
       const allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const total = allStudents.length;
+
+      if (total === EXPORT_MAX_STUDENTS) {
+        addToast("Export capped at 2000 students for stability.", "info");
+      }
 
       const rawDataBatch = [];
       const batchSize = 10;
@@ -95,11 +101,21 @@ export default function DashboardPage() {
       for (let i = 0; i < total; i += batchSize) {
         const chunk = allStudents.slice(i, i + batchSize);
         const resolved = await Promise.all(chunk.map(async (u) => {
-          const lists = await fetchExhaustiveStudentData(u.id);
-          const report = computeReport(u, lists);
-          return { user: u, lists, report };
+          try {
+            const lists = await fetchExhaustiveStudentData(u.id);
+            const report = computeReport(u, lists);
+            return { user: u, lists, report };
+          } catch (studentErr) {
+            console.error(`Failed to fetch database records for student ${u.name || u.id}:`, studentErr);
+            return null;
+          }
         }));
-        rawDataBatch.push(...resolved);
+        rawDataBatch.push(...resolved.filter(Boolean));
+      }
+
+      if (rawDataBatch.length === 0) {
+        addToast("No student records available to export.", "info");
+        return;
       }
 
       // 1. Calculate dynamic slots
@@ -114,9 +130,10 @@ export default function DashboardPage() {
       );
 
       downloadFacultyStudentRecordsCsv(rows, `department-ledger-staff-${new Date().toISOString().split('T')[0]}.csv`, { fields });
+      addToast("Exhaustive student records exported successfully.", "success");
     } catch (err) {
       console.error("Export failed:", err);
-      alert("Failed to prepare export. Please try again.");
+      addToast(err?.message || "Failed to prepare export. Please try again.", "error");
     } finally {
       setExporting(false);
     }

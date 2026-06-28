@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/lib/toast-context";
 import { useLedgerSection } from "@/lib/use-ledger-section";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -16,6 +16,8 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
   const { editingRecord, setEditingRecord, deleteTarget, setDeleteTarget, saving, add, save, confirmDelete } =
     useLedgerSection("academicRecords", uid, onRefresh);
 
+  const assistantRef = useRef(null);
+
   const [year, setYear] = useState("");
   const [semester, setSemester] = useState("");
   const [rollNumber, setRollNumber] = useState("");
@@ -31,11 +33,14 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
       addToast("GPA must be a number between 0 and 10.", "error");
       return;
     }
-    await add(
+    const ok = await add(
       { year, semester, gpa, subjects, rollNumber, branch, document },
       `Added academic record for Year ${year} Sem ${semester}`
     );
-    setYear(""); setSemester(""); setGpa(""); setSubjects(""); setRollNumber(""); setBranch(""); setDocument(null);
+    if (ok) {
+      setYear(""); setSemester(""); setGpa(""); setSubjects(""); setRollNumber(""); setBranch(""); setDocument(null);
+      assistantRef.current?.reset();
+    }
   }
 
   async function handleUpdate() {
@@ -70,6 +75,7 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
             <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-0.5">Auto-fill with AI</p>
           </div>
           <SmartAssistant
+            ref={assistantRef}
             mode="academic"
             studentUid={uid}
             existingData={rows}
