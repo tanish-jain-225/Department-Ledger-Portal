@@ -177,6 +177,12 @@ export default function AdminRequestsPage() {
       return;
     }
 
+    // Governance guard: prevent all administrative actions on current user's own account
+    if (uid === user?.uid) {
+      addToast("Governance policy: Self-account actions are protected and cannot be executed.", "error");
+      return;
+    }
+
     try {
       const roleToAssign = assignedRole || "student";
       if (action === "delete") {
@@ -261,6 +267,11 @@ export default function AdminRequestsPage() {
   }
 
   function askRoleChange(uid, role, reqDocId = null) {
+    // Governance guard: prevent self-role modification
+    if (uid === user?.uid) {
+      addToast("Governance policy: You cannot modify your own role assignment.", "error");
+      return;
+    }
     setRoleChangeTarget({ uid, role, reqDocId });
   }
 
