@@ -111,6 +111,37 @@ describe("POST /api/analyze-readiness", () => {
     expect(res.statusCode).toBe(200);
   });
 
+  it("rejects disallowed origin when ALLOWED_ORIGIN is set", async () => {
+    process.env.ALLOWED_ORIGIN = "https://your-app.vercel.app";
+    const req = createReq({ headers: { origin: "https://malicious.example" } });
+    const res = createRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toEqual({ error: "Access Forbidden: Disallowed origin." });
+  });
+
+  it("allows configured ALLOWED_ORIGIN matching origin", async () => {
+    process.env.ALLOWED_ORIGIN = "https://your-app.vercel.app";
+    const req = createReq({ headers: { origin: "https://your-app.vercel.app" } });
+    const res = createRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+  });
+
+  it("allows localhost bypass even when ALLOWED_ORIGIN is set", async () => {
+    process.env.ALLOWED_ORIGIN = "https://your-app.vercel.app";
+    const req = createReq({ headers: { origin: "http://localhost:3000" } });
+    const res = createRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+  });
+
   it("returns early when auth fails", async () => {
     verifyAuthToken.mockImplementation(async (_req, res) => {
       res.status(401).json({ error: "Unauthorized" });

@@ -5,7 +5,7 @@ This document defines stable request/response contracts for public API routes.
 ## Common Rules
 
 - Content type: application/json
-- Auth: Bearer token required unless explicitly noted
+- Auth: Cryptographically verified Bearer token required (Firebase ID JWT) unless explicitly noted. Tokens are validated using Google's public key certificates.
 - Error format:
 
 ```json
@@ -14,7 +14,7 @@ This document defines stable request/response contracts for public API routes.
 }
 ```
 
-- CORS origin allowlist is enforced on AI routes.
+- CORS: Origin allowlist is enforced server-side. Requests from unapproved origins are blocked early with `403 Forbidden` to prevent unauthorized backend computations.
 - High-level runtime health checks return a `service` field for monitoring.
 
 ## GET /api/health

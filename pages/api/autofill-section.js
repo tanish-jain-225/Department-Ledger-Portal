@@ -156,6 +156,13 @@ export default async function handler(req, res) {
     return res.status(204).end();
   }
 
+  const origin = req.headers.origin;
+  const isLocalhost = origin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  if (process.env.ALLOWED_ORIGIN && origin && allowedOrigin !== origin && !isLocalhost) {
+    console.warn(`[CORS Audit] Blocked request execution from disallowed origin: ${origin}`);
+    return res.status(403).json({ error: "Access Forbidden: Disallowed origin." });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -165,6 +172,7 @@ export default async function handler(req, res) {
   if (!uid) return;
 
   if (await isRateLimited(`autofill:${uid}`, RATE_LIMIT.AUTOFILL, RATE_LIMIT.WINDOW_MS)) {
+    console.warn(`[Rate Limit Audit] User ${uid} triggered rate limit on autofill-section`);
     return res.status(429).json({ error: "Too many requests. Please wait a moment." });
   }
 
@@ -258,6 +266,7 @@ No markdown, no explanation, no preamble. Just the JSON object.`;
     return res.status(200).json(data);
   } catch (error) {
     const { status, message } = sanitizeApiError(error);
+    console.error(`[API Error Audit] Autofill-section request failed with status ${status}:`, error);
     return res.status(status).json({ error: message });
   }
 }
