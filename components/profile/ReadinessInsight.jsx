@@ -157,7 +157,7 @@ export default function ReadinessInsight({ profile, academic, activities, achiev
             <div className="flex justify-end">
               <DownloadPdfButton
                 elementRef={pdfRef}
-                filename={buildFilename("Career_Report", profile?.name || "Student")}
+                filename={buildFilename("Career_Pulse", profile?.name || "Student")}
                 label="Download PDF"
                 orientation="portrait"
                 windowWidth={700}

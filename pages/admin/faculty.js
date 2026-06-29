@@ -240,7 +240,10 @@ export default function AdminFacultyDashboard() {
           </div>
           <Button onClick={() => {
             const mapped = faculty.map(f => buildFacultyExportRow(f));
-            downloadAdminFacultyRecordsCsv(mapped, "faculty-ledger-extensive.csv");
+            downloadAdminFacultyRecordsCsv(
+              mapped,
+              `Faculty_Registry_Full_${new Date().toISOString().split('T')[0]}.csv`
+            );
             addToast("Staff ledger downloaded (Full Fidelity).", "success");
           }}
             className="lg:w-auto w-full group shadow-xl shadow-brand-500/10">

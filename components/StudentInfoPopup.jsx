@@ -3,6 +3,7 @@ import { getDoc, doc } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { listByStudent, listStudentDocuments } from "@/lib/data";
 import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/lib/toast-context";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import DocumentPreview from "@/components/profile/DocumentPreview";
@@ -189,11 +190,13 @@ function BarRow({ label, pct, barColor, sub }) {
 
 export default function StudentInfoPopup({ uid, onClose }) {
   const { profile: currentUser } = useAuth();
+  const { addToast } = useToast();
   const [data, setData] = useState(null);
   const [lists, setLists] = useState({ academic: [], activities: [], achievements: [], placements: [], uploadedDocuments: [] });
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [showReport, setShowReport] = useState(false);
+  const [downloadingDossier, setDownloadingDossier] = useState(false);
 
 
   useEffect(() => {
@@ -234,9 +237,47 @@ export default function StudentInfoPopup({ uid, onClose }) {
       ? downloadAdminStudentsCsv
       : downloadFacultyStudentsCsv;
 
-    download([exportRow], `record-extensive-${data.name || uid}.csv`, {
-      fields,
-    });
+    const cleanName = (data.name || uid)
+      .trim()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-zA-Z0-9_-]/g, "");
+
+    download(
+      [exportRow],
+      `Student_Record_Extensive_${cleanName}_${new Date().toISOString().split('T')[0]}.csv`,
+      { fields }
+    );
+  }
+
+  async function handlePdfDownload() {
+    if (!data) return;
+    setDownloadingDossier(true);
+    try {
+      const { buildStudentPdf } = await import("@/lib/pdf-export");
+      const { buildFilename } = await import("@/lib/pdf-download");
+
+      addToast("Compiling student dossier PDF...", "info");
+
+      const report = computeReport(data, lists);
+      const pdfBytes = await buildStudentPdf(data, lists, report);
+
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = buildFilename("Student_Dossier", data.rollNumber || data.name);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      addToast("Dossier PDF downloaded successfully.", "success");
+    } catch (e) {
+      console.error("PDF generation failed:", e);
+      addToast(e?.message || "Failed to download PDF.", "error");
+    } finally {
+      setDownloadingDossier(false);
+    }
   }
 
   return (
@@ -266,11 +307,23 @@ export default function StudentInfoPopup({ uid, onClose }) {
                 View Profile Report
               </Button>
               <Button
+                onClick={handlePdfDownload}
+                variant="brand"
+                disabled={downloadingDossier}
+                loading={downloadingDossier}
+                className="font-black flex items-center justify-center"
+              >
+                <svg className="h-4 w-4 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download PDF Dossier
+              </Button>
+              <Button
                 onClick={handleCsvDownload}
                 variant="success"
-                className="font-black"
+                className="font-black flex items-center justify-center"
               >
-                <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg className="h-4 w-4 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 Download CSV

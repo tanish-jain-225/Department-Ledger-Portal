@@ -171,7 +171,11 @@ export default function AdminStudentsDashboard() {
         buildStudentExportRow(user, lists, report, slots)
       );
 
-      downloadAdminStudentsCsv(rows, "global-registry-dynamic.csv", { fields });
+      downloadAdminStudentsCsv(
+        rows,
+        `Student_Registry_Full_${new Date().toISOString().split('T')[0]}.csv`,
+        { fields }
+      );
       addToast("Exhaustive registry exported.", "success");
     } catch (error) {
       addToast(error?.message || "Failed to export", "error");
@@ -239,13 +243,11 @@ export default function AdminStudentsDashboard() {
             const report = computeReport(u, lists);
             const pdfBytes = await buildStudentPdf(u, lists, report);
 
-            // Standardize name to FirstName_LastName style, stripping spaces and weird characters
             const cleanName = (u.name || "Anonymous")
               .trim()
               .replace(/\s+/g, "_")
               .replace(/[^a-zA-Z0-9_-]/g, "");
-
-            const filename = `${selectedYear}_${cleanName}_Dossier.pdf`;
+            const filename = `Student_Dossier_${cleanName}.pdf`;
             zip.file(filename, pdfBytes);
           } catch (err) {
             console.error(`Failed to compile dossier PDF for ${u.name || u.id}:`, err);
@@ -260,7 +262,7 @@ export default function AdminStudentsDashboard() {
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `student-dossiers-year-${selectedYear}.zip`;
+      a.download = `Student_Dossiers_Year_${selectedYear}_${new Date().toISOString().split('T')[0]}.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

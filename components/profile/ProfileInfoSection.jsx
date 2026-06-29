@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useProfileEdit } from "@/lib/use-profile-edit";
+import { useToast } from "@/lib/toast-context";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
@@ -7,7 +8,9 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Select from "@/components/ui/Select";
 
 export default function ProfileInfoSection({ user, profile, refreshProfile, onViewCard }) {
+  const { addToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [downloadingDossier, setDownloadingDossier] = useState(false);
   const [form, setForm] = useState({
     name: profile?.name || "",
     phone: profile?.phone || "",
@@ -38,6 +41,40 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
     if (ok) setIsEditing(false);
   }
 
+  async function handleDownloadDossier() {
+    if (!user?.uid) return;
+    setDownloadingDossier(true);
+    try {
+      const { fetchExhaustiveStudentData } = await import("@/lib/student-data");
+      const { computeReport } = await import("@/lib/student-analytics");
+      const { buildStudentPdf } = await import("@/lib/pdf-export");
+      const { buildFilename } = await import("@/lib/pdf-download");
+
+      addToast("Assembling complete academic ledger dossier...", "info");
+
+      const lists = await fetchExhaustiveStudentData(user.uid);
+      const report = computeReport(profile, lists);
+      const pdfBytes = await buildStudentPdf(profile, lists, report);
+
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = buildFilename("Student_Dossier", profile.rollNumber || profile.name);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      addToast("Dossier PDF downloaded successfully.", "success");
+    } catch (err) {
+      console.error("Dossier download failed:", err);
+      addToast(err?.message || "Failed to download dossier.", "error");
+    } finally {
+      setDownloadingDossier(false);
+    }
+  }
+
   return (
     <section className="premium-card p-responsive animate-slide-up transition-all duration-300">
       <div className="flex flex-col sm:flex-row items-start justify-between gap-6 mb-8">
@@ -49,21 +86,38 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
           {!isEditing && (
             <button
               onClick={onViewCard}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-xs font-black bg-brand-700 text-white hover:bg-brand-800 transition-all active:scale-95 shadow-xl shadow-brand-900/10 uppercase tracking-widest whitespace-nowrap"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-xs font-black bg-brand-700 text-white hover:bg-brand-800 transition-all active:scale-95 shadow-xl shadow-brand-900/10 uppercase tracking-widest whitespace-nowrap"
             >
-              View Identity Card
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+              </svg>
+              Identity Card
             </button>
+          )}
+          {!isEditing && (
+            <Button
+              variant="brand"
+              onClick={handleDownloadDossier}
+              disabled={downloadingDossier}
+              loading={downloadingDossier}
+              className="group py-3.5 shrink-0"
+            >
+              <svg className="h-4 w-4 shrink-0 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download Dossier
+            </Button>
           )}
           {!isEditing && (
             <Button
               variant="secondary"
               onClick={() => setIsEditing(true)}
-              className="group py-3.5"
+              className="group py-3.5 border-slate-200"
             >
-              <svg className="h-4 w-4 text-brand-500 transition-transform group-hover:rotate-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-4 w-4 text-slate-500 transition-transform group-hover:rotate-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Edit Attributes
+              Edit Details
             </Button>
           )}
         </div>

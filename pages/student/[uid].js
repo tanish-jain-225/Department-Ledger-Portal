@@ -8,7 +8,8 @@ import { useAuth } from "@/lib/auth-context";
 import { isStaff } from "@/lib/roles";
 import { listByStudent, listStudentDocuments } from "@/lib/data";
 import DocumentPreview from "@/components/profile/DocumentPreview";
-import { Badge, Skeleton, EmptyState, SectionCard } from "@/components/ui";
+import { Badge, Skeleton, EmptyState, SectionCard, Button } from "@/components/ui";
+import { useToast } from "@/lib/toast-context";
 
 function InfoItem({ label, value, wide }) {
   return (
@@ -24,12 +25,14 @@ export default function StudentDetailPage() {
   const router = useRouter();
   const { uid } = router.query;
   const { user, profile } = useAuth();
+  const { addToast } = useToast();
   const [data, setData] = useState(null);
   const [lists, setLists] = useState({
     academic: [], activities: [], achievements: [], placements: [], uploadedDocuments: [],
   });
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
+  const [downloadingDossier, setDownloadingDossier] = useState(false);
 
   const role = profile?.role;
   const allowed = user && role && isStaff(role);
@@ -62,6 +65,40 @@ export default function StudentDetailPage() {
     }
     load();
   }, [uid, allowed]);
+
+  async function handleDownloadDossier() {
+    if (!data) return;
+    setDownloadingDossier(true);
+    try {
+      const { fetchExhaustiveStudentData } = await import("@/lib/student-data");
+      const { computeReport } = await import("@/lib/student-analytics");
+      const { buildStudentPdf } = await import("@/lib/pdf-export");
+      const { buildFilename } = await import("@/lib/pdf-download");
+
+      addToast("Compiling student dossier PDF...", "info");
+
+      const exhaustiveLists = await fetchExhaustiveStudentData(uid);
+      const report = computeReport(data, exhaustiveLists);
+      const pdfBytes = await buildStudentPdf(data, exhaustiveLists, report);
+
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = buildFilename("Student_Dossier", data.rollNumber || data.name);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      addToast("Dossier PDF downloaded successfully.", "success");
+    } catch (e) {
+      console.error("PDF generation failed:", e);
+      addToast(e?.message || "Failed to download PDF.", "error");
+    } finally {
+      setDownloadingDossier(false);
+    }
+  }
 
   return (
     <Layout title={data?.name || "Student Detail"} access={ACCESS.STAFF}>
@@ -116,15 +153,29 @@ export default function StudentDetailPage() {
                   )}
                 </div>
               </div>
-              <Link
-                href={`/student/${uid}/card`}
-                className="flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-800 transition-all active:scale-95"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-                </svg>
-                View Student Card
-              </Link>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/student/${uid}/card`}
+                  className="flex items-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition-all active:scale-95 shadow-sm"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+                  </svg>
+                  View Student Card
+                </Link>
+                <Button
+                  onClick={handleDownloadDossier}
+                  disabled={downloadingDossier}
+                  loading={downloadingDossier}
+                  variant="brand"
+                  className="py-2.5 px-4 rounded-xl text-sm"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Dossier
+                </Button>
+              </div>
             </div>
 
             <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-4 pt-5 border-t border-slate-100">

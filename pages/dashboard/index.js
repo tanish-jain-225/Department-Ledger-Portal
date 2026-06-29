@@ -129,7 +129,11 @@ export default function DashboardPage() {
         buildStudentExportRow(user, lists, report, slots)
       );
 
-      downloadFacultyStudentRecordsCsv(rows, `department-ledger-staff-${new Date().toISOString().split('T')[0]}.csv`, { fields });
+      downloadFacultyStudentRecordsCsv(
+        rows,
+        `Student_Registry_Summary_${new Date().toISOString().split('T')[0]}.csv`,
+        { fields }
+      );
       addToast("Exhaustive student records exported successfully.", "success");
     } catch (err) {
       console.error("Export failed:", err);
