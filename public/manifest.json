@@ -1,0 +1,10 @@
+{
+  "name": "Department Ledger Portal",
+  "short_name": "Ledger Portal",
+  "description": "AI-powered academic records platform for departments.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "icons": []
+}

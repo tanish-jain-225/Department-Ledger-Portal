@@ -15,10 +15,13 @@ export default function Document() {
         <meta name="author" content="Department Ledger Portal" />
         <meta name="robots" content="index, follow" />
         <meta name="theme-color" content="#2563eb" />
+        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
 
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/favicon.ico" />
+        <link rel="manifest" href="/manifest.json" />
       </Head>
       <body>
         <Main />

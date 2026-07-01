@@ -10,6 +10,7 @@ import { listByStudent, listStudentDocuments } from "@/lib/data";
 import DocumentPreview from "@/components/profile/DocumentPreview";
 import { Badge, Skeleton, EmptyState, SectionCard, Button } from "@/components/ui";
 import { useToast } from "@/lib/toast-context";
+import { getAccessDeniedMessage, isPermissionDeniedError } from "@/lib/access-errors";
 
 function InfoItem({ label, value, wide }) {
   return (
@@ -58,7 +59,11 @@ export default function StudentDetailPage() {
         ]);
         setLists({ academic, activities, achievements, placements, uploadedDocuments });
       } catch (e) {
-        setErr(e?.message || "Load failed");
+        if (isPermissionDeniedError(e)) {
+          setErr(getAccessDeniedMessage(e));
+        } else {
+          setErr(e?.message || "Load failed");
+        }
       } finally {
         setLoading(false);
       }

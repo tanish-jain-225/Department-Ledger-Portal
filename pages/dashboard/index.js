@@ -16,6 +16,7 @@ import StudentInfoPopup from "@/components/StudentInfoPopup";
 import { Button, EmptyState, Skeleton } from "@/components/ui";
 import { PAGE_SIZE } from "@/lib/constants";
 import { useToast } from "@/lib/toast-context";
+import { getAccessDeniedMessage, isPermissionDeniedError } from "@/lib/access-errors";
 
 const PAGE = PAGE_SIZE.DASHBOARD;
 
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [exporting, setExporting] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [accessError, setAccessError] = useState("");
   const [selectedStudentUid, setSelectedStudentUid] = useState(null);
   const lastDocRef = useRef(null);
 
@@ -50,7 +52,18 @@ export default function DashboardPage() {
         if (!cancelled) {
           setRows(data);
           setHasMore(data.length === PAGE);
+          setAccessError("");
           lastDocRef.current = cursor;
+        }
+      } catch (err) {
+        if (!cancelled && isPermissionDeniedError(err)) {
+          setRows([]);
+          setHasMore(false);
+          setAccessError(getAccessDeniedMessage(err));
+        } else if (!cancelled) {
+          setRows([]);
+          setHasMore(false);
+          setAccessError("Unable to load student records right now.");
         }
       } finally {
         if (!cancelled) setBusy(false);
@@ -73,7 +86,14 @@ export default function DashboardPage() {
         return [...prev, ...data.filter(r => !ids.has(r.id))];
       });
       setHasMore(data.length === PAGE);
+      setAccessError("");
       lastDocRef.current = cursor;
+    } catch (err) {
+      if (isPermissionDeniedError(err)) {
+        setAccessError(getAccessDeniedMessage(err));
+      } else {
+        setAccessError("Unable to load more student records right now.");
+      }
     } finally {
       setLoadingMore(false);
     }
@@ -168,6 +188,13 @@ export default function DashboardPage() {
           Export CSV
         </Button>
       </div>
+
+      {accessError ? (
+        <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
+          <p className="font-semibold">Access restricted</p>
+          <p className="mt-1">{accessError}</p>
+        </div>
+      ) : null}
 
       {/* Search */}
       <div className="mb-8">

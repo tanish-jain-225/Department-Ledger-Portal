@@ -5,7 +5,8 @@ import { useRouter } from "next/router";
 import { useEffect, useState, Component, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ROLES, isStaff, canManageUsers, hasApprovedRole } from "@/lib/roles";
-import { ACCESS } from "@/lib/route-access";
+import { ACCESS, canAccessRoute, getHomeRouteForRole } from "@/lib/route-access";
+import { getRouteAccess } from "@/lib/route-policy";
 import CommonFooter from "@/components/ui/CommonFooter";
 import NotificationCenter from "@/components/NotificationCenter";
 import Sidebar from "@/components/Sidebar";
@@ -21,22 +22,11 @@ class NotificationBoundary extends Component {
 export { ACCESS };
 
 function canRender(access, role) {
-  switch (access) {
-    case ACCESS.PUBLIC: return true;
-    case ACCESS.GUEST: return !role;
-    case ACCESS.AUTH: return !!role && hasApprovedRole(role);
-    case ACCESS.STUDENT: return role === ROLES.STUDENT;
-    case ACCESS.STAFF: return role === ROLES.FACULTY;
-    case ACCESS.ADMIN: return canManageUsers(role);
-    default: return false;
-  }
+  return canAccessRoute(access, role);
 }
 
 function homeFor(role) {
-  if (canManageUsers(role)) return "/admin";
-  if (isStaff(role)) return "/faculty";
-  if (role === ROLES.STUDENT) return "/student";
-  return "/";
+  return getHomeRouteForRole(role);
 }
 
 export default function Layout({ children, title = "", access = ACCESS.PUBLIC }) {
@@ -60,6 +50,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
   const isStudent = role === ROLES.STUDENT;
 
   const activePath = router.asPath.split("?")[0];
+  const routePolicy = getRouteAccess(activePath);
   const isDashboardPath = ["/admin", "/student", "/faculty", "/profile", "/dashboard"].some(p => activePath.startsWith(p));
   const showSidebar = isLogged && isDashboardPath;
 
@@ -83,38 +74,33 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
     if (!router.isReady || loading || isLoggingOut) return;
     if (redirectingRef.current) return;
 
-    if (access === ACCESS.GUEST && user && hasApprovedRole(role)) {
+    const effectiveAccess = access ?? routePolicy;
+
+    if (effectiveAccess === ACCESS.GUEST && user && hasApprovedRole(role)) {
       redirectingRef.current = true;
       router.replace(homeFor(role)); return;
     }
-    if (access !== ACCESS.PUBLIC && access !== ACCESS.GUEST) {
+    if (effectiveAccess !== ACCESS.PUBLIC && effectiveAccess !== ACCESS.GUEST) {
       if (!user || !hasApprovedRole(role)) {
         redirectingRef.current = true;
         router.replace("/"); return;
       }
-      if (access === ACCESS.STUDENT && role !== ROLES.STUDENT) {
-        redirectingRef.current = true;
-        router.replace(homeFor(role)); return;
-      }
-      if (access === ACCESS.STAFF && role !== ROLES.FACULTY) {
-        redirectingRef.current = true;
-        router.replace(homeFor(role)); return;
-      }
-      if (access === ACCESS.ADMIN && !canManageUsers(role)) {
+      if (!canAccessRoute(effectiveAccess, role)) {
         redirectingRef.current = true;
         router.replace(homeFor(role)); return;
       }
     }
-    if (access === ACCESS.PUBLIC && router.asPath === "/" && user && hasApprovedRole(role)) {
+    if (effectiveAccess === ACCESS.PUBLIC && router.asPath === "/" && user && hasApprovedRole(role)) {
       redirectingRef.current = true;
       router.replace(homeFor(role));
     }
-  }, [router.isReady, loading, isLoggingOut, user, role, access, router]);
+  }, [router.isReady, loading, isLoggingOut, user, role, access, routePolicy, router]);
 
   // Only block rendering during active auth checks, or while waiting for redirect resolution on unauthorized paths.
   // This provides an instantaneous, flicker-free SPA transition for all allowed pages.
-  const isResolving = loading || (!router.isReady && !canRender(access, role));
-  const allowed = isResolving ? false : canRender(access, role);
+  const effectiveAccess = access ?? routePolicy;
+  const isResolving = loading || (!router.isReady && !canRender(effectiveAccess, role));
+  const allowed = isResolving ? false : canRender(effectiveAccess, role);
 
   // Sidebar offset
   const sidebarWidth = showSidebar ? (sidebarCollapsed ? "md:pl-16" : "md:pl-64") : "";

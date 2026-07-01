@@ -8,6 +8,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { useAuth } from "@/lib/auth-context";
 import { getDb } from "@/lib/firebase";
 import { isStaff } from "@/lib/roles";
+import { getAccessDeniedMessage, isPermissionDeniedError } from "@/lib/access-errors";
 
 function base64ToBlob(base64, mimeType = "application/octet-stream") {
   const binary = atob(base64);
@@ -46,7 +47,11 @@ export default function DocumentViewerPage() {
         }
         setDocumentData(docData);
       } catch (err) {
-        setError(err?.message || "Unable to load the document.");
+        if (isPermissionDeniedError(err)) {
+          setError(getAccessDeniedMessage(err));
+        } else {
+          setError(err?.message || "Unable to load the document.");
+        }
       } finally {
         setIsLoading(false);
       }
