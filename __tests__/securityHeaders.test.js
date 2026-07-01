@@ -16,6 +16,9 @@ describe("getSecurityHeaders", () => {
       ])
     );
 
+    const csp = headers.find((header) => header.key === "Content-Security-Policy")?.value || "";
+    expect(csp).toContain("https://apis.google.com");
+    expect(csp).toContain("https://www.gstatic.com");
     expect(headers.some((header) => header.key === "X-Powered-By")).toBe(false);
   });
 });
