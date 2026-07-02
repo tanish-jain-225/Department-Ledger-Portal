@@ -42,7 +42,7 @@ Departments often manage student progression across multiple disconnected tools.
 * **Administrative Governance**: Access approval dashboards and account auditing.
 * **AI-Assisted Operations**: Automated section autofill and profile readiness analysis.
 * **Immutable Auditing**: Append-only transaction logging to guarantee action non-repudiation.
-
+ 
 ---
 
 ## 2. Product Capabilities
