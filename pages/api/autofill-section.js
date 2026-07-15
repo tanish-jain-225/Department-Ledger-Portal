@@ -18,7 +18,10 @@ function resolveAllowedOrigin(requestOrigin) {
     return requestOrigin;
   }
   if (configured) {
-    return requestOrigin === configured ? configured : configured;
+    // Exact match against the configured production origin.
+    // Return "null" for non-matching origins — browsers treat ACAO: null as a CORS
+    // rejection, and the downstream 403 guard provides a second enforcement layer.
+    return requestOrigin === configured ? configured : "null";
   }
   // No ALLOWED_ORIGIN configured — open (matches previous behaviour)
   return "*";

@@ -2,7 +2,10 @@ import nextConfig from "eslint-config-next";
 
 const config = [
   {
-    ignores: ["node_modules/**", ".next/**"],
+    // Ignore generated build artifacts and coverage reports.
+    // coverage/ files contain Istanbul-injected eslint-disable directives
+    // that would otherwise generate spurious "unused directive" warnings.
+    ignores: ["node_modules/**", ".next/**", "coverage/**"],
   },
   ...nextConfig,
   {

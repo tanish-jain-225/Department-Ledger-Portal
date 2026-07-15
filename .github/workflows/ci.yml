@@ -47,14 +47,24 @@ jobs:
         run: npm ci --include=optional
 
       - name: Audit production dependencies
+        # No continue-on-error: high-severity vulnerabilities must fail the build.
         run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
 
       - name: Lint
         run: npm run lint
 
       - name: Run unit and property tests
         run: npm test -- --ci
+
+      - name: Run tests with coverage and enforce thresholds
+        run: npm run test:coverage -- --ci
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-node-${{ matrix.node-version }}
+          path: coverage/
+          retention-days: 14
 
       - name: Build
         run: npm run build

@@ -66,32 +66,31 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
 
       <form onSubmit={handleAdd} className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3">
-          <select value={type} onChange={e => setType(e.target.value)} className={field}>
-            <option value="none">Select Type</option>
-            <option value="co-curricular">Co-curricular</option>
-            <option value="extra-curricular">Extra-curricular</option>
-            <option value="cultural">Cultural</option>
-            <option value="sports">Sports</option>
-            <option value="other">Other</option>
+          <Input id="activity-title" name="activityTitle" placeholder="Activity Title / Event Name" required value={title} onChange={e => setTitle(e.target.value)} />
+          <select id="activity-type" name="activityType" value={type} onChange={e => setType(e.target.value)} className={field}>
+            <option value="extracurricular">Extracurricular Activity</option>
+            <option value="co-curricular">Co-curricular Activity</option>
+            <option value="sports">Sports / Athletics</option>
+            <option value="social">Social Work / NGO</option>
+            <option value="none">Other</option>
           </select>
-          <Input placeholder="Activity Name" required value={title} onChange={e => setTitle(e.target.value)} />
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Input type="date" required value={date} onChange={e => setDate(e.target.value)} />
+          <Input id="activity-date" name="activityDate" type="date" required value={date} onChange={e => setDate(e.target.value)} />
         </div>
-        <textarea placeholder="Short description, role, or impact..." value={description} onChange={e => setDescription(e.target.value)} rows={2} className={field} />
-        <Button type="submit" className="w-full py-4">Add Activity</Button>
+        <textarea id="activity-desc" name="activityDesc" placeholder="Short description, role, or impact..." value={description} onChange={e => setDescription(e.target.value)} rows={2} className={field} />
+        <Button type="submit" className="w-full py-4">Register Activity</Button>
       </form>
 
       <div className="flex flex-col gap-4 mt-10">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Activity Feed</h3>
-          <Badge variant="brand">{rows.length} Events</Badge>
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Co-Curricular / Extracurricular</h3>
+          <Badge variant="brand">{rows.length} Activities</Badge>
         </div>
 
         {rows.length === 0 ? (
           <div className="flex items-center justify-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-            <p className="text-sm text-slate-500 italic">No activities logged yet.</p>
+            <p className="text-sm text-slate-500 italic">No activities registered yet.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -99,29 +98,25 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
               <div key={r.id} className="flex flex-col gap-3 p-4 sm:p-5 rounded-2xl bg-slate-50/50 border border-slate-100 hover:bg-white hover:shadow-md hover:border-slate-200 transition-all">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-base font-black text-slate-900">{r.title}</span>
-                  <Badge variant={r.type === "none" ? "neutral" : "brand"}>{r.type}</Badge>
+                  <Badge variant="brand">{r.type}</Badge>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
-                  <span className="flex items-center gap-1">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    {r.date}
-                  </span>
-                  {r.link && (
-                    <a href={r.link} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:text-brand-700 flex items-center gap-1 transition-colors">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" /></svg>
-                      Portfolio
-                    </a>
+                  <span className="font-black text-slate-800">{r.date ? new Date(r.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A"}</span>
+                  {r.description && (
+                    <>
+                      <span className="text-slate-300">·</span>
+                      <span className="text-slate-600 leading-relaxed max-w-lg">{r.description}</span>
+                    </>
                   )}
                   {r.document && (
                     <DocumentPreview document={r.document} triggerLabel="View uploaded file" />
                   )}
                 </div>
-                {r.description && <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{r.description}</p>}
                 <div className="flex items-center gap-2 self-end">
-                  <button onClick={() => setEditingRecord({...r})} className="p-2 text-slate-400 hover:text-brand-600 rounded-xl hover:bg-brand-50 transition-all">
+                  <button onClick={() => setEditingRecord({ ...r })} className="p-2 text-slate-400 hover:text-brand-600 rounded-xl hover:bg-brand-50 transition-all">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M18.364 5.636a2.121 2.121 0 113 3L12 18l-4 1 1-4 9.364-9.364z" /></svg>
                   </button>
-                  <button onClick={() => setDeleteTarget({ id: r.id, title: r.title })} className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all">
+                  <button onClick={() => setDeleteTarget(r)} className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 </div>
@@ -134,8 +129,8 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
       <Modal title="Edit Activity" open={!!editingRecord} onClose={() => setEditingRecord(null)}>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Category</label>
-            <select value={editingRecord?.type || "none"} onChange={e => setEditingRecord({...editingRecord, type: e.target.value})} className={field}>
+            <label htmlFor="edit-activity-type" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Category</label>
+            <select id="edit-activity-type" name="editActivityType" value={editingRecord?.type || "none"} onChange={e => setEditingRecord({...editingRecord, type: e.target.value})} className={field}>
               <option value="none">None</option>
               <option value="co-curricular">Co-curricular</option>
               <option value="extra-curricular">Extra-curricular</option>
@@ -145,13 +140,13 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Title</label>
-            <Input value={editingRecord?.title || ""} onChange={e => setEditingRecord({...editingRecord, title: e.target.value})} />
+            <label htmlFor="edit-activity-title" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Title</label>
+            <Input id="edit-activity-title" name="editActivityTitle" value={editingRecord?.title || ""} onChange={e => setEditingRecord({...editingRecord, title: e.target.value})} />
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex flex-col gap-1 flex-1">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Date</label>
-              <Input type="date" value={editingRecord?.date || ""} onChange={e => setEditingRecord({...editingRecord, date: e.target.value})} />
+              <label htmlFor="edit-activity-date" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Date</label>
+              <Input id="edit-activity-date" name="editActivityDate" type="date" value={editingRecord?.date || ""} onChange={e => setEditingRecord({...editingRecord, date: e.target.value})} />
             </div>
           </div>
           {editingRecord?.document && (
@@ -160,8 +155,8 @@ export default function ActivitySection({ uid, rows, onRefresh }) {
             </div>
           )}
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Description</label>
-            <textarea value={editingRecord?.description || ""} onChange={e => setEditingRecord({...editingRecord, description: e.target.value})} rows={3} className={field} />
+            <label htmlFor="edit-activity-desc" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Description</label>
+            <textarea id="edit-activity-desc" name="editActivityDesc" value={editingRecord?.description || ""} onChange={e => setEditingRecord({...editingRecord, description: e.target.value})} rows={3} className={field} />
           </div>
           <div className="flex justify-end gap-3 mt-2">
             <Button variant="ghost" onClick={() => setEditingRecord(null)}>Cancel</Button>

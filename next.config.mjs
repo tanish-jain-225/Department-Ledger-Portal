@@ -9,6 +9,20 @@ const nextConfig = {
   devIndicators: false,
   allowedDevOrigins: ["127.0.0.1", "localhost"],
 
+  // ── Image Optimization ───────────────────────────────────────────────────────
+  // Enable AVIF/WebP for best-in-class compression on supported browsers.
+  // Allowlist Firebase Storage as a remote image source for future avatar/
+  // document thumbnail features.
+  images: {
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+      },
+    ],
+  },
+
   async headers() {
     return [
       {
@@ -20,3 +34,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+

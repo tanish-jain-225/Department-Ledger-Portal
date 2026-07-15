@@ -169,8 +169,9 @@ service cloud.firestore {
     // ── notifications ─────────────────────────────────────────────────────
     match /notifications/{docId} {
       allow read:   if isAuth() && resource.data.userUid == uid();
-      // Users may create their own notifications; admins may create for any recipient.
-      allow create: if isAuth() && (request.resource.data.userUid == uid() || isAdmin());
+      // Only approved-role users may create notifications.
+      // Prevents pending/unapproved users from inflating the notifications collection.
+      allow create: if isAuth() && hasApprovedRole() && (request.resource.data.userUid == uid() || isAdmin());
       allow update: if isAuth() && (resource.data.userUid == uid() || isAdmin());
       allow delete: if isAuth() && (resource.data.userUid == uid() || isAdmin());
     }

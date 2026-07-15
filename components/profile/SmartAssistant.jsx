@@ -167,6 +167,7 @@ const SmartAssistant = forwardRef(function SmartAssistant({
           onChange={handleFileChange}
           className="hidden"
           id={`smart-upload-${mode}`}
+          name="fileUpload"
           disabled={isLoading}
         />
 
@@ -226,6 +227,8 @@ const SmartAssistant = forwardRef(function SmartAssistant({
             <iframe src={previewUrl} title="Document preview" className="h-52 w-full rounded-xl border border-slate-200" />
           ) : previewText ? (
             <textarea
+              id="smart-assistant-preview"
+              name="smartAssistantPreview"
               readOnly
               value={previewText}
               className="w-full min-h-36 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700"

@@ -88,12 +88,12 @@ export default function SkillSection({ uid, rows, onRefresh }) {
       </div>
 
       <form onSubmit={handleAdd} className="flex flex-col gap-3">
-        <Input placeholder="Skill Name (e.g. Python, Docker)" required value={name} onChange={e => setName(e.target.value)} />
+        <Input id="skill-name" name="skillName" placeholder="Skill Name (e.g. Python, Docker)" required value={name} onChange={e => setName(e.target.value)} />
         <div className="flex flex-col sm:flex-row gap-3">
-          <select value={category} onChange={e => setCategory(e.target.value)} className={field}>
+          <select id="skill-category" name="skillCategory" value={category} onChange={e => setCategory(e.target.value)} className={field}>
             {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
-          <select value={proficiency} onChange={e => setProficiency(e.target.value)} className={field}>
+          <select id="skill-proficiency" name="skillProficiency" value={proficiency} onChange={e => setProficiency(e.target.value)} className={field}>
             {PROFICIENCY_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
           </select>
         </div>
@@ -138,11 +138,11 @@ export default function SkillSection({ uid, rows, onRefresh }) {
 
       <Modal open={!!editingRecord} onClose={() => setEditingRecord(null)} title="Update Skill">
         <div className="flex flex-col gap-4">
-          <Input placeholder="Skill Name" value={editingRecord?.name || ""} onChange={e => setEditingRecord({ ...editingRecord, name: e.target.value })} />
-          <select value={editingRecord?.category || "languages"} onChange={e => setEditingRecord({ ...editingRecord, category: e.target.value })} className={field}>
+          <Input id="edit-skill-name" name="editSkillName" placeholder="Skill Name" value={editingRecord?.name || ""} onChange={e => setEditingRecord({ ...editingRecord, name: e.target.value })} />
+          <select id="edit-skill-category" name="editSkillCategory" value={editingRecord?.category || "languages"} onChange={e => setEditingRecord({ ...editingRecord, category: e.target.value })} className={field}>
             {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
-          <select value={editingRecord?.proficiency || "intermediate"} onChange={e => setEditingRecord({ ...editingRecord, proficiency: e.target.value })} className={field}>
+          <select id="edit-skill-proficiency" name="editSkillProficiency" value={editingRecord?.proficiency || "intermediate"} onChange={e => setEditingRecord({ ...editingRecord, proficiency: e.target.value })} className={field}>
             {PROFICIENCY_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
           </select>
           <Button onClick={handleUpdate} className="w-full py-4">Save Ledger Entry</Button>

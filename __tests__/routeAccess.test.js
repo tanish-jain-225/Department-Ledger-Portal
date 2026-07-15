@@ -2,9 +2,9 @@ import { ACCESS, canAccessRoute, getHomeRouteForRole } from "@/lib/route-access"
 import { ROLES } from "@/lib/roles";
 
 describe("route access control", () => {
-  it("allows faculty and admins onto staff routes, but blocks students", () => {
+  it("allows faculty onto staff routes, but blocks admins and students", () => {
     expect(canAccessRoute(ACCESS.STAFF, ROLES.FACULTY)).toBe(true);
-    expect(canAccessRoute(ACCESS.STAFF, ROLES.ADMIN)).toBe(true);
+    expect(canAccessRoute(ACCESS.STAFF, ROLES.ADMIN)).toBe(false);
     expect(canAccessRoute(ACCESS.STAFF, ROLES.STUDENT)).toBe(false);
   });
 

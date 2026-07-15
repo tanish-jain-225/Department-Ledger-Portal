@@ -176,23 +176,31 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
         <form onSubmit={handleSave} className="space-y-6 max-w-2xl animate-fade-in">
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Full Legal Name</label>
+              <label htmlFor="profile-name" className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Full Legal Name</label>
               <Input
+                id="profile-name"
+                name="name"
+                autoComplete="name"
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Phone Number</label>
+              <label htmlFor="profile-phone" className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Phone Number</label>
               <Input
+                id="profile-phone"
+                name="phone"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Gender</label>
+              <label htmlFor="profile-gender" className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Gender</label>
               <Select
+                id="profile-gender"
+                name="gender"
                 value={form.gender}
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
               >
@@ -203,8 +211,11 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
               </Select>
             </div>
             <div className="sm:col-span-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Residential Address</label>
+              <label htmlFor="profile-address" className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Residential Address</label>
               <textarea
+                id="profile-address"
+                name="address"
+                autoComplete="street-address"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 rows={2}
@@ -212,16 +223,21 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Date of Birth</label>
+              <label htmlFor="profile-dob" className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Date of Birth</label>
               <Input
+                id="profile-dob"
+                name="dob"
+                autoComplete="bday"
                 type="date"
                 value={form.dob}
                 onChange={(e) => setForm({ ...form, dob: e.target.value })}
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Academic Year of Study</label>
+              <label htmlFor="profile-year" className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">Academic Year of Study</label>
               <Select
+                id="profile-year"
+                name="year"
                 value={form.year}
                 onChange={(e) => setForm({ ...form, year: e.target.value })}
               >
@@ -233,8 +249,10 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
               </Select>
             </div>
             <div className="flex items-center pt-6">
-              <label className="flex items-center gap-3 text-sm font-black text-slate-700 cursor-pointer select-none">
+              <label htmlFor="profile-alumni" className="flex items-center gap-3 text-sm font-black text-slate-700 cursor-pointer select-none">
                 <input
+                  id="profile-alumni"
+                  name="alumni"
                   type="checkbox"
                   checked={form.alumni}
                   onChange={(e) => setForm({ ...form, alumni: e.target.checked })}
@@ -244,16 +262,20 @@ export default function ProfileInfoSection({ user, profile, refreshProfile, onVi
               </label>
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">LinkedIn (URL)</label>
+              <label htmlFor="profile-linkedin" className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">LinkedIn (URL)</label>
               <Input
+                id="profile-linkedin"
+                name="linkedin"
                 placeholder="https://linkedin.com/in/..."
                 value={form.linkedin}
                 onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">GitHub (URL)</label>
+              <label htmlFor="profile-github" className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1 mb-2 block">GitHub (URL)</label>
               <Input
+                id="profile-github"
+                name="github"
                 placeholder="https://github.com/..."
                 value={form.github}
                 onChange={(e) => setForm({ ...form, github: e.target.value })}

@@ -128,7 +128,7 @@ Defined in `lib/route-access.js`:
 * `GUEST`: Only visible when signed out (e.g. `/login`, `/register`).
 * `AUTH`: Requires any validated user profile with an approved role.
 * `STUDENT`: Requires role `"student"`.
-* `STAFF`: Requires role `"faculty"` or `"admin"`.
+* `STAFF`: Requires role `"faculty"` exclusively (e.g. `/faculty`, `/dashboard`, and `/student/:uid` to ensure strict role-level route isolation and privacy).
 * `ADMIN`: Requires role `"admin"`.
 
 ---
@@ -147,7 +147,8 @@ Defined in `lib/route-access.js`:
 ├── lib/                        # Auth, Firestore connections, and validation utilities
 ├── firebase/                   # Firestore security rule definitions and indexes
 ├── public/                     # Static media and web worker modules
-└── docs/                       # Project API contract and hackathon deck
+└── docs/                       # Project documentation
+    └── CHANGELOG.md            # Version history (Keep a Changelog format)
 ```
 
 ---
@@ -209,7 +210,7 @@ Collection Constants defined in `lib/constants.js`.
 
 ---
 
-## 9. Security Model
+## 9. Security & Accessibility Model
 
 * **Cryptographic Verification**: Incoming JWT tokens are checked directly on the serverless backend using Google's x509 public certificates.
 * **Gated CORS Rejection**: Validates request origin headers on API route gateways immediately. Returns `403 Forbidden` on disallowed domains, protecting Gemini credit quotas.
@@ -217,6 +218,9 @@ Collection Constants defined in `lib/constants.js`.
 * **Cascade Deletion Batching**: User deletes utilize `writeBatch` in Firestore to atomically delete all sub-collection ledger entities or revert entirely.
 * **PII Masking**: CSV generation automatically masks user phone numbers and emails for general faculty downloads. Admins receive unmasked data.
 * **Immutable Audits**: Firestore rules prevent update or delete actions on the `auditLogs` collection (`allow update: if false; allow delete: if false`).
+* **Tightened Content Security Policy**: Implements explicit `frame-src 'self' blob: https://*.firebaseapp.com` and `worker-src 'self' blob:` rules in [security.js](file:///d:/_Deployed_Projects_Vercel/Department-Ledger-Portal/lib/security.js) to support Firebase Auth iframe checks and PDF rendering in workers/frames.
+* **WCAG Skip Link Integration**: The skip-to-content focus mechanism is styled using absolute off-screen viewport offsets (`top: -100%` translated to `top: 0.75rem` on focus) to ensure Chromium's tab indexing remains fully accessible.
+* **Autofill & Accessibility Semantics**: Every `<input>`, `<select>`, and `<textarea>` carries a unique semantic `name`, `id`, and standard browser `autoComplete` tags (`current-password`, `tel`, `bday`, etc.) to eliminate browser warnings and ensure form fields autofill correctly.
 
 ---
 
@@ -280,16 +284,19 @@ ALLOWED_ORIGIN=https://your-production-app.vercel.app
 * `npm run build`: Compile Next.js production bundles.
 * `npm run start`: Start compiled production server.
 * `npm run lint`: Execute ESLint formatting checks.
-* `npm test`: Run Jest unit and property-based test suites.
+* `npm test`: Run Jest unit and property-based test suites (fast, no coverage).
+* `npm run test:coverage`: Run Jest with coverage reporting and enforce thresholds.
 * `npm run test:e2e`: Run Playwright browser integration tests.
+* `pre-deploy.bat`: Windows pre-deployment batch script that automates clean builds, lint checks, fast unit tests, coverage verification, Playwright E2E browser tests, Firebase Firestore rules/indexes push, and production Next.js build compilation sequentially.
 
 ---
 
 ## 13. Testing and Quality Gates
 
 ### Current Validation Status
-* **Jest**: 84+ passing tests across 17 suites.
-* **Playwright**: 5+ passing smoke tests.
+* **Jest**: 100+ passing tests across 22 suites.
+* **Playwright**: 10+ passing smoke and flow tests.
+* **Coverage**: Enforced thresholds — 65% branches, 70% functions/lines/statements on `lib/**`.
 * **Lint**: Pass.
 * **Build**: Pass.
 
@@ -298,7 +305,9 @@ ALLOWED_ORIGIN=https://your-production-app.vercel.app
 * **Component Testing**: Tests UI primitives (Buttons, Modals, EmptyStates) using React Testing Library.
 * **Property-Based Testing**: Employs `fast-check` to verify mathematical invariants on rates, analytics calculators, and prompts against hundreds of randomized inputs.
 * **Route Integration Testing**: Simulates mock server requests verifying rate-limiting status codes and CORS gating triggers.
-* **E2E Smoke Testing**: Runs browser scripts simulating registrations, responsive layouts, page transfers, and route guard redirects.
+* **Service Unit Testing**: Tests `lib/audit.js` and `lib/notifications.js` including silent-failure resilience and `relatedId`-based deduplication.
+* **E2E Smoke Testing**: Runs browser scripts simulating registrations, responsive layouts, page transfers, route guard redirects, accessibility (skip link, `aria-expanded`), and security header validation.
+
 
 ---
 

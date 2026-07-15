@@ -29,7 +29,7 @@ function homeFor(role) {
   return getHomeRouteForRole(role);
 }
 
-export default function Layout({ children, title = "", access = ACCESS.PUBLIC }) {
+export default function Layout({ children, title = "", access }) {
   const { user, profile, loading, logout, isLoggingOut } = useAuth();
   const router = useRouter();
   const redirectingRef = useRef(false);
@@ -114,6 +114,11 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
         <meta name="theme-color" content="#2563eb" />
       </Head>
 
+      {/* Skip-to-content: first focusable element for keyboard/screen-reader users (WCAG 2.1 SC 2.4.1) */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
       {/* Logout overlay */}
       {isLoggingOut && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center no-print">
@@ -140,7 +145,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
               }`}>
               <div className="mx-auto max-w-7xl px-4 min-[400px]:px-6 h-16 flex items-center justify-between gap-4">
                 {/* Logo */}
-                <Link href={logoHref} className="flex items-center gap-2.5 px-0.5 min-w-0 group">
+                <Link href="/" className="flex items-center gap-2.5 px-0.5 min-w-0 group">
                   <div className="bg-brand-700 rounded-xl p-1.5 shrink-0 shadow-lg shadow-brand-700/20 group-hover:scale-110 transition-transform">
                     <Image src="/logo.png" alt="Logo" width={20} height={20} className="h-5 w-5" style={{ height: 'auto' }} priority />
                   </div>
@@ -151,7 +156,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
                 </Link>
 
                 {/* Desktop nav */}
-                <nav className="hidden md:flex items-center gap-2 bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
+                <nav aria-label="Main navigation" className="hidden md:flex items-center gap-2 bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
                   {!isLogged && !loading && (
                     <>
                       <Link href="/login" className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-colors">
@@ -180,6 +185,8 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
                   className="md:hidden p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                   onClick={() => setMobileMenuOpen(o => !o)}
                   aria-label="Toggle menu"
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls="mobile-menu"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
@@ -189,7 +196,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
 
               {/* Mobile dropdown */}
               {mobileMenuOpen && (
-                <div className="md:hidden glass border-t border-slate-200/50 px-6 py-8 space-y-4 animate-menu-down shadow-2xl overflow-y-auto max-h-[calc(100vh-64px)] sidebar-scroll">
+                <div id="mobile-menu" className="md:hidden glass border-t border-slate-200/50 px-6 py-8 space-y-4 animate-menu-down shadow-2xl overflow-y-auto max-h-[calc(100vh-64px)] sidebar-scroll">
                   {!isLogged && (
                     <>
                       <Link href="/login" className="block w-full text-center py-3 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Sign In</Link>
@@ -210,7 +217,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
           {/* Mobile top bar (dashboard pages) */}
           {showSidebar && (
             <header className="md:hidden no-print sticky top-0 z-50 bg-white border-b border-slate-200 h-14 flex items-center justify-between px-4 shadow-sm">
-              <Link href={logoHref} className="flex items-center gap-2">
+              <Link href="/" className="flex items-center gap-2">
                 <div className="bg-brand-700 rounded-lg p-1.5">
                   <Image src="/logo.png" alt="Logo" width={18} height={18} className="h-4.5 w-4.5" style={{ height: 'auto' }} />
                 </div>
@@ -224,6 +231,8 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
                   onClick={() => setMobileMenuOpen(o => !o)}
                   className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                   aria-label="Toggle menu"
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls="dashboard-mobile-menu"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
@@ -233,7 +242,7 @@ export default function Layout({ children, title = "", access = ACCESS.PUBLIC })
 
               {/* Mobile nav drawer */}
               {mobileMenuOpen && (
-                <div className="absolute top-14 left-0 right-0 glass shadow-2xl z-50 px-6 py-8 animate-menu-down border-b border-slate-200/50 rounded-b-[2.5rem] overflow-y-auto max-h-[calc(100vh-56px)] sidebar-scroll">
+                <div id="dashboard-mobile-menu" className="absolute top-14 left-0 right-0 glass shadow-2xl z-50 px-6 py-8 animate-menu-down border-b border-slate-200/50 rounded-b-[2.5rem] overflow-y-auto max-h-[calc(100vh-56px)] sidebar-scroll">
                   <nav className="space-y-1 mb-6">
                     <NavContent role={role} activePath={activePath} router={router} />
                   </nav>

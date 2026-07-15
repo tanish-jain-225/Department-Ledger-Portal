@@ -81,6 +81,37 @@
   .field-base:focus {
     @apply border-brand-500 bg-white ring-4 ring-brand-500/10;
   }
+
+  /* ── Skip-to-content Link (WCAG 2.1 SC 2.4.1) ───────────────────────────────
+   * Uses the viewport-offset pattern: the link is positioned ABOVE the viewport
+   * (top: -100%) so it is off-screen but NOT clipped — Chromium and all major
+   * browsers keep off-viewport elements in the tab order.
+   *
+   * On :focus the link slides into view at top: 0.75rem. This is more reliable
+   * than the clip/sr-only pattern, which some Chromium builds exclude from focus
+   * because the element has a zero-pixel painted area. */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0.75rem;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background: hsl(235 76% 48%);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    outline: 2px solid hsl(235 76% 48%);
+    outline-offset: 2px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+    transition: top 0.1s ease;
+  }
+
+  .skip-link:focus {
+    top: 0.75rem;
+  }
 }
 
 @layer utilities {

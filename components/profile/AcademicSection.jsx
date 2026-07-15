@@ -96,88 +96,86 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
         {/* Form */}
         <form onSubmit={handleAdd} className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row gap-3">
-            <Input required placeholder="Year (e.g. 2024)" value={year} onChange={e => setYear(e.target.value)} />
-            <Input required placeholder="Semester (e.g. 5)" value={semester} onChange={e => setSemester(e.target.value)} />
+            <Input id="academic-year" name="academicYear" required placeholder="Year (e.g. 2024)" value={year} onChange={e => setYear(e.target.value)} />
+            <Input id="academic-semester" name="academicSemester" required placeholder="Semester (e.g. 5)" value={semester} onChange={e => setSemester(e.target.value)} />
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Input required placeholder="Roll Number" value={rollNumber} onChange={e => setRollNumber(e.target.value)} />
-            <Input required placeholder="Branch / Department" value={branch} onChange={e => setBranch(e.target.value)} />
+            <Input id="academic-roll" name="academicRollNumber" required placeholder="Roll Number" value={rollNumber} onChange={e => setRollNumber(e.target.value)} />
+            <Input id="academic-branch" name="academicBranch" required placeholder="Branch / Department" value={branch} onChange={e => setBranch(e.target.value)} />
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Input required placeholder="GPA / SGPA (e.g. 9.5)" value={gpa} onChange={e => setGpa(e.target.value)} />
+            <Input id="academic-gpa" name="academicGpa" required placeholder="GPA / SGPA (e.g. 9.5)" value={gpa} onChange={e => setGpa(e.target.value)} />
           </div>
-          <textarea placeholder="Subjects or key learnings..." value={subjects} onChange={e => setSubjects(e.target.value)} rows={2} className={field} />
+          <textarea id="academic-subjects" name="academicSubjects" placeholder="Subjects or key learnings..." value={subjects} onChange={e => setSubjects(e.target.value)} rows={2} className={field} />
           <Button type="submit" className="w-full py-4">Add Record to Ledger</Button>
         </form>
 
         {/* Records list */}
         <div className="flex flex-col gap-4 mt-10">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Academic Timeline</h3>
-            <Badge variant="brand">{rows.length} Sessions</Badge>
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Academic Records</h3>
+            <Badge variant="brand">{rows.length} Records</Badge>
           </div>
 
-          {rows.length === 0 ? (
-            <div className="flex items-center justify-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-              <p className="text-sm text-slate-500 italic">No academic records yet.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {rows.map((r) => (
-                <div key={r.id} className="flex flex-col gap-3 p-4 sm:p-5 rounded-2xl bg-slate-50/50 border border-slate-100 hover:bg-white hover:shadow-md hover:border-slate-200 transition-all">
-                  {/* Top row: title + badge */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-black text-slate-900">Year {r.year} · Sem {r.semester}</span>
-                    <Badge variant="success" className="bg-emerald-700 border-none text-white">{r.gpa} GPA</Badge>
+          <div className="flex flex-col gap-4">
+            {rows.length === 0 ? (
+              <div className="flex items-center justify-center py-16 bg-slate-50/50 rounded-4xl border-2 border-dashed border-slate-100">
+                <p className="text-sm text-slate-500 italic">&ldquo;No academic records found in the institutional ledger.&rdquo;</p>
+              </div>
+            ) : (
+              rows.map((r) => (
+                <div key={r.id} className="group flex flex-col gap-4 premium-card p-4 sm:p-6 border-slate-100 hover:border-brand-500/30 transition-all">
+                  {/* Top row: badge + actions */}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">
+                      GPA {r.gpa}
+                    </span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingRecord({ ...r })} className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      </button>
+                      <button onClick={() => setDeleteTarget(r)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
                   </div>
-                  {/* Meta row */}
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
-                    <span>{r.subjects || "General Curriculum"}</span>
-                    {r.resultLink && (
-                      <a href={r.resultLink} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:text-brand-700 flex items-center gap-1 transition-colors">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 10-5.656-5.656l-1.102 1.101" /></svg>
-                        View Results
-                      </a>
-                    )}
-                    {r.document && (
-                      <DocumentPreview document={r.document} triggerLabel="View uploaded file" />
-                    )}
+                  {/* Content: Semester + Branch + Roll */}
+                  <div className="flex flex-col gap-1">
+                    <h4 className="text-base font-black text-slate-900 uppercase tracking-tight">Year {r.year} &bull; Semester {r.semester}</h4>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{r.branch} &bull; Roll: {r.rollNumber}</p>
                   </div>
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 self-end">
-                    <button onClick={() => setEditingRecord({ ...r })} className="p-2 text-slate-400 hover:text-brand-600 rounded-xl hover:bg-brand-50 transition-all" title="Edit">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M18.364 5.636a2.121 2.121 0 113 3L12 18l-4 1 1-4 9.364-9.364z" /></svg>
-                    </button>
-                    <button onClick={() => setDeleteTarget({ collection: "academicRecords", id: r.id, label: `Year ${r.year} · Sem ${r.semester}` })} className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all" title="Delete">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                  </div>
+                  {r.subjects && <p className="text-sm text-slate-500 leading-relaxed font-medium">{r.subjects}</p>}
+                  {r.document && (
+                    <div className="pt-2 border-t border-slate-100">
+                      <DocumentPreview document={r.document} triggerLabel="View transcript / grade sheet" />
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </div>
       </section>
 
-      <Modal title="Edit Record" open={!!editingRecord} onClose={() => setEditingRecord(null)}>
+      <Modal open={!!editingRecord} onClose={() => setEditingRecord(null)} title="Update Academic Record">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex gap-4">
             <div className="flex flex-col gap-1 flex-1">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Batch Year</label>
-              <Input value={editingRecord?.year || ""} onChange={e => setEditingRecord({ ...editingRecord, year: e.target.value })} />
+              <label htmlFor="edit-academic-year" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Batch Year</label>
+              <Input id="edit-academic-year" name="editAcademicYear" value={editingRecord?.year || ""} onChange={e => setEditingRecord({ ...editingRecord, year: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1 flex-1">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Semester</label>
-              <Input value={editingRecord?.semester || ""} onChange={e => setEditingRecord({ ...editingRecord, semester: e.target.value })} />
+              <label htmlFor="edit-academic-semester" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Semester</label>
+              <Input id="edit-academic-semester" name="editAcademicSemester" value={editingRecord?.semester || ""} onChange={e => setEditingRecord({ ...editingRecord, semester: e.target.value })} />
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Score (GPA)</label>
-            <Input value={editingRecord?.gpa || ""} onChange={e => setEditingRecord({ ...editingRecord, gpa: e.target.value })} />
+            <label htmlFor="edit-academic-gpa" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Score (GPA)</label>
+            <Input id="edit-academic-gpa" name="editAcademicGpa" value={editingRecord?.gpa || ""} onChange={e => setEditingRecord({ ...editingRecord, gpa: e.target.value })} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Subjects</label>
-            <textarea value={editingRecord?.subjects || ""} onChange={e => setEditingRecord({ ...editingRecord, subjects: e.target.value })} rows={3} className={field} />
+            <label htmlFor="edit-academic-subjects" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Subjects</label>
+            <textarea id="edit-academic-subjects" name="editAcademicSubjects" value={editingRecord?.subjects || ""} onChange={e => setEditingRecord({ ...editingRecord, subjects: e.target.value })} rows={3} className={field} />
           </div>
           {editingRecord?.document && (
             <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-[11px] text-slate-600">

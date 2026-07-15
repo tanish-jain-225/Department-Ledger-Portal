@@ -28,10 +28,10 @@ export default function Custom404() {
               Return Home
             </Link>
             <Link
-              href="/dashboard"
+              href="/"
               className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-brand-200 hover:text-brand-700"
             >
-              Open Dashboard
+              Portal Home
             </Link>
           </div>
         </div>

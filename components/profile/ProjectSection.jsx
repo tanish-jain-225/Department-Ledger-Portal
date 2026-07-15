@@ -66,14 +66,14 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
 
       <form onSubmit={handleAdd} className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3">
-          <Input placeholder="Project Title" required value={title} onChange={e => setTitle(e.target.value)} />
-          <Input placeholder="Tech Stack (e.g. Next.js, Firebase)" value={techStack} onChange={e => setTechStack(e.target.value)} />
+          <Input id="project-title" name="projectTitle" placeholder="Project Title" required value={title} onChange={e => setTitle(e.target.value)} />
+          <Input id="project-tech" name="projectTechStack" placeholder="Tech Stack (e.g. Next.js, Firebase)" value={techStack} onChange={e => setTechStack(e.target.value)} />
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Input placeholder="Live Preview URL" type="url" value={link} onChange={e => setLink(e.target.value)} />
-          <Input placeholder="GitHub Repository" type="url" value={github} onChange={e => setGithub(e.target.value)} />
+          <Input id="project-link" name="projectLink" placeholder="Live Preview URL" type="url" value={link} onChange={e => setLink(e.target.value)} />
+          <Input id="project-github" name="projectGithub" placeholder="GitHub Repository" type="url" value={github} onChange={e => setGithub(e.target.value)} />
         </div>
-        <textarea placeholder="Detailed Project Description" className={field} value={description} onChange={e => setDescription(e.target.value)} rows={3} />
+        <textarea id="project-desc" name="projectDesc" placeholder="Detailed Project Description" className={field} value={description} onChange={e => setDescription(e.target.value)} rows={3} />
         <Button type="submit" className="w-full py-4 uppercase tracking-widest text-[10px] font-black">Register Project in Ledger</Button>
       </form>
 
@@ -114,13 +114,13 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
 
       <Modal open={!!editingRecord} onClose={() => setEditingRecord(null)} title="Update Project">
         <div className="flex flex-col gap-4">
-          <Input placeholder="Title" value={editingRecord?.title || ""} onChange={e => setEditingRecord({...editingRecord, title: e.target.value})} />
-          <Input placeholder="Tech Stack" value={editingRecord?.techStack || ""} onChange={e => setEditingRecord({...editingRecord, techStack: e.target.value})} />
+          <Input id="edit-project-title" name="editProjectTitle" placeholder="Title" value={editingRecord?.title || ""} onChange={e => setEditingRecord({...editingRecord, title: e.target.value})} />
+          <Input id="edit-project-tech" name="editProjectTechStack" placeholder="Tech Stack" value={editingRecord?.techStack || ""} onChange={e => setEditingRecord({...editingRecord, techStack: e.target.value})} />
           <div className="flex flex-col sm:flex-row gap-3">
-            <Input placeholder="Live URL" value={editingRecord?.link || ""} onChange={e => setEditingRecord({...editingRecord, link: e.target.value})} />
-            <Input placeholder="GitHub URL" value={editingRecord?.github || ""} onChange={e => setEditingRecord({...editingRecord, github: e.target.value})} />
+            <Input id="edit-project-link" name="editProjectLink" placeholder="Live URL" value={editingRecord?.link || ""} onChange={e => setEditingRecord({...editingRecord, link: e.target.value})} />
+            <Input id="edit-project-github" name="editProjectGithub" placeholder="GitHub URL" value={editingRecord?.github || ""} onChange={e => setEditingRecord({...editingRecord, github: e.target.value})} />
           </div>
-          <textarea placeholder="Description" className={field} rows={4} value={editingRecord?.description || ""} onChange={e => setEditingRecord({...editingRecord, description: e.target.value})} />
+          <textarea id="edit-project-desc" name="editProjectDesc" placeholder="Description" className={field} rows={4} value={editingRecord?.description || ""} onChange={e => setEditingRecord({...editingRecord, description: e.target.value})} />
           <Button onClick={handleUpdate} className="w-full py-4">Save Ledger Entry</Button>
         </div>
       </Modal>
