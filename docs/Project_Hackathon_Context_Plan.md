@@ -4,7 +4,7 @@ This document frames the project for hackathon evaluation with implementation-al
 
 ## Problem
 
-Academic departments often manage student records across scattered files and manual updates. This slows reporting, creates inconsistency, and limits visibility for faculty and administrators.
+Academic departments often manage student records across scattered files and manual updates. This slows reporting, creates inconsistency and limits visibility for faculty and administrators.
 
 ## Solution Summary
 

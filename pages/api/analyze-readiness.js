@@ -7,7 +7,7 @@ import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
 const GEMINI_TIMEOUT_MS = 30_000;
 
 /** Resolves the value for Access-Control-Allow-Origin based on the request origin.
- * Allows: configured ALLOWED_ORIGIN, any localhost port, and falls back to * when unset.
+ * Allows: configured ALLOWED_ORIGIN, any localhost port and falls back to * when unset.
  * @param {string|undefined} requestOrigin - The Origin header from the request.
  * @returns {string} The allowed origin string to reflect.
  */
@@ -20,7 +20,7 @@ function resolveAllowedOrigin(requestOrigin) {
   if (configured) {
     // Exact match against the configured production origin.
     // Return "null" for non-matching origins — browsers treat ACAO: null as a CORS
-    // rejection, and the downstream 403 guard provides a second enforcement layer.
+    // rejection and the downstream 403 guard provides a second enforcement layer.
     return requestOrigin === configured ? configured : "null";
   }
   // No ALLOWED_ORIGIN configured — open (matches previous behaviour)

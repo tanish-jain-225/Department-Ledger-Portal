@@ -43,7 +43,7 @@ describe("Modal component", () => {
     expect(screen.queryByText("Content")).not.toBeInTheDocument();
   });
 
-  it("renders dialog, title, and children when open=true", async () => {
+  it("renders dialog, title and children when open=true", async () => {
     await renderOpenModal({ title: "My Dialog" });
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("My Dialog")).toBeInTheDocument();

@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 // ── Auth page structure ───────────────────────────────────────────────────────
 
 test.describe("Login page", () => {
-  test("renders heading, email field, password field, and sign-in button", async ({ page }) => {
+  test("renders heading, email field, password field and sign-in button", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByRole("heading", { name: /welcome back/i })).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
@@ -43,7 +43,7 @@ test.describe("Login page", () => {
 // ── Register page structure ───────────────────────────────────────────────────
 
 test.describe("Register page", () => {
-  test("renders heading, name, email, password, and submit button", async ({ page }) => {
+  test("renders heading, name, email, password and submit button", async ({ page }) => {
     await page.goto("/register");
     await expect(page.getByRole("heading", { name: /identity join/i })).toBeVisible();
     await expect(page.getByLabel(/full name/i)).toBeVisible();

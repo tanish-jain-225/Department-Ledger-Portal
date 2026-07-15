@@ -30,7 +30,7 @@ Screen action:
 - Keep landing section and feature cards visible.
 
 Say:
-- "This platform is role-based for students, faculty, and admins. Students maintain academic and career records, faculty can review and search quickly, and admins enforce governance with approvals, audit tracking, and secure workflows."
+- "This platform is role-based for students, faculty and admins. Students maintain academic and career records, faculty can review and search quickly and admins enforce governance with approvals, audit tracking and secure workflows."
 
 ### 0:25-0:35 | Sign-in Context
 
@@ -67,11 +67,11 @@ Say:
 Screen action:
 - Trigger AI readiness analysis.
 - Open generated report.
-- Point at score, summary, strengths, gaps, recommendations, and roadmap.
+- Point at score, summary, strengths, gaps, recommendations and roadmap.
 
 Say:
 - "Next is Career Pulse, which converts student profile and record data into actionable readiness intelligence."
-- "The report includes a score, executive summary, strengths, critical gaps, and a practical action roadmap."
+- "The report includes a score, executive summary, strengths, critical gaps and a practical action roadmap."
 - "This gives students and mentors a structured plan instead of generic feedback."
 
 ### 1:55-2:20 | Faculty and Admin Governance
@@ -82,7 +82,7 @@ Screen action:
 - Show requests and audit view.
 
 Say:
-- "Faculty can discover students quickly using search and filters, and review complete records in one place."
+- "Faculty can discover students quickly using search and filters and review complete records in one place."
 - "Admins handle role and deletion requests with auditable actions, giving departments governance and accountability built into daily workflows."
 
 ### 2:20-2:35 | Deployment and Impact Close
@@ -91,8 +91,8 @@ Screen action:
 - Show live app URL and repository link.
 
 Say:
-- "The solution is live on Vercel, integrated with Firebase and Gemini, and validated with lint, tests, production build, and end-to-end checks."
-- "Department Ledger Portal makes academic data faster to capture, safer to govern, and more useful for placement outcomes."
+- "The solution is live on Vercel, integrated with Firebase and Gemini and validated with lint, tests, production build and end-to-end checks."
+- "Department Ledger Portal makes academic data faster to capture, safer to govern and more useful for placement outcomes."
 
 ## Backup Branch (If AI or Network Is Slow)
 
@@ -121,7 +121,7 @@ Then jump directly to Faculty/Admin governance section.
 2. Never wait silently during AI calls; narrate safeguards and flow.
 3. Use one concrete student example from upload to saved record.
 4. Use "AI-assisted" wording, not absolute automation claims.
-5. End with measurable value: speed, governance, and decision quality.
+5. End with measurable value: speed, governance and decision quality.
 
 ## Pre-Recording Setup
 

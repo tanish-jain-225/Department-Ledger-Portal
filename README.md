@@ -6,7 +6,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.2.2-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![CI](https://img.shields.io/badge/CI-lint%20%7C%20test%20%7C%20build%20%7C%20e2e-brightgreen?style=flat)](.github/workflows/ci.yml)
 
-A production-grade, secure academic ledger platform for university departments. The system centralizes student progression records, faculty review workflows, administrative governance actions, and AI-assisted portfolio analysis using a strict client/server cryptographic role model and Firestore-backed data.
+A production-grade, secure academic ledger platform for university departments. The system centralizes student progression records, faculty review workflows, administrative governance actions and AI-assisted portfolio analysis using a strict client/server cryptographic role model and Firestore-backed data.
 
 - **Live Demo**: [department-ledger-portal.vercel.app](https://department-ledger-portal.vercel.app)
 - **Hackathon Deck**: [docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf](docs/GDG_Solution_Challenge_Solution_PPT_Final.pdf)
@@ -38,7 +38,7 @@ A production-grade, secure academic ledger platform for university departments. 
 
 Departments often manage student progression across multiple disconnected tools. Department Ledger Portal provides a unified, secure platform for:
 * **Student Record Management**: Single source of truth for academic profiles.
-* **Faculty Review Workflows**: Interface for student search, filtering, and validation.
+* **Faculty Review Workflows**: Interface for student search, filtering and validation.
 * **Administrative Governance**: Access approval dashboards and account auditing.
 * **AI-Assisted Operations**: Automated section autofill and profile readiness analysis.
 * **Immutable Auditing**: Append-only transaction logging to guarantee action non-repudiation.
@@ -48,15 +48,15 @@ Departments often manage student progression across multiple disconnected tools.
 ## 2. Product Capabilities
 
 ### Student Ledger Management
-* **Ledger Sections**: Manage academics, achievements, activities, placements, projects, and skills.
+* **Ledger Sections**: Manage academics, achievements, activities, placements, projects and skills.
 * **Smart Autofill**: Upload proof documents (PDFs/images) to trigger AI-assisted section inputs.
 * **Career Pulse**: Generate detailed AI readiness evaluations outlining strengths and roadmaps.
 * **PDF Exporter**: Compile verified resumes and credential portfolios into unified PDFs.
 * **Privacy Controls**: Submit deletion requests to purge personal records.
 
 ### Faculty Verification
-* **Student Search**: Advanced filtering by branch, year, and search keywords.
-* **Ledger Review**: Review student portfolios, grades, and uploaded certificates.
+* **Student Search**: Advanced filtering by branch, year and search keywords.
+* **Ledger Review**: Review student portfolios, grades and uploaded certificates.
 * **Masked Exports**: Export datasets as CSV with masked PII (emails/phone numbers) for general staff use.
 
 ### Admin Governance
@@ -88,7 +88,7 @@ graph TD
 * **Frontend**: Next.js Pages Router with React 19 and Tailwind CSS 4. Route guards are evaluated synchronously inside client layouts to prevent layout flash during page switches.
 * **Web Worker Offloading**: High-volume data exports (CSV downloads) are offloaded to Web Workers (`public/workers/csv-worker.js`) to keep the browser UI thread free.
 * **Serverless Backend**: Gated API endpoints with early CORS verification and cryptographic verification of Firebase ID JWTs using Google public certificate stores.
-* **Security Headers**: Standard headers like Content Security Policy, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and HSTS are configured in `next.config.mjs` and optimized to bypass Next.js internal static assets.
+* **Security Headers**: Standard headers like Content Security Policy, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff` and HSTS are configured in `next.config.mjs` and optimized to bypass Next.js internal static assets.
 * **Firestore Index Fallback**: If query indexing fails during local/staging environments, data utilities query simpler batches and perform local filtering in-memory to prevent interface locks.
 
 ---
@@ -128,7 +128,7 @@ Defined in `lib/route-access.js`:
 * `GUEST`: Only visible when signed out (e.g. `/login`, `/register`).
 * `AUTH`: Requires any validated user profile with an approved role.
 * `STUDENT`: Requires role `"student"`.
-* `STAFF`: Requires role `"faculty"` exclusively (e.g. `/faculty`, `/dashboard`, and `/student/:uid` to ensure strict role-level route isolation and privacy).
+* `STAFF`: Requires role `"faculty"` exclusively (e.g. `/faculty`, `/dashboard` and `/student/:uid` to ensure strict role-level route isolation and privacy).
 * `ADMIN`: Requires role `"admin"`.
 
 ---
@@ -138,13 +138,13 @@ Defined in `lib/route-access.js`:
 ```text
 .
 ├── .github/workflows/          # CI pipeline definition
-├── __tests__/                  # Unit, API integration, and property-based test suites
+├── __tests__/                  # Unit, API integration and property-based test suites
 ├── e2e/                        # Playwright smoke and auth journey specs
 ├── components/                 # React UI layout and dashboard files
 │   └── ui/                     # Reusable UI primitives (Buttons, Modals, Badges)
 ├── pages/                      # Next.js router pages
 │   └── api/                    # Serverless backend controllers
-├── lib/                        # Auth, Firestore connections, and validation utilities
+├── lib/                        # Auth, Firestore connections and validation utilities
 ├── firebase/                   # Firestore security rule definitions and indexes
 ├── public/                     # Static media and web worker modules
 └── docs/                       # Project documentation
@@ -220,7 +220,7 @@ Collection Constants defined in `lib/constants.js`.
 * **Immutable Audits**: Firestore rules prevent update or delete actions on the `auditLogs` collection (`allow update: if false; allow delete: if false`).
 * **Tightened Content Security Policy**: Implements explicit `frame-src 'self' blob: https://*.firebaseapp.com` and `worker-src 'self' blob:` rules in [security.js](file:///d:/_Deployed_Projects_Vercel/Department-Ledger-Portal/lib/security.js) to support Firebase Auth iframe checks and PDF rendering in workers/frames.
 * **WCAG Skip Link Integration**: The skip-to-content focus mechanism is styled using absolute off-screen viewport offsets (`top: -100%` translated to `top: 0.75rem` on focus) to ensure Chromium's tab indexing remains fully accessible.
-* **Autofill & Accessibility Semantics**: Every `<input>`, `<select>`, and `<textarea>` carries a unique semantic `name`, `id`, and standard browser `autoComplete` tags (`current-password`, `tel`, `bday`, etc.) to eliminate browser warnings and ensure form fields autofill correctly.
+* **Autofill & Accessibility Semantics**: Every `<input>`, `<select>` and `<textarea>` carries a unique semantic `name`, `id` and standard browser `autoComplete` tags (`current-password`, `tel`, `bday`, etc.) to eliminate browser warnings and ensure form fields autofill correctly.
 
 ---
 
@@ -287,7 +287,7 @@ ALLOWED_ORIGIN=https://your-production-app.vercel.app
 * `npm test`: Run Jest unit and property-based test suites (fast, no coverage).
 * `npm run test:coverage`: Run Jest with coverage reporting and enforce thresholds.
 * `npm run test:e2e`: Run Playwright browser integration tests.
-* `pre-deploy.bat`: Windows pre-deployment batch script that automates clean builds, lint checks, fast unit tests, coverage verification, Playwright E2E browser tests, Firebase Firestore rules/indexes push, and production Next.js build compilation sequentially.
+* `pre-deploy.bat`: Windows pre-deployment batch script that automates clean builds, lint checks, fast unit tests, coverage verification, Playwright E2E browser tests, Firebase Firestore rules/indexes push and production Next.js build compilation sequentially.
 
 ---
 
@@ -301,12 +301,12 @@ ALLOWED_ORIGIN=https://your-production-app.vercel.app
 * **Build**: Pass.
 
 ### Quality Parameters
-* **Unit Testing**: Tests validation helpers, navigation routing, and token authorization processes (`__tests__/apiAuth.test.js`).
+* **Unit Testing**: Tests validation helpers, navigation routing and token authorization processes (`__tests__/apiAuth.test.js`).
 * **Component Testing**: Tests UI primitives (Buttons, Modals, EmptyStates) using React Testing Library.
-* **Property-Based Testing**: Employs `fast-check` to verify mathematical invariants on rates, analytics calculators, and prompts against hundreds of randomized inputs.
+* **Property-Based Testing**: Employs `fast-check` to verify mathematical invariants on rates, analytics calculators and prompts against hundreds of randomized inputs.
 * **Route Integration Testing**: Simulates mock server requests verifying rate-limiting status codes and CORS gating triggers.
 * **Service Unit Testing**: Tests `lib/audit.js` and `lib/notifications.js` including silent-failure resilience and `relatedId`-based deduplication.
-* **E2E Smoke Testing**: Runs browser scripts simulating registrations, responsive layouts, page transfers, route guard redirects, accessibility (skip link, `aria-expanded`), and security header validation.
+* **E2E Smoke Testing**: Runs browser scripts simulating registrations, responsive layouts, page transfers, route guard redirects, accessibility (skip link, `aria-expanded`) and security header validation.
 
 
 ---
