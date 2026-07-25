@@ -232,7 +232,7 @@ export default function AdminFacultyDashboard() {
       />
       {selectedFacultyUid && <FacultyInfoPopup uid={selectedFacultyUid} onClose={() => setSelectedFacultyUid(null)} />}
 
-      <div className="space-y-10 animate-slide-up">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-10 animate-slide-up">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Faculty Ledger</h1>

@@ -140,7 +140,7 @@ export default function StudentDetailPage() {
       )}
 
       {data && (
-        <div className="space-y-6 mt-2">
+        <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
           {/* Profile header */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">

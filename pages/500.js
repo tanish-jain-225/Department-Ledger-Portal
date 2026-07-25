@@ -9,7 +9,7 @@ export default function Custom500() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <main className="min-h-screen bg-slate-50 px-6 py-20 text-slate-900">
+      <main className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center w-full bg-slate-50 px-6 py-12 text-slate-900">
         <div className="mx-auto flex max-w-2xl flex-col items-center rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
           <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-3xl font-black text-amber-600">
             500

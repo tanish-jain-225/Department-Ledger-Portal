@@ -54,7 +54,7 @@ export default function AdminDashboard() {
 
   return (
     <Layout title="Governance Overview" access={ACCESS.ADMIN}>
-      <div className="space-y-10 animate-slide-up">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-10 animate-slide-up">
         <div>
           <h1 className="text-2xl min-[340px]:text-3xl min-[400px]:text-4xl font-black text-slate-900 tracking-tighter uppercase leading-none">Governance Overview</h1>
           <p className="text-xs min-[360px]:text-sm min-[400px]:text-base text-slate-500 mt-2 font-medium">Real-time surveillance and administrative metrics for the ledger.</p>

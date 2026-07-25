@@ -39,13 +39,17 @@ export default function Home() {
           }}
         />
       </Head>
-      <div className="mx-auto max-w-7xl pt-8 sm:pt-12 pb-16 sm:pb-24 px-4 min-[400px]:px-6 relative overflow-x-clip">
-        {/* Decorative background elements */}
-        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-brand-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="flex-1 flex flex-col justify-between w-full relative overflow-x-hidden">
+        {/* Full-width decorative background elements */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 -left-1/4 w-3/4 h-3/4 bg-brand-500/10 rounded-full blur-[140px]" />
+          <div className="absolute top-1/4 -right-1/4 w-3/4 h-3/4 bg-indigo-500/10 rounded-full blur-[140px]" />
+        </div>
 
-        {/* Hero Section */}
-        <div className="relative z-10 text-center py-10 min-[400px]:py-14 sm:py-24 px-1 min-[400px]:px-2">
+        {/* Content container */}
+        <div className="relative z-10 flex-1 flex flex-col justify-between w-full max-w-7xl mx-auto px-4 min-[400px]:px-6 sm:px-8 py-6 sm:py-10">
+          {/* Hero Section */}
+          <div className="text-center py-6 min-[400px]:py-8 sm:py-14 px-1 min-[400px]:px-2 my-auto">
 
           <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-3 min-[400px]:px-4 py-2 text-[10px] min-[400px]:text-xs font-black text-brand-700 uppercase tracking-wider mb-6 sm:mb-10 shadow-sm animate-slide-up">
             <span className="h-2.5 w-2.5 rounded-full bg-brand-700 animate-pulse shrink-0"></span>
@@ -134,7 +138,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="mt-12 sm:mt-16 animate-slide-up" style={{ animationDelay: "0.5s" }}>
+        <div className="mt-6 sm:mt-10 animate-slide-up" style={{ animationDelay: "0.5s" }}>
           <div className="premium-card p-responsive">
             <div className="grid gap-8 min-[500px]:grid-cols-3 text-center">
               {[
@@ -151,6 +155,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
+  </Layout>
   );
 }

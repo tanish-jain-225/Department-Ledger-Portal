@@ -29,12 +29,22 @@
 
 @layer base {
   html {
-    @apply scroll-smooth;
+    @apply scroll-smooth h-full;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   body {
-    @apply min-h-screen bg-slate-50 antialiased text-slate-900 leading-relaxed;
+    @apply min-h-screen bg-slate-50 antialiased text-slate-900 leading-relaxed overflow-x-hidden flex flex-col;
+    min-height: 100vh;
+    min-height: 100dvh;
     font-feature-settings: "cv02", "cv03", "cv04", "dash", "kern";
+  }
+
+  #__next {
+    @apply flex flex-col flex-1 w-full;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   body::selection {

@@ -86,8 +86,8 @@ export default function RegisterPage() {
         <meta name="description" content="Create your Department Ledger Portal account to access AI-powered academic records, placement tracking and career readiness reports." />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className="mx-auto max-w-lg pt-12 pb-24 px-responsive animate-fade-in">
-        <div className="premium-card p-responsive relative overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-lg mx-auto py-6 sm:py-12 px-responsive animate-fade-in">
+        <div className="premium-card p-responsive w-full relative overflow-hidden">
           <div className="absolute top-0 left-0 p-8 opacity-[0.03] pointer-events-none">
             <svg className="h-48 w-48 rotate-180" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />

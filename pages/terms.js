@@ -11,7 +11,7 @@ const Section = ({ title, children }) => (
 export default function TermsPage() {
   return (
     <Layout title="Terms of Use" access={ACCESS.PUBLIC}>
-      <article className="mx-auto max-w-3xl py-12 space-y-10">
+      <article className="flex-1 w-full max-w-3xl mx-auto py-8 sm:py-12 space-y-8 sm:space-y-10">
         <div className="space-y-3 px-responsive">
           <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Terms of Use</h1>
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Last updated: March 2026</p>

@@ -92,7 +92,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <Layout title="My Profile" access={ACCESS.AUTH}>
-        <div className="max-w-4xl mx-auto py-10 px-4">
+        <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <ProfileSkeleton />
         </div>
       </Layout>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
       {isStaff(profile?.role) ? (
         <FacultyProfile profile={profile} onRefresh={refreshProfile} />
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
           {/* Tab Navigation */}
           <nav className="flex items-center gap-0 border-b border-slate-200 bg-white">
             {TABS.map((t) => (

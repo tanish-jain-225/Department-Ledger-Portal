@@ -127,7 +127,7 @@ export default function Layout({ children, title = "", access }) {
         </div>
       )}
 
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex flex-col md:flex-row min-h-screen min-h-[100dvh] w-full bg-slate-50 overflow-x-hidden">
 
         {/* Desktop Sidebar */}
         {showSidebar && (
@@ -137,7 +137,7 @@ export default function Layout({ children, title = "", access }) {
         )}
 
         {/* Main content column */}
-        <div className={`flex flex-col flex-1 min-w-0 ${sidebarWidth}`}>
+        <div className={`flex flex-col flex-1 min-w-0 w-full ${sidebarWidth}`}>
 
           {/* Public navbar (no sidebar) */}
           {!showSidebar && (
@@ -269,13 +269,13 @@ export default function Layout({ children, title = "", access }) {
           )}
 
           {/* Page content */}
-          <main id="main-content" className="flex-1 px-4 min-[400px]:px-6 py-8 mx-auto w-full max-w-7xl">
+          <main id="main-content" className="flex-1 flex flex-col w-full">
             {isResolving ? (
-              <div className="flex h-[60vh] items-center justify-center">
+              <div className="flex-1 flex items-center justify-center py-12">
                 <div className="h-10 w-10 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : allowed ? children : (
-              <div className="flex h-[60vh] items-center justify-center">
+              <div className="flex-1 flex items-center justify-center py-12">
                 <div className="text-center max-w-sm">
                   <div className="mx-auto h-14 w-14 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
                     <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

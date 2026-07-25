@@ -62,7 +62,7 @@ function PageTransition({ children }) {
     }
   }, [children, displayChildren]);
 
-  return <div className={transitionStage}>{displayChildren}</div>;
+  return <div className={`flex-1 flex flex-col w-full min-h-full ${transitionStage}`}>{displayChildren}</div>;
 }
 
 export default function App({ Component, pageProps, router }) {

@@ -7,7 +7,7 @@ export default function StudentStarterPage() {
   return (
     <Layout title="Student Hub" access={ACCESS.STUDENT}>
 
-      <div className="flex min-h-[70vh] flex-col items-center justify-center py-12 animate-fade-in">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12 flex flex-col items-center justify-center animate-fade-in">
         <div className="text-center mb-16 px-6">
           <h1 className="text-5xl font-black text-slate-900 tracking-tighter sm:text-7xl leading-none transition-all">
             Welcome, <span className="text-brand-600">{profile?.name || "Scholar"}</span>
