@@ -52,8 +52,11 @@ function flattenData(rows, maskSensitive, origin) {
 }
 
 function escapeCell(val) {
-  const s = String(val ?? "");
-  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  let s = String(val ?? "");
+  if (/^[=+\-@\t\r]/.test(s)) {
+    s = `'${s}`;
+  }
+  if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
 
