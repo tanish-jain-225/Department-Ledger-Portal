@@ -28,8 +28,8 @@ export default function AdminRequestsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [debouncing, setDebouncing] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
-  const [deleteTarget, setDeleteTarget] = useState(null); // { uid, reqDocId }
-  const [dismissTarget, setDismissTarget] = useState(null); // { uid, reqDocId }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [dismissTarget, setDismissTarget] = useState(null);
   const [roleChangeTarget, setRoleChangeTarget] = useState(null);
 
   const [roleRequests, setRoleRequests] = useState({ map: {}, docIds: {} });
@@ -38,7 +38,7 @@ export default function AdminRequestsPage() {
   const [hasMore, setHasMore] = useState(false);
   const lastDocRef = useRef(null);
 
-  // Debounce search - avoids re-filtering on every keystroke
+  // Debounce search
   useEffect(() => {
     if (searchTerm.trim() !== debouncedSearch.trim()) {
       setDebouncing(true);
@@ -173,13 +173,12 @@ export default function AdminRequestsPage() {
   async function decide(uid, action, reqDocId, assignedRole = null) {
     const db = getDb();
     if (!db || !uid) {
-      addToast("Protocol Error: Missing User Identifier.", "error");
+      addToast("Missing user ID.", "error");
       return;
     }
 
-    // Governance guard: prevent all administrative actions on current user's own account
     if (uid === user?.uid) {
-      addToast("Governance policy: Self-account actions are protected and cannot be executed.", "error");
+      addToast("You cannot perform administrative actions on your own account.", "error");
       return;
     }
 
@@ -191,7 +190,6 @@ export default function AdminRequestsPage() {
       }
 
       if (action === "approve") {
-
         await updateDoc(doc(db, "users", uid), {
           role: roleToAssign,
           facultyVerification: roleToAssign === 'faculty' ? "approved" : "none"
@@ -205,20 +203,19 @@ export default function AdminRequestsPage() {
           action: "user_role_assigned",
           actorUid: user.uid,
           targetUid: uid,
-          description: `Policy Override: User elevated to ${roleToAssign}`,
+          description: `User role updated to ${roleToAssign}`,
           details: { role: roleToAssign }
         });
 
         await createNotification(uid, {
-          title: "Access Updated",
-          message: `Administrative protocol has updated your access level to: ${roleToAssign.toUpperCase()}`,
+          title: "Account Role Updated",
+          message: `Your account role has been updated to: ${roleToAssign.toUpperCase()}`,
           type: "success",
           link: "/profile"
         }).catch(() => {
           addToast("Role updated, but notification delivery failed.", "info");
         });
 
-        // Notify all faculty when a new student is approved
         if (roleToAssign === "student") {
           const approvedUser = rows.find(r => r.id === uid);
           const studentName = approvedUser?.name || approvedUser?.email || "A new student";
@@ -229,11 +226,11 @@ export default function AdminRequestsPage() {
             link: "/dashboard",
             relatedId: `student_${uid}`,
           }).catch(() => {
-            addToast("Student approved, but faculty broadcast failed.", "info");
-          }); // non-blocking - don't fail the approval if this errors
+            // non-blocking
+          });
         }
 
-        addToast(`Clearance set to: ${roleToAssign}`, "success");
+        addToast(`Role assigned: ${roleToAssign}`, "success");
       } else if (action === "reject") {
         if (reqDocId) {
           await deleteDoc(doc(db, "roleRequests", reqDocId));
@@ -246,7 +243,6 @@ export default function AdminRequestsPage() {
         addToast("Deletion request rejected.", "info");
       }
 
-      // Optimistic Local State Update
       setRows(prev => {
         if (action === "delete") return prev.filter(r => r.id !== uid);
         return prev.map(r => {
@@ -260,16 +256,14 @@ export default function AdminRequestsPage() {
       });
 
       await syncAdminNotifications(user.uid);
-      // load(); // Retired: Switching to Optimistic Flow
     } catch (e) {
       addToast(e.message, "error");
     }
   }
 
   function askRoleChange(uid, role, reqDocId = null) {
-    // Governance guard: prevent self-role modification
     if (uid === user?.uid) {
-      addToast("Governance policy: You cannot modify your own role assignment.", "error");
+      addToast("You cannot modify your own role assignment.", "error");
       return;
     }
     setRoleChangeTarget({ uid, role, reqDocId });
@@ -282,11 +276,11 @@ export default function AdminRequestsPage() {
   });
 
   return (
-    <Layout title="Governance Requests" access={ACCESS.ADMIN}>
+    <Layout title="Role Requests" access={ACCESS.ADMIN}>
       <ConfirmDialog
         open={!!roleChangeTarget}
         title="Confirm Role Change"
-        message={`Confirm update role to ${roleChangeTarget?.role?.toUpperCase()}? This will immediately change their access privileges.`}
+        message={`Are you sure you want to update this user's role to ${roleChangeTarget?.role?.toUpperCase()}?`}
         onConfirm={async () => {
           const target = roleChangeTarget;
           setRoleChangeTarget(null);
@@ -299,23 +293,22 @@ export default function AdminRequestsPage() {
       />
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Protocol: Permanent Purge"
-        message="CRITICAL: You are about to permanently erase this entity from the global ledger. This includes all academic records, activities and professional achievements. This action is irreversible."
+        title="Delete Account & Records"
+        message="Are you sure you want to permanently delete this user and all associated records from the ledger? This action cannot be undone."
         onConfirm={async () => {
           const { uid, reqDocId } = deleteTarget;
           setDeleteTarget(null);
           try {
-            await purgeUser(uid, user.uid, `Permanently purged user entity and all professional records for ID: ${uid}`);
-            // Clean up any associated role/deletion request docs
+            await purgeUser(uid, user.uid, `Admin permanently purged user ${uid}`);
             if (reqDocId) {
-              try { await deleteDoc(doc(getDb(), "deletionRequests", reqDocId)); await purgeNotifications(`del_${reqDocId}`); } catch { /* already gone */ }
-              try { await deleteDoc(doc(getDb(), "roleRequests", reqDocId)); await purgeNotifications(`role_${reqDocId}`); } catch { /* already gone */ }
+              try { await deleteDoc(doc(getDb(), "deletionRequests", reqDocId)); await purgeNotifications(`del_${reqDocId}`); } catch { /* ignore */ }
+              try { await deleteDoc(doc(getDb(), "roleRequests", reqDocId)); await purgeNotifications(`role_${reqDocId}`); } catch { /* ignore */ }
             }
-            addToast("User entity and records purged successfully.", "success");
+            addToast("User and records deleted successfully.", "success");
             setRows(prev => prev.filter(r => r.id !== uid));
             await load();
           } catch (e) {
-            addToast(e?.message || "Purge failed", "error");
+            addToast(e?.message || "Delete failed", "error");
           }
         }}
         onCancel={() => setDeleteTarget(null)}
@@ -323,8 +316,8 @@ export default function AdminRequestsPage() {
       />
       <ConfirmDialog
         open={!!dismissTarget}
-        title="Confirm Dismiss Request"
-        message="Dismiss this purge request? This will keep the user active and reject the deletion workflow."
+        title="Dismiss Deletion Request"
+        message="Dismiss this deletion request? The user account will remain active."
         confirmLabel="Dismiss"
         onConfirm={async () => {
           const target = dismissTarget;
@@ -336,176 +329,143 @@ export default function AdminRequestsPage() {
         }}
         onCancel={() => setDismissTarget(null)}
       />
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-10 animate-slide-up">
+      
+      <div className="flex-1 w-full max-w-7xl mx-auto px-3 min-[360px]:px-6 py-4 min-[360px]:py-8 space-y-6 min-[360px]:space-y-8 animate-slide-up">
         {/* Header */}
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Governance Requests</h1>
-            <p className="text-sm min-[360px]:text-base text-slate-500 mt-2 font-medium">Coordinate clearance, policy overrides and data lifecycle protocols.</p>
+            <h1 className="text-xl min-[340px]:text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Requests & Access</h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage role clearance, elevations, and pending deletion requests.</p>
           </div>
-          <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-sm p-1 px-4 rounded-2xl">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Global Activity</span>
-            <Badge variant="brand" className="animate-pulse">
-              {rows.length} RECORDED
-            </Badge>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500">
+              Total Accounts: <strong className="text-slate-900">{rows.length}</strong>
+            </span>
           </div>
         </div>
 
-        {/* Search & Filter Island */}
-        <div className="premium-card p-responsive mb-12 animate-slide-up no-print">
-          <div className="flex flex-col gap-4 min-[360px]:gap-6 mb-8">
-            <div>
-              <h2 className="text-2xl min-[360px]:text-3xl font-black text-slate-900 tracking-tighter uppercase">Clearance Filters</h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium italic">&ldquo;Query pending protocols and role elevations.&rdquo;</p>
+        {/* Filter Controls */}
+        <div className="premium-card p-3 min-[360px]:p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="relative flex-1 min-w-0">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-10 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-all"
+              />
+              {(debouncing || loading) && (
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                  <div className="h-3.5 w-3.5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
+            <div className="flex items-center gap-2 shrink-0">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs font-semibold text-slate-800 focus:border-brand-500 focus:outline-none cursor-pointer"
+              >
+                <option value="all">All Accounts</option>
+                <option value="pending">Pending Requests</option>
+                <option value="student">Students</option>
+                <option value="faculty">Faculty</option>
+                <option value="admin">Administrators</option>
+              </select>
 
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
-              {/* Search Core */}
-              <div className="relative flex-1 group">
-                <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all duration-300 transform group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Identify entities in the global registry..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-[2.5rem] border-none bg-transparent pl-16 pr-12 py-5 text-sm font-black text-slate-900 focus:ring-0 outline-none placeholder:text-slate-500 transition-all"
-                />
-                {(debouncing || loading) && (
-                  <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center">
-                    <div className="h-4 w-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-              </div>
-
-              <div className="hidden lg:block w-px h-10 bg-slate-100" />
-
-              {/* Filter Module */}
-              <div className="relative min-w-60 group px-2">
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none transition-all group-hover:translate-x-1">
-                  <div className="h-2 w-2 rounded-full bg-brand-500" />
-                  <span className="text-[9px] font-black uppercase text-brand-600 tracking-tighter">Sector</span>
-                </div>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full rounded-2xl border-none bg-slate-50/50 hover:bg-white pl-20 pr-12 py-4 text-[10px] font-black uppercase tracking-widest text-slate-900 focus:ring-0 outline-none cursor-pointer transition-all appearance-none"
-                >
-                  <option value="all">Global Catalog</option>
-                  <option value="pending">Pending Protocols</option>
-                  <option value="student">Student Registry</option>
-                  <option value="faculty">Faculty Ledger</option>
-                  <option value="admin">Administrator Pool</option>
-                </select>
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Status Indicator */}
-              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-35">
-                <div className="flex flex-col items-end">
-                  <span className="text-xs text-slate-500 tracking-[0.2em]">Stream</span>
-                  <span className="text-[10px] font-black text-brand-600 transition-all">
-                    {filtered.length} / {rows.length}
-                  </span>
-                </div>
-                <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                  </svg>
-                </div>
+              <div className="px-2 text-xs font-bold text-slate-500 shrink-0">
+                {filtered.length} shown
               </div>
             </div>
           </div>
         </div>
 
-        {/* List */}
+        {/* List of Requests */}
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[1, 2, 3, 4].map(i => <TableRowSkeleton key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-3xl border border-slate-200 shadow-sm animate-fade-in">
-            <div className="h-16 w-16 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-6">
-              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex flex-col items-center justify-center py-12 px-4 bg-white rounded-2xl border border-slate-200 shadow-sm animate-fade-in">
+            <div className="h-12 w-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 mb-3">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-black text-slate-900 uppercase tracking-wide">No Requests Discovered</h3>
-            <p className="text-sm text-slate-500 font-medium mt-2 text-center max-w-sm">No active clearance or role requests match your filtered criteria.</p>
+            <h3 className="text-base font-bold text-slate-900">No requests found</h3>
+            <p className="text-xs text-slate-500 mt-1 text-center max-w-sm">No active clearance or role requests match your filters.</p>
             <Button
               onClick={() => { setSearchTerm(""); setRoleFilter("all"); }}
-              className="mt-6 px-6 py-2.5"
-              size="sm"
+              className="mt-4 px-4 py-2 text-xs"
               variant="secondary"
             >
-              Clear Active Filters
+              Clear Filters
             </Button>
           </div>
         ) : (
           <>
-            <div className="space-y-6">
-            {filtered.map((r) => {
-              const isUnassigned = !r.role;
-              return (
-                <div
-                  key={r.id}
-                  style={isUnassigned ? { boxShadow: '0 10px 40px -18px rgba(245, 158, 11, 0.45)' } : undefined}
-                  className={`group premium-card p-responsive border transition-all ${isUnassigned ? 'border-amber-400 bg-amber-50/50 hover:bg-amber-50/80' : r.pendingRoleReq || r.pendingDeletion ? 'border-brand-200 bg-brand-50/5' : 'border-slate-100 hover:bg-slate-50/20'}`}
-                >
-
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                    <div className="flex items-start gap-6">
-                      <div className={`h-14 w-14 rounded-3xl flex items-center justify-center font-black text-xl shadow-2xl group-hover:scale-110 transition-transform ${isUnassigned ? 'bg-rose-600 text-white' : r.role === 'admin' ? 'bg-slate-900 text-white' : r.role === 'faculty' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-900'}`}>
-                        {r.name?.charAt(0) || "?"}
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-xl font-black text-slate-900 tracking-tight">{r.name || "Anonymous Entity"}</h2>
-                          <Badge variant={isUnassigned ? 'danger' : (r.role === 'admin' ? 'brand' : 'neutral')}>
-                            {r.role ? r.role.toUpperCase() : "UNASSIGNED"}
-                          </Badge>
+            <div className="space-y-3 min-w-0">
+              {filtered.map((r) => {
+                const isUnassigned = !r.role;
+                return (
+                  <div
+                    key={r.id}
+                    className={`premium-card p-3 min-[360px]:p-4 border transition-all min-w-0 ${
+                      isUnassigned
+                        ? 'border-amber-300 bg-amber-50/30'
+                        : r.pendingRoleReq || r.pendingDeletion
+                        ? 'border-brand-200 bg-brand-50/20'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 min-w-0">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-sm ${
+                          isUnassigned ? 'bg-amber-600 text-white' : r.role === 'admin' ? 'bg-slate-900 text-white' : r.role === 'faculty' ? 'bg-indigo-600 text-white' : 'bg-brand-700 text-white'
+                        }`}>
+                          {r.name?.charAt(0) || "?"}
                         </div>
-                        <p className="text-sm text-slate-600">{r.email}</p>
-                        <div className="flex gap-4 pt-3">
-                          <div className="flex flex-col">
-                            <span className="text-xs font-medium text-slate-500">UID</span>
-                            <span className="text-xs text-slate-700 font-mono">{r.id.slice(-12)}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-sm font-bold text-slate-900 truncate">{r.name || "Unnamed User"}</h2>
+                            <Badge variant={isUnassigned ? 'danger' : (r.role === 'admin' ? 'brand' : 'neutral')}>
+                              {r.role ? r.role.toUpperCase() : "UNASSIGNED"}
+                            </Badge>
+                            {r.pendingRoleReq && (
+                              <Badge variant="warning">Requested: {r.pendingRoleReq.toUpperCase()}</Badge>
+                            )}
+                            {r.pendingDeletion && (
+                              <Badge variant="danger">Deletion Requested</Badge>
+                            )}
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-medium text-slate-500">Status</span>
-                            <span className="text-xs font-semibold text-emerald-700">Verified</span>
-                          </div>
+                          <p className="text-xs text-slate-500 truncate mt-0.5">{r.email}</p>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Action Terminal */}
-                    <div className="flex flex-wrap items-center gap-4 lg:justify-end">
-                      {/* Unified Protocol Selector */}
-                      {r.id !== user?.uid ? (
-                        <div className="flex flex-col gap-4 p-responsive rounded-4xl bg-slate-50 border border-slate-100 group-hover:bg-white group-hover:shadow-2xl group-hover:border-white transition-all duration-500">
-                          <div className="flex flex-wrap gap-2 items-center">
+                      {/* Action buttons */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 min-w-0">
+                        {r.id !== user?.uid ? (
+                          <div className="flex flex-wrap gap-1.5 items-center">
                             {r.pendingDeletion ? (
                               <>
                                 <Button
                                   onClick={() => decide(r.id, "delete", r.delDocId)}
                                   variant="danger"
                                   size="sm"
+                                  className="text-xs py-1 px-3"
                                 >
-                                  Accept Purge
+                                  Accept Deletion
                                 </Button>
                                 <Button
                                   onClick={() => setDismissTarget({ uid: r.id, reqDocId: r.delDocId })}
                                   variant="secondary"
                                   size="sm"
+                                  className="text-xs py-1 px-3"
                                 >
                                   Dismiss
                                 </Button>
@@ -515,48 +475,41 @@ export default function AdminRequestsPage() {
                                 <RoleButton label="Student" role="student" currentRole={r.role} onClick={() => askRoleChange(r.id, "student", r.roleReqDocId)} />
                                 <RoleButton label="Faculty" role="faculty" currentRole={r.role} onClick={() => askRoleChange(r.id, "faculty", r.roleReqDocId)} />
                                 <RoleButton label="Admin" role="admin" currentRole={r.role} onClick={() => askRoleChange(r.id, "admin", r.roleReqDocId)} />
-
-                                <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
-
                                 <button
                                   onClick={() => decide(r.id, "delete", r.delDocId)}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors"
+                                  className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors ml-1"
+                                  title="Delete user"
                                 >
-                                  Delete
+                                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
                                 </button>
                               </>
                             )}
                           </div>
-                        </div>
-                      ) : (
-                        <div className="p-5 rounded-4xl bg-amber-50 border border-amber-100">
-                          <span className="text-[10px] font-black uppercase text-amber-600 tracking-widest flex items-center gap-2">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                            Self-Account Protected
-                          </span>
-                        </div>
-                      )}
+                        ) : (
+                          <span className="text-[11px] font-bold text-slate-400 italic">Current User Account</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
 
-          {hasMore && (
-          <div className="flex justify-center mt-8">
-            <Button
-              onClick={loadMore}
-              loading={loadingMore}
-              variant="secondary"
-              className="px-8 font-black"
-            >
-              Load More Requests
-            </Button>
-          </div>
-        )}
+            {hasMore && (
+              <div className="flex justify-center mt-6">
+                <Button
+                  onClick={loadMore}
+                  loading={loadingMore}
+                  variant="secondary"
+                  size="sm"
+                  className="px-6"
+                >
+                  Load More Requests
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>

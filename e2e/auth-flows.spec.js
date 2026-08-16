@@ -6,8 +6,8 @@ test.describe("Login page", () => {
   test("renders heading, email field, password field and sign-in button", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByRole("heading", { name: /welcome back/i })).toBeVisible();
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
+    await expect(page.getByLabel(/^email/i)).toBeVisible();
+    await expect(page.locator("#login-password")).toBeVisible();
     await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
   });
 
@@ -45,8 +45,8 @@ test.describe("Login page", () => {
 test.describe("Register page", () => {
   test("renders heading, name, email, password and submit button", async ({ page }) => {
     await page.goto("/register");
-    await expect(page.getByRole("heading", { name: /identity join/i })).toBeVisible();
-    await expect(page.getByLabel(/full name/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /create account/i })).toBeVisible();
+    await expect(page.getByLabel(/name/i).first()).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /create account/i })).toBeVisible();
   });
@@ -54,7 +54,7 @@ test.describe("Register page", () => {
   test("stays responsive on mobile (360px) with no horizontal overflow", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 });
     await page.goto("/register");
-    await expect(page.getByRole("heading", { name: /identity join/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /create account/i })).toBeVisible();
     const hasHorizontalOverflow = await page.evaluate(() =>
       document.documentElement.scrollWidth > document.documentElement.clientWidth
     );

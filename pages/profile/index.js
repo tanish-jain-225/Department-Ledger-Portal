@@ -11,9 +11,10 @@ import { ProfileSkeleton } from "@/components/ui";
 const TABS = [
   {
     id: "profile",
-    label: "Profile",
+    label: "My Profile",
+    shortLabel: "Profile",
     icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z" />
         <circle cx="12" cy="11" r="3" />
       </svg>
@@ -21,18 +22,20 @@ const TABS = [
   },
   {
     id: "records",
-    label: "Student Records",
+    label: "Academic Records",
+    shortLabel: "Records",
     icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     ),
   },
   {
     id: "intelligence",
-    label: "Career Pulse",
+    label: "AI Career Pulse",
+    shortLabel: "AI Pulse",
     icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.989-2.386l-.548-.547z" />
       </svg>
     ),
@@ -78,7 +81,7 @@ export default function ProfilePage() {
       setSkills(sk);
       setListsLoaded(true);
     } catch (e) {
-      // Profile lists load failure is non-critical - page still renders
+      // Non-critical background failure
     }
   }, [user?.uid]);
 
@@ -92,7 +95,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <Layout title="My Profile" access={ACCESS.AUTH}>
-        <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex-1 w-full max-w-7xl mx-auto px-3 min-[360px]:px-6 py-4 min-[360px]:py-8">
           <ProfileSkeleton />
         </div>
       </Layout>
@@ -102,22 +105,28 @@ export default function ProfilePage() {
   return (
     <Layout title="Profile" access={ACCESS.AUTH}>
       {isStaff(profile?.role) ? (
-        <FacultyProfile profile={profile} onRefresh={refreshProfile} />
+        <div className="flex-1 w-full max-w-7xl mx-auto px-3 min-[360px]:px-6 py-4 min-[360px]:py-8">
+          <FacultyProfile profile={profile} onRefresh={refreshProfile} />
+        </div>
       ) : (
-        <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        <div className="flex-1 w-full max-w-7xl mx-auto px-3 min-[360px]:px-6 py-4 min-[360px]:py-8 flex flex-col gap-4 min-[360px]:gap-6 min-w-0 animate-fade-in">
           {/* Tab Navigation */}
-          <nav className="flex items-center gap-0 border-b border-slate-200 bg-white">
+          <nav className="flex items-center gap-1 border-b border-slate-200 bg-white rounded-xl p-1 shadow-xs min-w-0">
             {TABS.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex items-center justify-center gap-2 px-3 min-[380px]:px-5 py-3 text-sm font-medium border-b-2 transition-colors flex-1 min-w-0 ${tab === t.id
-                    ? "border-brand-600 text-brand-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                  }`}
+                className={`flex items-center justify-center gap-1.5 px-2.5 py-2.5 min-[360px]:px-4 text-xs font-bold rounded-lg transition-all flex-1 min-w-0 ${
+                  tab === t.id
+                    ? "bg-brand-50 text-brand-700 shadow-xs"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                }`}
               >
                 {t.icon}
-                <span className="hidden min-[400px]:inline truncate">{t.label}</span>
+                <span className="truncate">
+                  <span className="sm:hidden">{t.shortLabel || t.label}</span>
+                  <span className="hidden sm:inline">{t.label}</span>
+                </span>
               </button>
             ))}
           </nav>

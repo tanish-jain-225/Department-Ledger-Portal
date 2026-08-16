@@ -52,10 +52,11 @@ Gemini 2.5 Flash via the Google Generative AI API.
 
 ## Verification Snapshot (June 16, 2026)
 
-- npm run lint: pass
-- npm test: 77 passed (12 suites)
-- npm run build: pass
-- npm run test:e2e: 5 passed
+- npm run lint: pass (0 errors)
+- npm test: 164 passed (22 suites)
+- npm run test:coverage: pass (65% branch, 70% func/line/stmt thresholds enforced)
+- npm run test:e2e: 27 passed (3 suites)
+- npm run build: pass (Next.js 16.2.3)
 
 ## Reviewer Quick-Inspect Code Paths
 

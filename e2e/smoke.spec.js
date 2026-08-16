@@ -26,8 +26,8 @@ test("auth pages render key forms", async ({ page }) => {
   await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
 
   await page.goto("/register");
-  await expect(page.getByRole("heading", { name: /identity join/i })).toBeVisible();
-  await expect(page.getByLabel(/full name/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /create account/i })).toBeVisible();
+  await expect(page.getByLabel(/name/i).first()).toBeVisible();
   await expect(page.getByRole("button", { name: /create account/i })).toBeVisible();
 });
 

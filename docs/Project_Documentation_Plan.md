@@ -7,12 +7,14 @@ This file defines how project documentation is maintained so it stays aligned wi
 Documentation files in this repository:
 
 - README.md
-- docs/Project_Documentation_Plan.md
+- docs/CHANGELOG.md
+- docs/GUIDE.md
 - docs/Project_API_Contract.md
-- docs/Project_Demo_Script_Plan.md
-- docs/Project_Hackathon_Context_Plan.md
 - docs/Project_Deck_Plan.md
+- docs/Project_Documentation_Plan.md
+- docs/Project_Hackathon_Context_Plan.md
 - docs/Project_Submission_Plan.md
+- docs/VIDEO_DEMO.md
 
 ## Alignment Rules
 
@@ -24,7 +26,7 @@ Documentation files in this repository:
 
 ## Update Procedure
 
-1. Run npm run lint, npm test, npm run build.
+1. Run npm run lint, npm test, npm run test:coverage, npm run test:e2e, npm run build.
 2. Note exact outputs (passing/failing, routes, test totals).
 3. Update docs to reflect current state only.
 4. Remove speculative numbers and unverifiable claims.
@@ -32,11 +34,12 @@ Documentation files in this repository:
 
 ## Current Verified Baseline (June 16, 2026)
 
-- Lint: passes
-- Tests: 77 passed, 12 suites
-- Build: passes (Next.js 16.2.3)
-- E2E smoke tests: 5 passed (Playwright)
-- API routes: analyze-readiness, autofill-section, health
+- Lint: passes (ESLint with 0 errors)
+- Tests: 164 passed, 22 suites (Jest + fast-check)
+- Coverage: Enforced thresholds (65% branches, 70% functions/lines/statements on lib/**)
+- Build: passes (Next.js 16.2.3 with Turbopack)
+- E2E tests: 27 passed across 3 suites (Playwright)
+- API routes: /api/analyze-readiness, /api/autofill-section, /api/health
 - API hardening: MIME + base64 validation for autofill, normalized AI readiness response, public-safe health response with token-gated debug details
 - Rate limiting: shared Firestore-backed sliding window with in-memory fallback and stale-key cleanup
 

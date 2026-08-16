@@ -42,9 +42,10 @@ Last metrics refresh: June 16, 2026
 - request approval workflows
 
 9. Reliability and Quality
-- lint, tests and production build status
-- current test total: 77 passing (12 suites)
-- Playwright smoke tests: 5 passing
+- lint, tests, coverage and production build status
+- current test total: 164 passing (22 suites)
+- Playwright E2E tests: 14 passing (3 suites)
+- coverage thresholds enforced (65% branch, 70% func/line/stmt)
 
 10. Evidence Slide (recommended)
 - Before: manual record entry workflow

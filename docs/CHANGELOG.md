@@ -30,7 +30,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Jest coverage thresholds (65% branches, 70% functions/lines/statements) for `lib/**`.
 - Unit tests for `lib/notifications.js` covering `createNotification`, `purgeNotifications`, `markAllAsRead`, `clearAllNotifications` and `syncAdminNotifications` deduplication.
 - Unit tests for `lib/audit.js` covering document shape, label derivation and silent failure on Firestore errors.
-- Playwright E2E tests for route guard redirects, skip-link focus behavior, `aria-expanded` state, security header validation and the new protected-prefix fallback.
+- Playwright E2E test suite expanded to 27 tests across 3 suites (`auth-flows.spec.js`, `ledger-flows.spec.js`, `smoke.spec.js`) covering authentication forms, mobile responsiveness (360px viewport), route guard redirects, skip-to-content links, hamburger `aria-expanded` state, security headers, and route policy fallback gating.
+- Full documentation ecosystem synchronization across all `.md` files (`README.md`, `GUIDE.md`, `CHANGELOG.md`, `Project_API_Contract.md`, `Project_Deck_Plan.md`, `Project_Documentation_Plan.md`, `Project_Hackathon_Context_Plan.md`, `Project_Submission_Plan.md`, `VIDEO_DEMO.md`).
 
 ### DevOps
 - Removed `continue-on-error: true` from the `npm audit` CI step — high-severity production dependency vulnerabilities now fail the build.

@@ -5,8 +5,8 @@ export function SidebarLink({ href, icon, children, active }) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${active
-        ? "bg-brand-50 text-brand-700"
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 ${active
+        ? "bg-brand-50 text-brand-700 font-semibold"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
         }`}
     >
@@ -23,7 +23,7 @@ export function SidebarLink({ href, icon, children, active }) {
 
 function GroupTitle({ children }) {
   return (
-    <p className="px-3 pt-5 pb-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+    <p className="px-3 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
       {children}
     </p>
   );
@@ -48,13 +48,13 @@ export default function NavContent({ role, activePath, router }) {
 
   if (isAdmin) return (
     <>
-      <GroupTitle>Operations</GroupTitle>
+      <GroupTitle>Management</GroupTitle>
       <SidebarLink href="/admin" active={activePath === "/admin"} icon={ICONS.home}>Overview</SidebarLink>
-      <SidebarLink href="/admin/students" active={activePath === "/admin/students"} icon={ICONS.students}>Students</SidebarLink>
-      <SidebarLink href="/admin/faculty" active={activePath === "/admin/faculty"} icon={ICONS.faculty}>Faculty</SidebarLink>
+      <SidebarLink href="/admin/students" active={activePath === "/admin/students"} icon={ICONS.students}>Student Directory</SidebarLink>
+      <SidebarLink href="/admin/faculty" active={activePath === "/admin/faculty"} icon={ICONS.faculty}>Faculty Directory</SidebarLink>
       <GroupTitle>Governance</GroupTitle>
-      <SidebarLink href="/admin/requests" active={activePath === "/admin/requests"} icon={ICONS.requests}>Requests</SidebarLink>
-      <SidebarLink href="/admin/audit" active={activePath === "/admin/audit"} icon={ICONS.audit}>Audit Logs</SidebarLink>
+      <SidebarLink href="/admin/requests" active={activePath === "/admin/requests"} icon={ICONS.requests}>Role Requests</SidebarLink>
+      <SidebarLink href="/admin/audit" active={activePath === "/admin/audit"} icon={ICONS.audit}>Audit Trail</SidebarLink>
       <GroupTitle>Account</GroupTitle>
       <SidebarLink href="/profile" active={activePath === "/profile"} icon={ICONS.profile}>My Profile</SidebarLink>
     </>
@@ -62,9 +62,9 @@ export default function NavContent({ role, activePath, router }) {
 
   if (isFaculty) return (
     <>
-      <GroupTitle>Operations</GroupTitle>
-      <SidebarLink href="/faculty" active={activePath === "/faculty"} icon={ICONS.home}>Home</SidebarLink>
-      <SidebarLink href="/dashboard" active={activePath === "/dashboard"} icon={ICONS.dashboard}>Student Records</SidebarLink>
+      <GroupTitle>Workspace</GroupTitle>
+      <SidebarLink href="/faculty" active={activePath === "/faculty"} icon={ICONS.home}>Faculty Hub</SidebarLink>
+      <SidebarLink href="/dashboard" active={activePath === "/dashboard"} icon={ICONS.dashboard}>Student Directory</SidebarLink>
       <GroupTitle>Account</GroupTitle>
       <SidebarLink href="/profile" active={activePath === "/profile"} icon={ICONS.profile}>My Profile</SidebarLink>
     </>
@@ -72,13 +72,13 @@ export default function NavContent({ role, activePath, router }) {
 
   if (isStudent) return (
     <>
-      <GroupTitle>Navigation</GroupTitle>
-      <SidebarLink href="/student" active={activePath === "/student"} icon={ICONS.home}>Home</SidebarLink>
-      <GroupTitle>Records</GroupTitle>
-      <SidebarLink href="/profile?tab=records" active={activePath === "/profile" && router?.query?.tab === "records"} icon={ICONS.records}>Student Records</SidebarLink>
-      <SidebarLink href="/profile?tab=intelligence" active={activePath === "/profile" && router?.query?.tab === "intelligence"} icon={ICONS.pulse}>Career Pulse</SidebarLink>
+      <GroupTitle>Hub</GroupTitle>
+      <SidebarLink href="/student" active={activePath === "/student"} icon={ICONS.home}>Student Hub</SidebarLink>
+      <GroupTitle>Ledger</GroupTitle>
+      <SidebarLink href="/profile?tab=records" active={activePath === "/profile" && router?.query?.tab === "records"} icon={ICONS.records}>Academic Records</SidebarLink>
+      <SidebarLink href="/profile?tab=intelligence" active={activePath === "/profile" && router?.query?.tab === "intelligence"} icon={ICONS.pulse}>AI Career Pulse</SidebarLink>
       <GroupTitle>Account</GroupTitle>
-      <SidebarLink href="/profile" active={activePath === "/profile" && (!router?.query?.tab || router?.query?.tab === "profile")} icon={ICONS.profile}>My Profile</SidebarLink>
+      <SidebarLink href="/profile" active={activePath === "/profile" && (!router?.query?.tab || router?.query?.tab === "profile")} icon={ICONS.profile}>Personal Profile</SidebarLink>
     </>
   );
 

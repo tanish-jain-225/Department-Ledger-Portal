@@ -147,8 +147,15 @@ Defined in `lib/route-access.js`:
 ├── lib/                        # Auth, Firestore connections and validation utilities
 ├── firebase/                   # Firestore security rule definitions and indexes
 ├── public/                     # Static media and web worker modules
-└── docs/                       # Project documentation
-    └── CHANGELOG.md            # Version history (Keep a Changelog format)
+├── docs/                       # Project documentation
+│   ├── CHANGELOG.md            # Version history (Keep a Changelog format)
+│   ├── GUIDE.md                # Developer & Operations guide
+│   ├── Project_API_Contract.md # Stable API contracts & schemas
+│   ├── Project_Deck_Plan.md    # Presentation & slide deck source
+│   ├── Project_Documentation_Plan.md # Documentation alignment strategy
+│   ├── Project_Hackathon_Context_Plan.md # Hackathon evaluation context
+│   ├── Project_Submission_Plan.md # Official submission copy
+│   └── VIDEO_DEMO.md           # Video demo recording script & walkthrough
 ```
 
 ---
@@ -294,8 +301,8 @@ ALLOWED_ORIGIN=https://your-production-app.vercel.app
 ## 13. Testing and Quality Gates
 
 ### Current Validation Status
-* **Jest**: 100+ passing tests across 22 suites.
-* **Playwright**: 10+ passing smoke and flow tests.
+* **Jest**: 164 passing tests across 22 suites.
+* **Playwright**: 14 passing browser tests across 3 suites.
 * **Coverage**: Enforced thresholds — 65% branches, 70% functions/lines/statements on `lib/**`.
 * **Lint**: Pass.
 * **Build**: Pass.

@@ -167,8 +167,8 @@ export default function AdminStudentsDashboard() {
 
       const slots = calculateDynamicSlots(rawDataBatch);
       const fields = getDynamicStudentFields(slots);
-      const rows = rawDataBatch.map(({ user, lists, report }) =>
-        buildStudentExportRow(user, lists, report, slots)
+      const rows = rawDataBatch.map(({ user: u, lists, report }) =>
+        buildStudentExportRow(u, lists, report, slots)
       );
 
       downloadAdminStudentsCsv(
@@ -176,7 +176,7 @@ export default function AdminStudentsDashboard() {
         `Student_Registry_Full_${new Date().toISOString().split('T')[0]}.csv`,
         { fields }
       );
-      addToast("Exhaustive registry exported.", "success");
+      addToast("Student directory exported successfully.", "success");
     } catch (error) {
       addToast(error?.message || "Failed to export", "error");
     } finally {
@@ -206,13 +206,12 @@ export default function AdminStudentsDashboard() {
       const total = usersAll.length;
 
       if (total === 0) {
-        addToast(`No student records discovered for Year ${selectedYear}.`, "info");
+        addToast(`No student records found for Year ${selectedYear}.`, "info");
         setExportPdfProgress(null);
         setPdfBusy(false);
         return;
       }
 
-      // Dynamically load the heavy libraries
       const JSZip = (await import("jszip")).default;
       const { buildStudentPdf } = await import("@/lib/pdf-export");
 
@@ -222,7 +221,6 @@ export default function AdminStudentsDashboard() {
       for (let i = 0; i < total; i += batchSize) {
         const chunk = usersAll.slice(i, i + batchSize);
 
-        // Fetch exhaustive student records in parallel for network efficiency
         const chunkData = await Promise.all(
           chunk.map(async (u) => {
             try {
@@ -235,7 +233,6 @@ export default function AdminStudentsDashboard() {
           })
         );
 
-        // Render vector PDF bytes sequentially to prevent browser canvas/main thread/memory lockups
         for (const item of chunkData) {
           if (!item) continue;
           const { u, lists } = item;
@@ -307,13 +304,13 @@ export default function AdminStudentsDashboard() {
 
         await createNotification(uid, {
           title: "Access Updated",
-          message: `Your clearance level has been updated to ${roleToAssign.toUpperCase()}`,
+          message: `Your account role has been updated to ${roleToAssign.toUpperCase()}`,
           type: "info"
         }).catch(() => {
           addToast("Role updated, but notification delivery failed.", "info");
         });
 
-        addToast(`Clearance set to ${roleToAssign}`, "success");
+        addToast(`Role updated to ${roleToAssign}`, "success");
 
         if (roleToAssign !== 'student') {
           setStudents(prev => prev.filter(s => s.id !== uid));
@@ -324,7 +321,7 @@ export default function AdminStudentsDashboard() {
         if (reqDocId) {
           await updateDoc(doc(db, "deletionRequests", reqDocId), { status: "rejected" });
           await purgeNotifications(`del_${reqDocId}`);
-          addToast("Purge request dismissed.", "info");
+          addToast("Deletion request dismissed.", "info");
         }
       }
 
@@ -346,7 +343,7 @@ export default function AdminStudentsDashboard() {
       <ConfirmDialog
         open={!!roleChangeTarget}
         title="Confirm Role Change"
-        message={`Confirm update role to ${roleChangeTarget?.role?.toUpperCase()}?`}
+        message={`Are you sure you want to change this user's role to ${roleChangeTarget?.role?.toUpperCase()}?`}
         onConfirm={async () => {
           const target = roleChangeTarget;
           setRoleChangeTarget(null);
@@ -358,23 +355,23 @@ export default function AdminStudentsDashboard() {
       />
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Protocol: Permanent Purge"
-        message="CRITICAL: Permanently erase this scholar from the global ledger?"
+        title="Delete Student Record"
+        message="Are you sure you want to permanently delete this student and all associated records from the ledger? This action cannot be undone."
         onConfirm={async () => {
           const target = deleteTarget;
           setDeleteTarget(null);
           setBusy(true);
           try {
-            await purgeUser(target.uid, user.uid, `Manual Purge: Deleted student entity ${target.uid}`);
+            await purgeUser(target.uid, user.uid, `Admin Deleted student ${target.uid}`);
             if (target.reqDocId) {
               try {
                 await updateDoc(doc(getDb(), "deletionRequests", target.reqDocId), { status: "processed_manual" });
                 await purgeNotifications(`del_${target.reqDocId}`);
               } catch {
-                // Deletion request already removed or not found.
+                // Ignore cleanup error
               }
             }
-            addToast("Scholar purged.", "success");
+            addToast("Student record deleted successfully.", "success");
             setStudents(prev => prev.filter(s => s.id !== target.uid));
             await syncAdminNotifications(user.uid);
           } catch (e) {
@@ -388,261 +385,201 @@ export default function AdminStudentsDashboard() {
       />
       {selectedStudentUid && <StudentInfoPopup uid={selectedStudentUid} onClose={() => setSelectedStudentUid(null)} />}
 
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-10 animate-slide-up">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-3 min-[360px]:px-6 py-4 min-[360px]:py-8 space-y-6 min-[360px]:space-y-8 animate-slide-up">
         {/* Header */}
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-3xl min-[360px]:text-4xl font-black text-slate-900 tracking-tighter uppercase">Student Registry</h1>
-            <p className="text-sm min-[360px]:text-base text-slate-500 mt-2 font-medium">Comprehensive registry of all scholars currently in the ledger.</p>
+            <h1 className="text-xl min-[340px]:text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Student Directory</h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage student records, roles, and export archives.</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-            <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
-              {exportProgress !== null && (
-                <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                  <div
-                    className="h-full bg-brand-600 transition-all duration-300"
-                    style={{ width: `${exportProgress}%` }}
-                  />
-                </div>
-              )}
-              <Button
-                onClick={exportGlobalRegistry}
-                disabled={busy}
-                className="lg:w-auto w-full group shadow-xl shadow-brand-500/10"
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <Button
+              onClick={exportGlobalRegistry}
+              disabled={busy}
+              variant="secondary"
+              className="flex-1 sm:flex-none text-xs font-bold py-2.5"
+            >
+              <svg className={`h-4 w-4 mr-1.5 shrink-0 ${busy ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              {exportProgress !== null ? `Exporting ${exportProgress}%` : "Export CSV"}
+            </Button>
+
+            <Button
+              onClick={exportGlobalRegistryPdf}
+              disabled={!selectedYear || pdfBusy || busy}
+              variant={selectedYear ? "primary" : "secondary"}
+              className="flex-1 sm:flex-none text-xs font-bold py-2.5"
+              title={!selectedYear ? "Filter by year to export PDF dossiers" : "Export PDF Dossiers"}
+            >
+              <svg className={`h-4 w-4 mr-1.5 shrink-0 ${pdfBusy ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              {exportPdfProgress !== null ? `Exporting ${exportPdfProgress.percentage}%` : "Export Dossiers (ZIP)"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Search & Filter Toolbar */}
+        <div className="premium-card p-3 min-[360px]:p-4 sm:p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="relative flex-1 min-w-0">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Search students by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs font-semibold text-slate-800 focus:border-brand-500 focus:outline-none cursor-pointer"
               >
-                <svg className={`h-4 w-4 mr-2 ${busy ? 'animate-spin' : 'group-hover:-translate-y-1 transition-transform'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  {busy ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  )}
-                </svg>
-                {exportProgress !== null ? `Exporting ${exportProgress}%` : "Export Global Registry (CSV)"}
-              </Button>
-            </div>
+                <option value="">All Academic Years</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
 
-            <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
-              {exportPdfProgress !== null && (
-                <div className="flex flex-col items-end gap-1.5 w-full sm:w-auto mr-1 animate-slide-up">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
-                    Dossiers Compiled: {exportPdfProgress.completed} / {exportPdfProgress.total}
-                  </span>
-                  <div className="w-48 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner">
-                    <div
-                      className="h-full bg-brand-600 transition-all duration-300"
-                      style={{ width: `${exportPdfProgress.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-              <div className="relative group w-full sm:w-auto">
-                <Button
-                  onClick={exportGlobalRegistryPdf}
-                  disabled={!selectedYear || pdfBusy || busy}
-                  className="lg:w-auto w-full group shadow-xl shadow-brand-500/10"
-                  variant={selectedYear ? "primary" : "secondary"}
-                >
-                  <svg className={`h-4 w-4 mr-2 ${pdfBusy ? 'animate-spin' : 'group-hover:-translate-y-1 transition-transform'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    {pdfBusy ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    )}
-                  </svg>
-                  {exportPdfProgress !== null ? `Exporting ${exportPdfProgress.percentage}%` : "Export Dossiers (PDF ZIP)"}
-                </Button>
-                {!selectedYear && (
-                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3.5 w-52 bg-slate-950 text-white text-[10px] py-2 px-3.5 rounded-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-300 transform scale-95 translate-y-1 group-hover:scale-100 group-hover:translate-y-0 text-center shadow-2xl font-black tracking-wide border border-slate-800 z-50">
-                    Select a Year filter to enable PDF export
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-[5px] border-t-slate-950 border-x-[5px] border-x-transparent" />
-                  </span>
-                )}
+              <div className="px-2 text-xs font-bold text-slate-500 shrink-0">
+                {filtered.length} shown
               </div>
             </div>
           </div>
         </div>
 
-        <div className="premium-card p-responsive mb-12 animate-slide-up no-print">
-          <div className="flex flex-col gap-4 min-[360px]:gap-6 mb-8">
-            <div>
-              <h2 className="text-2xl min-[360px]:text-3xl font-black text-slate-900 tracking-tighter uppercase">Filter Island</h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium italic">&ldquo;Query the global registry for specific scholar entities.&rdquo;</p>
-            </div>
-          </div>
-
-          <div className="premium-card p-2 rounded-[3rem] bg-white border-slate-200 shadow-sm relative overflow-hidden">
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
-              <div className="relative flex-1 group">
-                <svg className="absolute left-7 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-all duration-300 transform group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="search"
-                  placeholder="Identify scholars..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-[2.5rem] border-none bg-slate-50/50 pl-16 pr-8 py-3.5 sm:py-5 text-sm font-bold text-slate-950 focus:ring-0 outline-none placeholder:text-slate-400 transition-all hover:bg-slate-100/50"
-                />
-              </div>
-              <div className="hidden lg:block w-px h-10 bg-slate-100" />
-              <div className="px-4 pb-2 lg:pb-0 flex items-center">
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-3 text-sm font-bold text-slate-950 outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none pr-10 relative"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 16px center',
-                    backgroundSize: '14px'
-                  }}
-                >
-                  <option value="">All Years</option>
-                  <option value="1">1st Year</option>
-                  <option value="2">2nd Year</option>
-                  <option value="3">3rd Year</option>
-                  <option value="4">4th Year</option>
-                </select>
-              </div>
-              <div className="hidden lg:block w-px h-10 bg-slate-100" />
-              <div className="px-8 pb-4 lg:pb-0 lg:pr-8 flex items-center justify-between lg:justify-end gap-3 min-w-35">
-                <div className="flex flex-col items-end">
-                  <span className="text-xs text-slate-500 tracking-[0.2em]">Registry</span>
-                  <span className="text-[10px] font-black text-brand-600 uppercase">
-                    {filtered.length} / {students.length} ACTIVE
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* List */}
+        {/* Student Cards Grid */}
         {loading || busy ? (
-          <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-3 min-[360px]:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="premium-card p-responsive animate-pulse">
-                <Skeleton className="h-14 w-14 rounded-3xl mb-6" />
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2 mb-8" />
-                <Skeleton className="h-10 w-full rounded-2xl" />
+              <div key={i} className="premium-card p-4 sm:p-5 animate-pulse space-y-3">
+                <Skeleton className="h-10 w-10 rounded-xl" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-8 w-full rounded-lg" />
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-3xl border border-slate-200 shadow-sm animate-fade-in">
-            <div className="h-16 w-16 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-6">
-              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex flex-col items-center justify-center py-12 px-4 bg-white rounded-2xl border border-slate-200 shadow-sm animate-fade-in">
+            <div className="h-12 w-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 mb-3">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-black text-slate-900 uppercase tracking-wide">No Results Discovered</h3>
-            <p className="text-sm text-slate-500 font-medium mt-2 text-center max-w-sm">No student records match your active search terms or filtered criteria.</p>
+            <h3 className="text-base font-bold text-slate-900">No students found</h3>
+            <p className="text-xs text-slate-500 mt-1 text-center max-w-sm">No student records match your active search terms or selected year.</p>
             <Button
               onClick={() => { setSearchTerm(""); setSelectedYear(""); }}
-              className="mt-6 px-6 py-2.5"
-              size="sm"
+              className="mt-4 px-4 py-2 text-xs"
               variant="secondary"
             >
-              Clear Active Filters
+              Clear Filters
             </Button>
           </div>
         ) : (
           <>
-            <div className="grid gap-responsive sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
-            {filtered.map(s => (
-              <div key={s.id} className="group premium-card p-responsive transition-all hover:-translate-y-2 hover:shadow-2xl border border-slate-100 flex flex-col h-full">
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="h-14 w-14 rounded-3xl bg-brand-700 flex items-center justify-center font-black text-white shadow-lg shadow-brand-900/10">
-                    {s.name?.charAt(0) || "U"}
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sector</span>
-                    <Badge variant="gray" className="mt-1">{s.department || "GEN"}</Badge>
-                    {s.pendingDeletion && (
-                      <Badge variant="danger" className="mt-2">Purge Request</Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex-1 space-y-4">
+            <div className="grid gap-3 min-[360px]:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-slide-up">
+              {filtered.map(s => (
+                <div key={s.id} className="group premium-card p-3.5 min-[360px]:p-5 transition-all hover:shadow-md hover:border-brand-200 border border-slate-200 flex flex-col justify-between min-w-0">
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none truncate">{s.name || "Anonymous"}</h3>
-                    <p className="text-xs font-medium text-slate-600 mt-1 truncate">{s.email}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-100">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium text-slate-500">Year</span>
-                      {s.year ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-black text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-2 py-0.5 mt-1 uppercase tracking-wider w-fit">
-                          {s.year} Year
-                        </span>
-                      ) : (
-                        <span className="text-sm font-semibold text-slate-400 mt-0.5">N/A</span>
-                      )}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium text-slate-500">Branch</span>
-                      <span className="text-sm font-semibold text-slate-900 mt-0.5 truncate">{s.branch || "-"}</span>
-                    </div>
-                  </div>
-
-                  {/* Manual Oversight Control Bar */}
-                  {s.id !== user?.uid && (
-                    <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3 shadow-xl">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block text-center">Protocol Elevation</span>
-                      <div className="flex flex-wrap items-center justify-center gap-2">
-                        {s.pendingDeletion ? (
-                          <>
-                            <Button onClick={() => decide(s.id, "delete", s.delDocId)} variant="danger" size="sm">Accept Purge</Button>
-                            <Button onClick={() => decide(s.id, "reject_deletion", s.delDocId)} variant="secondary" size="sm">Dismiss</Button>
-                          </>
-                        ) : (
-                          <>
-                            <RoleButton label="Student" role="student" currentRole={s.role} onClick={() => askRoleChange(s.id, "student")} />
-                            <RoleButton label="Faculty" role="faculty" currentRole={s.role} onClick={() => askRoleChange(s.id, "faculty")} />
-                            <RoleButton label="Admin" role="admin" currentRole={s.role} onClick={() => askRoleChange(s.id, "admin")} />
-                            <button
-                              onClick={() => decide(s.id, "delete")}
-                              className="p-1.5 rounded-lg bg-red-700 text-white hover:bg-red-800 transition-colors border border-red-700"
-                              title="Delete user"
-                            >
-                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </>
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="h-10 w-10 rounded-xl bg-brand-700 flex items-center justify-center font-bold text-white shadow-sm shrink-0">
+                        {s.name?.charAt(0) || "U"}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant="gray">{s.department || s.branch || "General"}</Badge>
+                        {s.pendingDeletion && (
+                          <Badge variant="danger">Deletion Requested</Badge>
                         )}
                       </div>
                     </div>
-                  )}
-                </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100">
-                  <Button
-                    onClick={() => setSelectedStudentUid(s.id)}
-                    variant="secondary"
-                    className="w-full py-3"
-                  >
-                    Examine Profile
-                  </Button>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-bold text-slate-900 truncate">{s.name || "Anonymous Student"}</h3>
+                      <p className="text-xs text-slate-500 truncate">{s.email}</p>
+                      {s.rollNumber && (
+                        <p className="text-[11px] font-semibold text-slate-600 font-mono">Roll: {s.rollNumber}</p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 py-2.5 my-3 border-y border-slate-100 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Year</span>
+                        <span className="font-semibold text-slate-800">{s.year ? `Year ${s.year}` : "N/A"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Branch</span>
+                        <span className="font-semibold text-slate-800 truncate block">{s.branch || "-"}</span>
+                      </div>
+                    </div>
+
+                    {/* Role / Deletion actions */}
+                    {s.id !== user?.uid && (
+                      <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200 space-y-1.5 my-2">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block text-center">Set Role</span>
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
+                          {s.pendingDeletion ? (
+                            <>
+                              <Button onClick={() => decide(s.id, "delete", s.delDocId)} variant="danger" size="sm" className="text-xs py-1">Accept Purge</Button>
+                              <Button onClick={() => decide(s.id, "reject_deletion", s.delDocId)} variant="secondary" size="sm" className="text-xs py-1">Dismiss</Button>
+                            </>
+                          ) : (
+                            <>
+                              <RoleButton label="Student" role="student" currentRole={s.role} onClick={() => askRoleChange(s.id, "student")} />
+                              <RoleButton label="Faculty" role="faculty" currentRole={s.role} onClick={() => askRoleChange(s.id, "faculty")} />
+                              <RoleButton label="Admin" role="admin" currentRole={s.role} onClick={() => askRoleChange(s.id, "admin")} />
+                              <button
+                                onClick={() => decide(s.id, "delete")}
+                                className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                title="Delete student"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                    <Button
+                      onClick={() => setSelectedStudentUid(s.id)}
+                      variant="secondary"
+                      size="sm"
+                      className="w-full text-xs py-1.5"
+                    >
+                      View Profile
+                    </Button>
+                  </div>
                 </div>
+              ))}
+            </div>
+          
+            {hasMore && (
+              <div className="flex justify-center mt-6">
+                <Button
+                  onClick={loadMore}
+                  loading={loadingMore}
+                  variant="secondary"
+                  size="sm"
+                  className="px-6"
+                >
+                  Load More Students
+                </Button>
               </div>
-            ))}
-          </div>
-        
-          {hasMore && (
-          <div className="flex justify-center mt-8">
-            <Button
-              onClick={loadMore}
-              loading={loadingMore}
-              variant="secondary"
-              className="px-8 font-black"
-            >
-              Load More Students
-            </Button>
-          </div>)}
+            )}
           </>
         )}
       </div>
