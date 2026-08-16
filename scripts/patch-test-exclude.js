@@ -31,14 +31,29 @@ try {
           fs.writeFileSync(filePath, content);
         }
       } catch (e) {}
-    } else if (filePath.includes('test-exclude') && (fileName === 'index.js' || fileName === 'is-outside-dir-win32.js')) {
-      try {
-        let content = fs.readFileSync(filePath, 'utf8');
-        if (content.includes("const minimatch = require('minimatch');")) {
-          content = content.replace("const minimatch = require('minimatch');", targetExcludeCode);
+    } else if (filePath.includes('test-exclude')) {
+      if (fileName === 'is-outside-dir-win32.js') {
+        try {
+          const content = `const path = require('path');
+module.exports = function(dir, filename) {
+  const rel = path.relative(dir, filename);
+  return Boolean(rel && (rel.startsWith('..') || path.isAbsolute(rel)));
+};
+`;
           fs.writeFileSync(filePath, content);
-        }
-      } catch (e) {}
+        } catch (e) {}
+      } else if (fileName === 'index.js') {
+        try {
+          let content = fs.readFileSync(filePath, 'utf8');
+          if (content.includes("const minimatch = require('minimatch');")) {
+            content = content.replace("const minimatch = require('minimatch');", targetExcludeCode);
+          }
+          if (content.includes("const matches = pattern => minimatch(pathToCheck, pattern, dot);")) {
+            content = content.replace("const matches = pattern => minimatch(pathToCheck, pattern, dot);", "const matches = pattern => minimatch(pathToCheck.split(path.sep).join('/'), pattern, dot);");
+          }
+          fs.writeFileSync(filePath, content);
+        } catch (e) {}
+      }
     }
   });
 } catch (e) {

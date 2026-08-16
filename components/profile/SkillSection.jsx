@@ -155,7 +155,6 @@ export default function SkillSection({ uid, rows, onRefresh }) {
         onConfirm={async () => {
           if (!deleteTarget) return;
           await confirmDelete(`Removed: ${deleteTarget.name}`);
-          addToast("Skill entry erased", "success");
         }}
         onCancel={() => setDeleteTarget(null)}
       />

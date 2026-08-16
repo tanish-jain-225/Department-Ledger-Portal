@@ -130,7 +130,6 @@ export default function ProjectSection({ uid, rows, onRefresh }) {
         onConfirm={async () => {
           if (!deleteTarget) return;
           await confirmDelete(`Removed: ${deleteTarget.title}`);
-          addToast("Project entry erased", "success");
         }}
         title="Erase Project Record"
         message="Permanently remove this project from the institutional ledger? This cannot be undone."

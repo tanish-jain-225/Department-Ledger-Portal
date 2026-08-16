@@ -192,11 +192,11 @@ export default function AcademicSection({ uid, rows, onRefresh }) {
       <ConfirmDialog
         open={!!deleteTarget}
         title="Delete Record?"
-        message={`Delete "${deleteTarget?.label}"? This cannot be undone.`}
+        message={`Delete record for Year ${deleteTarget?.year} Semester ${deleteTarget?.semester}? This cannot be undone.`}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
           if (!deleteTarget) return;
-          await confirmDelete(`Deleted: ${deleteTarget.label}`);
+          await confirmDelete(`Deleted record for Year ${deleteTarget.year} Sem ${deleteTarget.semester}`);
         }}
       />
     </div>
