@@ -225,7 +225,7 @@ Collection Constants defined in `lib/constants.js`.
 * **Cascade Deletion Batching**: User deletes utilize `writeBatch` in Firestore to atomically delete all sub-collection ledger entities or revert entirely.
 * **PII Masking**: CSV generation automatically masks user phone numbers and emails for general faculty downloads. Admins receive unmasked data.
 * **Immutable Audits**: Firestore rules prevent update or delete actions on the `auditLogs` collection (`allow update: if false; allow delete: if false`).
-* **Tightened Content Security Policy**: Implements explicit `frame-src 'self' blob: https://*.firebaseapp.com` and `worker-src 'self' blob:` rules in [security.js](file:///d:/_Deployed_Projects_Vercel/Department-Ledger-Portal/lib/security.js) to support Firebase Auth iframe checks and PDF rendering in workers/frames.
+* **Tightened Content Security Policy**: Implements explicit `frame-src 'self' blob: https://*.firebaseapp.com` and `worker-src 'self' blob:` rules in [`lib/security.js`](lib/security.js) to support Firebase Auth iframe checks and PDF rendering in workers/frames.
 * **WCAG Skip Link Integration**: The skip-to-content focus mechanism is styled using absolute off-screen viewport offsets (`top: -100%` translated to `top: 0.75rem` on focus) to ensure Chromium's tab indexing remains fully accessible.
 * **Autofill & Accessibility Semantics**: Every `<input>`, `<select>` and `<textarea>` carries a unique semantic `name`, `id` and standard browser `autoComplete` tags (`current-password`, `tel`, `bday`, etc.) to eliminate browser warnings and ensure form fields autofill correctly.
 

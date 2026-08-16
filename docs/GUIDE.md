@@ -172,7 +172,7 @@ npm run start
 
 ## 8. Firebase & Firestore Rules Deployment
 
-Deploy Cloud Firestore security rules ([firestore.rules](file:///d:/_Deployed_Projects_Vercel/Department-Ledger-Portal/firebase/firestore.rules)) and index definitions ([firestore.indexes.json](file:///d:/_Deployed_Projects_Vercel/Department-Ledger-Portal/firebase/firestore.indexes.json)) to your live Firebase project:
+Deploy Cloud Firestore security rules ([`firebase/firestore.rules`](../firebase/firestore.rules)) and index definitions ([`firebase/firestore.indexes.json`](../firebase/firestore.indexes.json)) to your live Firebase project:
 
 ```bash
 # Login to Firebase CLI (if not logged in)
@@ -186,7 +186,7 @@ npx firebase deploy --only firestore:rules,firestore:indexes
 
 ## 9. Automated Pre-Deployment Pipeline
 
-For Windows environments, run the automated pre-deployment batch script [pre-deploy.bat](file:///d:/_Deployed_Projects_Vercel/Department-Ledger-Portal/pre-deploy.bat). This script executes all validation gates sequentially:
+For Windows environments, run the automated pre-deployment batch script [`pre-deploy.bat`](../pre-deploy.bat). This script executes all validation gates sequentially:
 
 ```cmd
 pre-deploy.bat
