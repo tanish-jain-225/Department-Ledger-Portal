@@ -99,6 +99,7 @@ graph TD
 * **Styling Engine**: Tailwind CSS
 * **Database & Auth**: Firebase Auth + Cloud Firestore
 * **Server Auth SDK**: firebase-admin
+* **Runtime Schema Validation**: Zod (`zod`)
 * **GenAI Engine**: @google/generative-ai
 * **Testing Engines**: Jest + fast-check (property-based) + Playwright (E2E)
 * **CI/CD Platform**: GitHub Actions
@@ -225,6 +226,8 @@ Collection Constants defined in `lib/constants.js`.
 * **Cascade Deletion Batching**: User deletes utilize `writeBatch` in Firestore to atomically delete all sub-collection ledger entities or revert entirely.
 * **PII Masking**: CSV generation automatically masks user phone numbers and emails for general faculty downloads. Admins receive unmasked data.
 * **Immutable Audits**: Firestore rules prevent update or delete actions on the `auditLogs` collection (`allow update: if false; allow delete: if false`).
+* **Administrative Self-Security**: Prohibits administrators from modifying or demoting their own roles across all directory views (`pages/admin/requests.js`, `pages/admin/students.js`, `pages/admin/faculty.js`) and database rules (`userId != uid() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'facultyVerification'])`). Action controls on current admin accounts are replaced with a `You (Admin - Protected)` badge.
+* **Profile Mutation Tamper-Proofing**: `useProfileEdit` defensively sanitizes incoming updates by stripping privileged fields (`role`, `facultyVerification`) before committing changes to Firestore.
 * **Tightened Content Security Policy**: Implements explicit `frame-src 'self' blob: https://*.firebaseapp.com` and `worker-src 'self' blob:` rules in [`lib/security.js`](lib/security.js) to support Firebase Auth iframe checks and PDF rendering in workers/frames.
 * **WCAG Skip Link Integration**: The skip-to-content focus mechanism is styled using absolute off-screen viewport offsets (`top: -100%` translated to `top: 0.75rem` on focus) to ensure Chromium's tab indexing remains fully accessible.
 * **Autofill & Accessibility Semantics**: Every `<input>`, `<select>` and `<textarea>` carries a unique semantic `name`, `id` and standard browser `autoComplete` tags (`current-password`, `tel`, `bday`, etc.) to eliminate browser warnings and ensure form fields autofill correctly.
@@ -250,7 +253,7 @@ npm install
 ```
 3. Copy environment configuration:
 ```bash
-copy .env.local.example .env.local
+copy .env.example .env.local
 ```
 4. Set up your values in `.env.local`.
 5. Spin up the development server:
@@ -262,10 +265,11 @@ npm run dev
 
 ## 11. Environment Variables
 
-Template defined in `.env.local.example`.
+Template defined in `.env.example`.
 
 ```env
-# Client Configuration (Shared)
+# --- SECTION A: REQUIRED KEYS ------------------------------------------------
+# Firebase Client SDK Configuration (Client-Side)
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=
@@ -273,14 +277,27 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 
-# Server Configuration (Private)
+# Google Gemini AI Engine (Server-Only Secret)
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.5-flash
 
-# Optional Controls
-HEALTHCHECK_DEBUG_TOKEN=
-RATE_LIMIT_STORE=shared
+# --- SECTION B: OPTIONAL KEYS ------------------------------------------------
+# Security & Rate Limiting Controls (Server-Side)
 ALLOWED_ORIGIN=https://your-production-app.vercel.app
+RATE_LIMIT_STORE=memory
+HEALTHCHECK_DEBUG_TOKEN=
+
+# Firebase Admin Service Account (Server-Side)
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+
+# Demo Evaluation Accounts (Client-Side)
+NEXT_PUBLIC_DEMO_ADMIN_EMAIL=
+NEXT_PUBLIC_DEMO_ADMIN_PASSWORD=
+NEXT_PUBLIC_DEMO_FACULTY_EMAIL=
+NEXT_PUBLIC_DEMO_FACULTY_PASSWORD=
+NEXT_PUBLIC_DEMO_STUDENT_EMAIL=
+NEXT_PUBLIC_DEMO_STUDENT_PASSWORD=
 ```
 
 ---
@@ -301,11 +318,11 @@ ALLOWED_ORIGIN=https://your-production-app.vercel.app
 ## 13. Testing and Quality Gates
 
 ### Current Validation Status
-* **Jest**: 164 passing tests across 22 suites.
-* **Playwright**: 14 passing browser tests across 3 suites.
-* **Coverage**: Enforced thresholds — 65% branches, 70% functions/lines/statements on `lib/**`.
-* **Lint**: Pass.
-* **Build**: Pass.
+* **Jest**: 199 passing tests across 26 suites (including `accessErrors`, `roles`, `validation`, and `selfSecurity` suites).
+* **Playwright**: 27 passing tests across 3 suites.
+* **Coverage**: Enforced thresholds — 65% branches, 70% functions/lines/statements on `lib/**` (currently 72.5% stmts, 71.3% branch, 85.4% funcs, 75.4% lines).
+* **Lint**: Pass (0 errors).
+* **Build**: Pass (Turbopack production build).
 
 ### Quality Parameters
 * **Unit Testing**: Tests validation helpers, navigation routing and token authorization processes (`__tests__/apiAuth.test.js`).

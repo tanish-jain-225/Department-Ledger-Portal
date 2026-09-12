@@ -8,3 +8,4 @@ export { default as ProjectSection } from "./ProjectSection";
 export { default as SkillSection } from "./SkillSection";
 export { default as StudentLedger } from "./StudentLedger";
 export { default as SmartAssistant } from "./SmartAssistant";
+export { default as DocumentPreview } from "./DocumentPreview";

@@ -28,10 +28,11 @@ Department Ledger Portal centralizes student records and governance workflows wi
 - Data/Auth: Firebase Firestore + Firebase Auth
 - AI model integration: Gemini via @google/generative-ai
 - API routes: /api/autofill-section, /api/analyze-readiness, /api/health
-- Tests: 164 passing across 22 suites (Jest + fast-check fuzz testing)
+- Tests: 199 passing across 26 suites (Jest + fast-check fuzz testing + self-security)
 - E2E tests: 27 passing across 3 suites (Playwright)
-- Code coverage: enforced thresholds on lib/** (65% branch, 70% func/line/stmt)
-- Validation hardening: strict MIME/base64 checks and AI response sanitization
+- Code coverage: enforced thresholds on lib/** (65% branch, 70% func/line/stmt; current: 72.5% stmts, 75.4% lines)
+- Validation hardening: Zod runtime schema validation (lib/validation.js), strict MIME/base64 checks and AI response sanitization
+- Governance protection: administrative self-security preventing self-role modification across all directory interfaces and Firestore security rules
 
 ## Risk and Mitigation Notes
 

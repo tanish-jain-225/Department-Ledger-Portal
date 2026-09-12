@@ -15,6 +15,7 @@ This document defines stable request/response contracts for public API routes.
 ```
 
 - CORS: Origin allowlist is enforced server-side. Requests from unapproved origins are blocked early with `403 Forbidden` to prevent unauthorized backend computations.
+- Schema Validation: All POST endpoints enforce strict runtime schema validation via Zod (`lib/validation.js`). Payloads with unexpected structures, invalid field boundaries, or disallowed types receive `400 Bad Request`.
 - High-level runtime health checks return a `service` field for monitoring.
 
 ## GET /api/health

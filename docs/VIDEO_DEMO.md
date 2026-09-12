@@ -52,7 +52,7 @@ Say:
 - "The extracted data is mapped into the form, so users can validate and save quickly with fewer errors."
 
 Say while waiting for response:
-- "This flow is powered by the autofill endpoint and includes validation for file type and payload integrity before AI processing."
+- "This flow is powered by the autofill endpoint and includes strict Zod schema validation for file type, size bounds, and payload integrity before AI processing."
 
 ### 1:10-1:25 | Save and Confirm Data Capture
 

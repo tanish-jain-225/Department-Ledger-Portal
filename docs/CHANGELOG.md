@@ -9,9 +9,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Security
+- Enforced administrative self-security: Administrators are strictly prohibited from modifying or demoting their own roles across all admin directory views (`pages/admin/requests.js`, `pages/admin/students.js`, `pages/admin/faculty.js`) via UI-level shields (`You (Admin - Protected)` badge) and defensive handler guards in `askRoleChange` and `decide`.
+- Added input payload sanitization in `useProfileEdit` (`lib/use-profile-edit.js`) to defensively strip privileged fields (`role`, `facultyVerification`) from profile update submissions.
+- Added `disabled` prop support to `RoleButton` (`components/ui/RoleButton.jsx`) with `opacity-50 cursor-not-allowed pointer-events-none` styling and `aria-disabled` semantics.
 - Tightened CSP `connect-src` from the overly broad `https:` to a specific allowlist of Firebase, Firestore, Gemini and Google APIs domains.
 - Fixed CORS `resolveAllowedOrigin` no-op bug in both API routes — disallowed origins now receive `Access-Control-Allow-Origin: null` instead of the configured origin, making the CORS header itself a correct rejection signal in addition to the downstream 403 guard.
 - Hardened Firestore notification `create` rule to require `hasApprovedRole()`, preventing pending/unapproved users from inflating the notifications collection.
+- Added centralized Zod runtime schema validation (`lib/validation.js`) across API routes (`/api/analyze-readiness`, `/api/autofill-section`) and client authentication forms (`/login`, `/register`).
 
 ### Changed
 - `logAudit()` no longer throws when a Firestore write fails — errors are swallowed silently and logged to `console.error`. Audit write failures must never roll back user-facing operations.
@@ -19,8 +23,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `syncAdminNotifications` is debounced to at most once per 60 seconds per admin UID, preventing triple Firestore query hits on every admin page load.
 - `logout()` uses a `finally` block to always reset `isLoggingOut` to `false`, preventing stuck overlay state in future refactors.
 - `getRouteAccess()` returns `ACCESS.AUTH` (not `ACCESS.PUBLIC`) for any unregistered path under a protected namespace (`/admin`, `/student`, `/faculty`, `/dashboard`, `/profile`, `/document`).
+- Re-exported `DocumentPreview` from `components/profile/index.js` to ensure complete module barrel resolution.
 
 ### Added
+- Unit tests for administrative self-security and safe role modification controls (`__tests__/selfSecurity.test.js`).
 - Skip-to-content link (`.skip-link`) as the first focusable element in the Layout component — WCAG 2.1 SC 2.4.1 compliance for keyboard and screen-reader users.
 - `aria-expanded` attribute on both mobile hamburger menu buttons, communicating open/closed state to screen readers.
 - `aria-label="Main navigation"` on the desktop `<nav>` landmark element.
@@ -30,10 +36,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Jest coverage thresholds (65% branches, 70% functions/lines/statements) for `lib/**`.
 - Unit tests for `lib/notifications.js` covering `createNotification`, `purgeNotifications`, `markAllAsRead`, `clearAllNotifications` and `syncAdminNotifications` deduplication.
 - Unit tests for `lib/audit.js` covering document shape, label derivation and silent failure on Firestore errors.
+- Unit tests for `lib/access-errors.js` (`__tests__/accessErrors.test.js`) achieving 100% test coverage.
+- Unit tests for `lib/roles.js` (`__tests__/roles.test.js`) achieving 100% test coverage.
+- Unit tests for `lib/validation.js` (`__tests__/validation.test.js`) verifying Zod runtime schema rules, boundary conditions, and payload sanitization.
+- Expanded Jest test suite to 199 tests across 26 suites.
 - Playwright E2E test suite expanded to 27 tests across 3 suites (`auth-flows.spec.js`, `ledger-flows.spec.js`, `smoke.spec.js`) covering authentication forms, mobile responsiveness (360px viewport), route guard redirects, skip-to-content links, hamburger `aria-expanded` state, security headers, and route policy fallback gating.
-- Full documentation ecosystem synchronization across all `.md` files (`README.md`, `GUIDE.md`, `CHANGELOG.md`, `Project_API_Contract.md`, `Project_Deck_Plan.md`, `Project_Documentation_Plan.md`, `Project_Hackathon_Context_Plan.md`, `Project_Submission_Plan.md`, `VIDEO_DEMO.md`).
+- Full documentation ecosystem synchronization across all 9 `.md` files (`README.md`, `GUIDE.md`, `CHANGELOG.md`, `Project_API_Contract.md`, `Project_Deck_Plan.md`, `Project_Documentation_Plan.md`, `Project_Hackathon_Context_Plan.md`, `Project_Submission_Plan.md`, `VIDEO_DEMO.md`).
 
 ### DevOps
+- Added standard production environment template (`.env.example`) and updated `.gitignore`.
+- Configured production deployment manifest (`vercel.json`) with clean URLs and security headers.
 - Removed `continue-on-error: true` from the `npm audit` CI step — high-severity production dependency vulnerabilities now fail the build.
 - Added coverage artifact upload step to the CI `verify` job.
 

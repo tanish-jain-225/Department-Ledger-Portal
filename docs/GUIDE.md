@@ -40,10 +40,10 @@ npm -v
 1. Copy the template configuration file:
    ```bash
    # On Windows (PowerShell/CMD):
-   copy .env.local.example .env.local
+   copy .env.example .env.local
 
    # On Linux/macOS:
-   cp .env.local.example .env.local
+   cp .env.example .env.local
    ```
 
 2. Open `.env.local` and populate your project credentials:
@@ -102,7 +102,7 @@ npm run clean
 ## 5. Testing & Quality Assurance Commands
 
 ### Run Unit, Integration & Property-Based Tests
-Runs Jest test suites across API auth, audit logging, rate limiters, notifications, route access policies, and RTL components:
+Runs 26 Jest test suites across API auth, audit logging, rate limiters, notifications, route access policies, access errors, roles, Zod runtime validation, self-security protections, and RTL components:
 ```bash
 npm test
 ```

@@ -2,7 +2,7 @@
  * Role assignment button used across admin pages.
  * Shows active state when currentRole matches role.
  */
-export default function RoleButton({ label, role, currentRole, onClick }) {
+export default function RoleButton({ label, role, currentRole, onClick, disabled = false, title }) {
   const active = currentRole === role;
 
   const activeStyles = {
@@ -19,8 +19,12 @@ export default function RoleButton({ label, role, currentRole, onClick }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      title={title}
+      aria-disabled={disabled}
       className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-300
+        ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}
         ${active
           ? (activeStyles[role] || activeStyles.admin)
           : (idleStyles[role] || idleStyles.admin)

@@ -3,6 +3,7 @@ import { RATE_LIMIT } from "@/lib/constants";
 import { isRateLimited } from "@/lib/rate-limit";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
+import { autofillSectionSchema, validatePayload } from "@/lib/validation";
 
 const GEMINI_TIMEOUT_MS = 30_000;
 
@@ -210,6 +211,11 @@ export default async function handler(req, res) {
   const estimatedBytes = (fileData.length * 3) / 4;
   if (estimatedBytes > MAX_FILE_BYTES) {
     return res.status(413).json({ error: "File too large. Maximum size is 10MB." });
+  }
+
+  const validation = validatePayload(autofillSectionSchema, req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: validation.error });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;

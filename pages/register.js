@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
 import { Input, Button, Select } from "@/components/ui";
+import { registerSchema, validatePayload } from "@/lib/validation";
 
 export default function RegisterPage() {
   const { register, loading, login } = useAuth();
@@ -46,8 +47,9 @@ export default function RegisterPage() {
   async function onSubmit(e) {
     e.preventDefault();
     setErr("");
-    if (password.length < 8) {
-      setErr("Password must be at least 8 characters.");
+    const validation = validatePayload(registerSchema, { name, email, password, rollNumber, year });
+    if (!validation.success) {
+      setErr(validation.error);
       return;
     }
     setBusy(true);

@@ -36,20 +36,22 @@ Last metrics refresh: June 16, 2026
 - Profile + records -> analysis endpoint -> structured readiness report
 
 8. Security and Governance
-- Firebase token verification
+- Firebase cryptographic token verification
+- Zod runtime schema validation on API routes and auth forms
 - Route-level RBAC
 - append-only audit trail
 - request approval workflows
+- admin self-security and role immutability controls
 
 9. Reliability and Quality
 - lint, tests, coverage and production build status
-- current test total: 164 passing (22 suites)
-- Playwright E2E tests: 14 passing (3 suites)
-- coverage thresholds enforced (65% branch, 70% func/line/stmt)
+- current test total: 199 passing (26 suites)
+- Playwright E2E tests: 27 passing (3 suites)
+- coverage thresholds enforced (65% branch, 70% func/line/stmt; current 72.5% stmts, 75.4% lines)
 
 10. Evidence Slide (recommended)
 - Before: manual record entry workflow
-- After: Smart Analysis + validated JSON autofill workflow
+- After: Smart Analysis + Zod-validated JSON autofill workflow
 - Show one concrete API request/response example
 
 11. Deployment and Usage

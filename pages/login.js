@@ -6,6 +6,7 @@ import Layout, { ACCESS } from "@/components/Layout";
 import { useAuth } from "@/lib/auth-context";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import { loginSchema, validatePayload } from "@/lib/validation";
 
 export default function LoginPage() {
   const { login, resetPassword } = useAuth();
@@ -48,6 +49,11 @@ export default function LoginPage() {
   async function onSubmit(e) {
     e.preventDefault();
     setErr("");
+    const validation = validatePayload(loginSchema, { email, password });
+    if (!validation.success) {
+      setErr(validation.error);
+      return;
+    }
     setBusy(true);
     try {
       await login(email, password);

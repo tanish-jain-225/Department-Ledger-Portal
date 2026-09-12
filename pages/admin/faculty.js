@@ -132,6 +132,11 @@ export default function AdminFacultyDashboard() {
   async function decide(uid, action, reqDocId = null, assignedRole = null) {
     const db = getDb();
     if (!db || !uid) return;
+
+    if (uid === user?.uid) {
+      addToast("Governance Policy: You cannot modify your own administrative account.", "error");
+      return;
+    }
     try {
       if (action === "delete") { setDeleteTarget({ uid, reqDocId }); return; }
       if (action === "approve") {
@@ -172,6 +177,10 @@ export default function AdminFacultyDashboard() {
   }
 
   function askRoleChange(uid, role) {
+    if (uid === user?.uid) {
+      addToast("Governance Policy: Administrators cannot modify their own role.", "warning");
+      return;
+    }
     setRoleChangeTarget({ uid, role });
   }
 
@@ -305,7 +314,7 @@ export default function AdminFacultyDashboard() {
                     <span className="font-semibold text-slate-800 truncate">{f.designation || "Department Staff"}</span>
                   </div>
 
-                  {f.id !== user?.uid && (
+                  {f.id !== user?.uid ? (
                     <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200 space-y-1.5 my-2">
                       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block text-center">Set Role</span>
                       <div className="flex flex-wrap items-center justify-center gap-1.5">
@@ -331,6 +340,15 @@ export default function AdminFacultyDashboard() {
                           </>
                         )}
                       </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200 flex items-center justify-center my-2">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-700 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-200 shadow-xs">
+                        <svg className="h-3.5 w-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                        </svg>
+                        You (Admin - Protected)
+                      </span>
                     </div>
                   )}
                 </div>

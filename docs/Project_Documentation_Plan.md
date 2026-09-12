@@ -21,7 +21,7 @@ Documentation files in this repository:
 - Every API statement must match current files under pages/api.
 - Every role/access statement must match lib/roles.js and lib/route-access.js.
 - Test counts must be derived from npm test output, not estimated.
-- Environment variable names must match .env.local.example.
+- Environment variable names must match .env.example.
 - Route lists should be validated with npm run build output.
 
 ## Update Procedure
@@ -35,18 +35,20 @@ Documentation files in this repository:
 ## Current Verified Baseline (June 16, 2026)
 
 - Lint: passes (ESLint with 0 errors)
-- Tests: 164 passed, 22 suites (Jest + fast-check)
-- Coverage: Enforced thresholds (65% branches, 70% functions/lines/statements on lib/**)
+- Tests: 199 passed, 26 suites (Jest + fast-check + self-security)
+- Coverage: Enforced thresholds (72.5% stmts, 71.3% branch, 85.4% funcs, 75.4% lines on lib/**)
 - Build: passes (Next.js 16.2.3 with Turbopack)
 - E2E tests: 27 passed across 3 suites (Playwright)
 - API routes: /api/analyze-readiness, /api/autofill-section, /api/health
-- API hardening: MIME + base64 validation for autofill, normalized AI readiness response, public-safe health response with token-gated debug details
+- API hardening: Zod runtime schema validation (lib/validation.js), MIME + base64 validation for autofill, normalized AI readiness response, public-safe health response with token-gated debug details
+- Administrative self-security: strict self-role modification prevention across admin dashboards, profile edit payload sanitization, and disabled state guards
 - Rate limiting: shared Firestore-backed sliding window with in-memory fallback and stale-key cleanup
 
 ## Code-to-Doc Mapping
 
 - Auth and pending-role flow: lib/auth-context.js, lib/roles.js
 - Route access levels: lib/route-access.js
+- Validation schemas: lib/validation.js
 - Rate limits and constants: lib/constants.js, lib/rate-limit.js
 - Data layer and query fallback behavior: lib/data.js
 - Security rules and indexes: firebase/firestore.rules, firebase/firestore.indexes.json

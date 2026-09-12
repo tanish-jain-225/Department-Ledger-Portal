@@ -3,6 +3,7 @@ import { RATE_LIMIT } from "@/lib/constants";
 import { isRateLimited } from "@/lib/rate-limit";
 import { verifyAuthToken } from "@/lib/api-auth";
 import { parseAiJson, isValidAiJsonResponse } from "@/lib/parse-ai-json";
+import { analyzeReadinessSchema, validatePayload } from "@/lib/validation";
 
 const GEMINI_TIMEOUT_MS = 30_000;
 
@@ -191,6 +192,11 @@ export default async function handler(req, res) {
   // ── Input validation ────────────────────────────────────────────────────────
   const gpaError = validateAcademic(academic);
   if (gpaError) return res.status(400).json({ error: gpaError });
+
+  const validation = validatePayload(analyzeReadinessSchema, req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: validation.error });
+  }
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
