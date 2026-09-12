@@ -1,10 +1,10 @@
 # Department Ledger Portal
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.2.3-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.5-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-12.11.0-orange?style=flat&logo=firebase)](https://firebase.google.com/)
 [![Gemini AI](https://img.shields.io/badge/AI-Gemini_2.5_Flash-blue?style=flat)](https://ai.google.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.2.2-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
-[![CI](https://img.shields.io/badge/CI-lint%20%7C%20test%20%7C%20build%20%7C%20e2e-brightgreen?style=flat)](.github/workflows/ci.yml)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen?style=flat)](.github/workflows/ci.yml)
 
 A production-grade, secure academic ledger platform for university departments. The system centralizes student progression records, faculty review workflows, administrative governance actions and AI-assisted portfolio analysis using a strict client/server cryptographic role model and Firestore-backed data.
 
@@ -22,14 +22,14 @@ A production-grade, secure academic ledger platform for university departments. 
 5. [Role and Access Model](#5-role-and-access-model)
 6. [Repository Structure](#6-repository-structure)
 7. [API Surface](#7-api-surface)
-8. [Data Model](#8-data-model-collections)
-9. [Security Model](#9-security-model)
+8. [Data Model](#8-data-model)
+9. [Security and Accessibility Model](#9-security-and-accessibility-model)
 10. [Local Development Setup](#10-local-development-setup)
 11. [Environment Variables](#11-environment-variables)
 12. [Scripts](#12-scripts)
 13. [Testing and Quality Gates](#13-testing-and-quality-gates)
-14. [CI/CD Pipeline](#14-cicd)
-15. [Deployment Checklist](#15-deployment)
+14. [CI/CD Pipeline](#14-cicd-pipeline)
+15. [Deployment](#15-deployment)
 16. [Operations and Troubleshooting](#16-operations-and-troubleshooting)
 
 ---
@@ -42,7 +42,7 @@ Departments often manage student progression across multiple disconnected tools.
 * **Administrative Governance**: Access approval dashboards and account auditing.
 * **AI-Assisted Operations**: Automated section autofill and profile readiness analysis.
 * **Immutable Auditing**: Append-only transaction logging to guarantee action non-repudiation.
- 
+
 ---
 
 ## 2. Product Capabilities
@@ -70,18 +70,23 @@ Departments often manage student progression across multiple disconnected tools.
 
 ### System Data Flow
 ```mermaid
-graph TD
+flowchart TD
     Client[Browser Client]
-    NextServer[Next.js Serverless API Route]
-    Firestore[Google Cloud Firestore]
-    Gemini[Google Gemini 2.5 Flash]
+    subgraph Edge["Next.js Serverless API"]
+        CORS[CORS & Rate Limiter]
+        JWT[JWT Bearer Auth]
+        Handler[Payload Sanitizer]
+    end
+    Firestore[(Cloud Firestore)]
+    Gemini[Gemini 2.5 Flash]
 
-    Client -- Auth & DB Operations --> Firestore
-    Client -- Smart Analysis / Autofill --> NextServer
-    NextServer -- Gated CORS Checks --> NextServer
-    NextServer -- Cryptographic JWT Signature check --> NextServer
-    NextServer -- Sliding Rate Limiter --> NextServer
-    NextServer -- Processed Request --> Gemini
+    Client -->|Direct Reads/Writes & Real-Time Sync| Firestore
+    Client -->|AI Requests| CORS
+    CORS --> JWT
+    JWT --> Handler
+    Handler -->|Structured Prompt| Gemini
+    Gemini -->|JSON Completion| Handler
+    Handler -->|Sanitized Payload| Client
 ```
 
 ### Key Architectural Patterns
@@ -95,15 +100,15 @@ graph TD
 
 ## 4. Tech Stack
 
-* **Frontend Framework**: Next.js, React
-* **Styling Engine**: Tailwind CSS
-* **Database & Auth**: Firebase Auth + Cloud Firestore
-* **Server Auth SDK**: firebase-admin
-* **Runtime Schema Validation**: Zod (`zod`)
-* **GenAI Engine**: @google/generative-ai
-* **Testing Engines**: Jest + fast-check (property-based) + Playwright (E2E)
-* **CI/CD Platform**: GitHub Actions
-* **Required Runtime Node Engine**: `>=20.19.0` or `>=22.13.0`
+* **Frontend Framework**: Next.js 16.3.5, React 19.2.4
+* **Styling Engine**: Tailwind CSS 4.2.2
+* **Database & Auth**: Firebase Auth + Cloud Firestore 12.11.0
+* **Server Auth SDK**: Firebase Admin SDK 13.7.0 (`firebase-admin`)
+* **Runtime Schema Validation**: Zod 4.3.6 (`zod`)
+* **GenAI Engine**: Google Gemini 2.5 Flash (`@google/generative-ai` 0.24.1)
+* **Testing Engines**: Jest 30.3.0 + fast-check 4.6.0 (property-based) + Playwright 1.59.1 (E2E)
+* **CI/CD Platform**: GitHub Actions (Node 20.x & 22.x matrix)
+* **Required Runtime Node Engine**: Node.js `>=20.19.0` or `>=22.13.0`
 
 ---
 
@@ -111,16 +116,18 @@ graph TD
 
 ### Governance Lifecycle
 ```mermaid
-graph TD
-    User([Registering User]) -->|Default| Pending[Pending Role]
-    Admin[Admin Role] -->|Approves Request| Approve[Approved Role]
-    Approve --> Student[Student Role]
-    Approve --> Faculty[Faculty Role]
-    Approve --> Admin
+flowchart TD
+    NewUser([New User Registration]) --> DefaultPending[Role: Pending]
+    AdminActor([Admin Authority]) -->|Reviews & Decides| ApproveRequest[Approve Role Assignment]
+    DefaultPending --> ApproveRequest
     
-    Student -.->|Ledger Management / AI Autofill| Portal[Portal Access]
-    Faculty -.->|Student Profile Search / Masked CSV Export| Portal
-    Admin -.->|User Purging / Audit Log Inspection| Portal
+    ApproveRequest -->|Assign Student| Student[Student Role]
+    ApproveRequest -->|Assign Faculty| Faculty[Faculty Role]
+    ApproveRequest -->|Promote Admin| AdminRole[Admin Role]
+    
+    Student --> StudentPortal[Student Ledger & Career Pulse]
+    Faculty --> FacultyPortal[Verification & Masked CSV Export]
+    AdminRole --> AdminPortal[Governance, Purges & Audit Logs]
 ```
 
 ### Route Authorization Matrix
@@ -204,7 +211,7 @@ All requests must send `Content-Type: application/json` and include a Bearer Fir
 
 ---
 
-## 8. Data Model (Collections)
+## 8. Data Model
 
 Primary Firestore collections used:
 * `users`: Main credentials and role details.
@@ -218,7 +225,7 @@ Collection Constants defined in `lib/constants.js`.
 
 ---
 
-## 9. Security & Accessibility Model
+## 9. Security and Accessibility Model
 
 * **Cryptographic Verification**: Incoming JWT tokens are checked directly on the serverless backend using Google's x509 public certificates.
 * **Gated CORS Rejection**: Validates request origin headers on API route gateways immediately. Returns `403 Forbidden` on disallowed domains, protecting Gemini credit quotas.
@@ -253,9 +260,13 @@ npm install
 ```
 3. Copy environment configuration:
 ```bash
+# On Linux / macOS / Git Bash:
+cp .env.example .env.local
+
+# On Windows (Command Prompt):
 copy .env.example .env.local
 ```
-4. Set up your values in `.env.local`.
+4. Configure your credentials in `.env.local`.
 5. Spin up the development server:
 ```bash
 npm run dev
@@ -305,12 +316,14 @@ NEXT_PUBLIC_DEMO_STUDENT_PASSWORD=
 ## 12. Scripts
 
 * `npm run dev`: Start Next.js hot-reload development server.
+* `npm run dev:clean`: Remove cache directory `.next` and start dev server.
+* `npm run clean`: Clean `.next` build cache directory.
 * `npm run build`: Compile Next.js production bundles.
 * `npm run start`: Start compiled production server.
-* `npm run lint`: Execute ESLint formatting checks.
-* `npm test`: Run Jest unit and property-based test suites (fast, no coverage).
+* `npm run lint`: Execute ESLint checks across JavaScript and JSX files.
+* `npm test`: Run Jest unit and property-based test suites (fast mode, no coverage).
 * `npm run test:coverage`: Run Jest with coverage reporting and enforce thresholds.
-* `npm run test:e2e`: Run Playwright browser integration tests.
+* `npm run test:e2e`: Run Playwright end-to-end browser integration tests.
 * `pre-deploy.bat`: Windows pre-deployment batch script that automates clean builds, lint checks, fast unit tests, coverage verification, Playwright E2E browser tests, Firebase Firestore rules/indexes push and production Next.js build compilation sequentially.
 
 ---
@@ -320,9 +333,10 @@ NEXT_PUBLIC_DEMO_STUDENT_PASSWORD=
 ### Current Validation Status
 * **Jest**: 199 passing tests across 26 suites (including `accessErrors`, `roles`, `validation`, and `selfSecurity` suites).
 * **Playwright**: 27 passing tests across 3 suites.
-* **Coverage**: Enforced thresholds — 65% branches, 70% functions/lines/statements on `lib/**` (currently 72.5% stmts, 71.3% branch, 85.4% funcs, 75.4% lines).
-* **Lint**: Pass (0 errors).
-* **Build**: Pass (Turbopack production build).
+* **Coverage**: Enforced thresholds — 65% branches, 70% functions/lines/statements on `lib/**` (currently 72.5% stmts, 71.8% branch, 85.4% funcs, 75.4% lines).
+* **Lint**: Pass (0 errors, 0 warnings).
+* **Audit**: Pass (0 vulnerabilities across all dependencies).
+* **Build**: Pass (Next.js 16 Turbopack production build).
 
 ### Quality Parameters
 * **Unit Testing**: Tests validation helpers, navigation routing and token authorization processes (`__tests__/apiAuth.test.js`).
@@ -332,10 +346,9 @@ NEXT_PUBLIC_DEMO_STUDENT_PASSWORD=
 * **Service Unit Testing**: Tests `lib/audit.js` and `lib/notifications.js` including silent-failure resilience and `relatedId`-based deduplication.
 * **E2E Smoke Testing**: Runs browser scripts simulating registrations, responsive layouts, page transfers, route guard redirects, accessibility (skip link, `aria-expanded`) and security header validation.
 
-
 ---
 
-## 14. CI/CD
+## 14. CI/CD Pipeline
 
 Pipeline defined in `.github/workflows/ci.yml`.
 

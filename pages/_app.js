@@ -28,7 +28,11 @@ class ErrorBoundary extends Component {
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-3">Something went wrong</h1>
             <p className="text-slate-500 font-medium mb-8 text-sm">An unexpected error occurred. Please refresh the page.</p>
             <button
-              onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = "/"; }}
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Hard reload resets corrupted React component tree
+                window.location.href = "/";
+              }}
               className="px-8 py-3 rounded-xl bg-slate-900 text-white font-semibold text-sm transition-colors hover:bg-slate-800"
             >
               Return Home

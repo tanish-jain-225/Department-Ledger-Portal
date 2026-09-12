@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Fixed CORS `resolveAllowedOrigin` no-op bug in both API routes — disallowed origins now receive `Access-Control-Allow-Origin: null` instead of the configured origin, making the CORS header itself a correct rejection signal in addition to the downstream 403 guard.
 - Hardened Firestore notification `create` rule to require `hasApprovedRole()`, preventing pending/unapproved users from inflating the notifications collection.
 - Added centralized Zod runtime schema validation (`lib/validation.js`) across API routes (`/api/analyze-readiness`, `/api/autofill-section`) and client authentication forms (`/login`, `/register`).
+- Resolved upstream dependency advisories (GHSA-p293-qw3h-jr36, GHSA-2xp9-vwfh-vxw4, GHSA-rgj7-g3m4-5g8c, GHSA-w5vr-8v7q-w6rv) by upgrading Next.js to 16.3.5 and pinning safe overrides (`sharp` ^0.35.4, `baseline-browser-mapping` ^2.11.0, `browserslist` ^4.28.9, `@humanfs/node` ^0.16.8, `js-yaml` ^4.3.2), achieving 0 vulnerabilities across `npm audit`.
 
 ### Changed
 - `logAudit()` no longer throws when a Firestore write fails — errors are swallowed silently and logged to `console.error`. Audit write failures must never roll back user-facing operations.
