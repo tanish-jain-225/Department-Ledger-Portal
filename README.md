@@ -145,25 +145,54 @@ Defined in `lib/route-access.js`:
 
 ```text
 .
-├── .github/workflows/          # CI pipeline definition
-├── __tests__/                  # Unit, API integration and property-based test suites
-├── e2e/                        # Playwright smoke and auth journey specs
-├── components/                 # React UI layout and dashboard files
-│   └── ui/                     # Reusable UI primitives (Buttons, Modals, Badges)
-├── pages/                      # Next.js router pages
-│   └── api/                    # Serverless backend controllers
-├── lib/                        # Auth, Firestore connections and validation utilities
-├── firebase/                   # Firestore security rule definitions and indexes
-├── public/                     # Static media and web worker modules
-├── docs/                       # Project documentation
-│   ├── CHANGELOG.md            # Version history (Keep a Changelog format)
-│   ├── GUIDE.md                # Developer & Operations guide
-│   ├── Project_API_Contract.md # Stable API contracts & schemas
-│   ├── Project_Deck_Plan.md    # Presentation & slide deck source
-│   ├── Project_Documentation_Plan.md # Documentation alignment strategy
-│   ├── Project_Hackathon_Context_Plan.md # Hackathon evaluation context
-│   ├── Project_Submission_Plan.md # Official submission copy
+├── .github/workflows/          # CI/CD GitHub Actions pipelines (ci.yml)
+├── __mocks__/                  # Jest test doubles and SDK mocks
+├── __tests__/                  # Unit, API integration and property-based test suites (26 suites)
+├── e2e/                        # Playwright smoke and end-to-end journey specs
+├── components/                 # Reusable React components & layout templates
+│   ├── profile/                # Student ledger section cards & credential viewers
+│   └── ui/                     # Design system primitives (Button, RoleButton, Modal, Skeleton, etc.)
+├── pages/                      # Next.js Pages router endpoints & UI views
+│   ├── admin/                  # Administrative portals (requests, students, faculty, audit)
+│   ├── api/                    # Serverless API routes (health, analyze-readiness, autofill-section)
+│   ├── dashboard/              # Role-aware dashboard redirection and overview views
+│   ├── document/               # Dynamic document inspection views
+│   ├── faculty/                # Faculty student search, review and CSV export views
+│   ├── profile/                # User profile viewing and credential management
+│   └── student/                # Student ledger editor, career pulse and PDF export views
+├── lib/                        # Shared business logic, authentication context and utilities
+│   ├── api-auth.js             # Cryptographic Firebase ID JWT verification
+│   ├── auth-context.js         # Global authentication state provider & route guards
+│   ├── rate-limit.js           # Sliding-window rate limiter implementation
+│   ├── route-access.js         # Route access definitions and role-based policies
+│   ├── security.js             # Content Security Policy & HTTP security headers
+│   ├── student-analytics.js    # Readiness scoring and metric aggregators
+│   └── validation.js           # Centralized Zod runtime schemas
+├── firebase/                   # Firebase Firestore configuration
+│   ├── firestore.rules         # Cryptographic database security rules
+│   └── firestore.indexes.json  # Composite index definitions for optimized queries
+├── public/                     # Static media, icons and web worker modules
+│   └── workers/                # Background web workers (CSV data export processing)
+├── scripts/                    # Build, post-install and test patch scripts
+├── styles/                     # Global CSS stylesheets and Tailwind directives
+├── docs/                       # Project documentation, architecture guides and presentation assets
+│   ├── CHANGELOG.md            # Version history (Keep a Changelog standard)
+│   ├── GUIDE.md                # Operations, deployment & developer guide
+│   ├── Project_API_Contract.md # Frozen API contract & JSON schemas
+│   ├── Project_Deck_Plan.md    # Hackathon presentation slide deck plan
+│   ├── Project_Documentation_Plan.md # Documentation synchronization strategy
+│   ├── Project_Hackathon_Context_Plan.md # Evaluation criteria and solution alignment
+│   ├── Project_Submission_Plan.md # Official submission copy and metadata
 │   └── VIDEO_DEMO.md           # Video demo recording script & walkthrough
+├── .env.example                # Template for required environment variables
+├── eslint.config.mjs           # ESLint flat configuration
+├── firebase.json               # Firebase CLI deployment targets
+├── jest.config.js              # Jest configuration and enforced coverage thresholds
+├── next.config.mjs             # Next.js configuration and CSP security headers
+├── package.json                # Project dependencies, scripts and overrides
+├── playwright.config.mjs       # Playwright end-to-end browser test configuration
+├── pre-deploy.bat              # Automated pre-deployment verification runner (Windows)
+└── vercel.json                 # Vercel serverless deployment routing configuration
 ```
 
 ---
